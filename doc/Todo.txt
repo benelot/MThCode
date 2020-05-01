@@ -1,21 +1,12 @@
-<<<<<<< HEAD
+﻿<<<<<<< HEAD
 ToDo
-- Simplify formalism
 - All Outputs at the same time
-- Lambda
 - Difference of sum of L or L_tau
+- Params as dict to pass on
+- show rotation cycle while training
+
 
 Questions
 - Bias?
 - Normalization?
 - Activation function?
-=======
-﻿- Admin: Termin Jörn, Github einrichten (Win/Linux).
-- iEEG Data Analysis: Correlation, clustermap, various patients, spectrogram.
-- RNN: Vizualize weights, rotate inputs/outputs (pattern compleiton, wait on Beni), compare no linear output layer to one linear output layer (how do the weights change?).
-- Theory: Why is normalization so important? Should I ignore it nevertheless?
-- Theory: How to interpret weights as synaptic strength? What about bias training?
-- Documentation: On Typora or PP.
-
-- new line
->>>>>>> cb136489dae33e26d62c734e8bab2d099410ba65

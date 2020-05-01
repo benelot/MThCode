@@ -23,7 +23,7 @@ class FRNN(nn.Module):
         channel_pos_in = list(range(0, self.visible_size))
         for _, val in enumerate(channel_pos_out):
             channel_pos_in.remove(val)
-        # Optionale new recurrence factor
+        # Optional new recurrence factor
         if new_recurrence is not None:
             self.recurrence = new_recurrence
         # Define gate s

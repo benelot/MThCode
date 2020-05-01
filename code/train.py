@@ -13,17 +13,17 @@ import models
 
 path2data = '../data/ID02_1h.mat'
 path2model = './FRNN_model.pth'
-nr_channels = 10
-hidden_size = 10
-nr_samples = 1500
+nr_channels = 20
+hidden_size = 20
+nr_samples = 2000
 window_size = 50
 
 epochs = 1
-rotations = 2
+rotations = 6
 
 ch_out_rotation = []
 for i in range(int(nr_channels/2)):
-    ch_out_rotation.append([i, i+int(nr_channels/2)])
+    ch_out_rotation.append([i, i + int(nr_channels/2)])
 
 X_train, X_test = util.data_loader(path=path2data, nr_channels=nr_channels, nr_samples=nr_samples,
                                    window_size=window_size)
@@ -73,7 +73,6 @@ ax.set_ylabel('loss')
 ax.set_xlabel('cycle')
 ax.grid()
 fig.tight_layout()
-plt.show()
 fig.savefig('../doc/figures/_losses.png')
 
 torch.save(model.state_dict(), path2model)

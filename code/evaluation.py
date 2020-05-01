@@ -12,9 +12,9 @@ import models
 
 path2data = '../data/ID02_1h.mat'
 path2model = './FRNN_model.pth'
-nr_channels = 10
-hidden_size = 10
-nr_samples = 1500
+nr_channels = 20
+hidden_size = 20
+nr_samples = 2000
 window_size = 50
 
 X_train, X_test = util.data_loader(path=path2data, nr_channels=nr_channels, nr_samples=nr_samples,
@@ -25,7 +25,7 @@ model.load_state_dict(torch.load(path2model))
 
 model.eval()
 
-ch = [0, 5, 9]
+ch = [6, 11, 18]
 model.make_gate(ch)
 Y_preds = []
 Y = []

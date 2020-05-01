@@ -7,12 +7,11 @@ import torch.nn as nn
 
 
 class FRNN(nn.Module):
-    def __init__(self, channel_pos_all: list, hidden_size=6, recurrence=0.5):
+    def __init__(self, visible_size: int, hidden_size: int, recurrence=0.5):
         super().__init__()
         # Parameters
-        self.visible_size = len(channel_pos_all)
+        self.visible_size = visible_size
         self.full_size = self.visible_size + hidden_size
-        self.channel_pos_all = channel_pos_all.copy()
         # Create FC Layer
         self.W = nn.Linear(self.full_size, self.full_size, bias=False)
         # Initialize gate s
@@ -21,10 +20,10 @@ class FRNN(nn.Module):
 
     def make_gate(self, channel_pos_out: list, new_recurrence=None):
         # Define input channels
-        channel_pos_in = self.channel_pos_all.copy()
+        channel_pos_in = list(range(0, self.visible_size))
         for _, val in enumerate(channel_pos_out):
             channel_pos_in.remove(val)
-        # Optional new recurrence factor
+        # Optionale new recurrence factor
         if new_recurrence is not None:
             self.recurrence = new_recurrence
         # Define gate s

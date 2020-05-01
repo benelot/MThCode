@@ -11,13 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 def data_loader(path: str, nr_channels: int, nr_samples: int, window_size: int, train_portion=0.8, normalization=True):
     """ Loads and prepares ieeg data for learning.
-    :param path: Path to iEEG data
-    :param nr_channels:
-    :param nr_samples:
-    :param window_size:
-    :param train_portion:
-    :param normalization:
-    :return:
+
     """
     data_mat = loadmat(path)
     data = data_mat['EEG'][:nr_channels, :nr_samples].transpose()
@@ -90,7 +84,7 @@ def plot_weights(W, channel_size, vmax=1, linewidth=.5, absolute=False, path=Non
     fig.text(0.35, 0.08, 'from visible node', va='center', ha='center')
     fig.text(0.77, 0.08, 'from hidden node', va='center', ha='center')
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
-    fig.show()
+    plt.show()
 
     if path is not None:
         fig.savefig(path)

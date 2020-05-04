@@ -11,7 +11,7 @@ from scipy.io import loadmat
 from sklearn.preprocessing import MinMaxScaler
 
 
-def data_loader(params: dict, train_portion=0.8, normalization=True):
+def data_loader(params: dict, train_portion=0.8):
     """ Loads and prepares iEEG data for NN model.
 
     """
@@ -19,7 +19,7 @@ def data_loader(params: dict, train_portion=0.8, normalization=True):
     data = data_mat['EEG'][:params['channel_size'], :params['sample_size']].transpose()
 
     # Normalization
-    if normalization:
+    if params['normalization']:
         sc = MinMaxScaler(feature_range=(-1, 1))
         sc.fit(data)
         data = sc.transform(data)
@@ -47,8 +47,8 @@ def plot_weights(W: float, params: dict, vmax=1, linewidth=.5, absolute=False, s
     """
     vmin = -vmax
     cmap = 'RdBu'
-    hticklabels = np.arange(params['channel_size'], W.shape[0], 1)
     ch = params['channel_size']
+    hticklabels = np.arange(ch, W.shape[0], 1)
 
     if absolute:
         vmin = 0

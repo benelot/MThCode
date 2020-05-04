@@ -1,4 +1,3 @@
-﻿<<<<<<< HEAD
 ToDo
 - All Outputs at the same time
 - Difference of sum of L or L_tau

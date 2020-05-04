@@ -14,6 +14,7 @@ import utilities as util
 import models
 
 
+<<<<<<< HEAD
 params = {'name': 'FRNN_02',
           'path2data': '../data/ID02_1h.mat',
           # model parameters ------------------------
@@ -33,6 +34,21 @@ params = {'name': 'FRNN_02',
 ch_out_rotation = []
 for i in range(int(params['channel_size']/2)):
     ch_out_rotation.append([i, i+int(params['channel_size']/2)])
+=======
+path2data = '../data/ID02_1h.mat'
+path2model = './FRNN_model.pth'
+nr_channels = 20
+hidden_size = 20
+nr_samples = 2000
+window_size = 50
+
+epochs = 1
+rotations = 6
+
+ch_out_rotation = []
+for i in range(int(nr_channels/2)):
+    ch_out_rotation.append([i, i + int(nr_channels/2)])
+>>>>>>> f53bc03f771988b512beaef1957f2acd4594ebcd
 
 # Load data
 X_train, X_test = util.data_loader(params)
@@ -85,7 +101,6 @@ ax.set_ylabel('Loss')
 ax.set_xlabel('Cycle')
 ax.grid()
 fig.tight_layout()
-plt.show()
 fig.savefig('../doc/figures/_losses.png')
 
 # Save model and params to file

@@ -15,8 +15,20 @@ import models
 # Load parameters
 params = pickle.load(open('../models/FRNN_02.pkl', 'rb'))
 
+<<<<<<< HEAD
 # Load data
 X_train, X_test = util.data_loader(params)
+=======
+path2data = '../data/ID02_1h.mat'
+path2model = './FRNN_model.pth'
+nr_channels = 20
+hidden_size = 20
+nr_samples = 2000
+window_size = 50
+
+X_train, X_test = util.data_loader(path=path2data, nr_channels=nr_channels, nr_samples=nr_samples,
+                                   window_size=window_size)
+>>>>>>> f53bc03f771988b512beaef1957f2acd4594ebcd
 
 # Get trained model
 model = models.FRNN(params)
@@ -24,7 +36,7 @@ model.load_state_dict(torch.load('../models/' + params['name'] + '.pth'))
 
 model.eval()
 
-ch = [0, 5, 9]
+ch = [6, 11, 18]
 model.make_gate(ch)
 Y_preds = []
 Y = []

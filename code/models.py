@@ -1,5 +1,7 @@
-# Models for iEEG connectome
-# Segessenmann J. 2020
+""" NN models
+
+Part of master thesis Segessenmann J. (2020)
+"""
 
 import numpy as np
 import torch
@@ -7,16 +9,20 @@ import torch.nn as nn
 
 
 class FRNN(nn.Module):
-    def __init__(self, visible_size: int, hidden_size: int, recurrence=0.5):
+    def __init__(self, params: dict):
         super().__init__()
         # Parameters
-        self.visible_size = visible_size
-        self.full_size = self.visible_size + hidden_size
-        # Create FC Layer
-        self.W = nn.Linear(self.full_size, self.full_size, bias=False)
+        self.name = params['name']
+        self.visible_size = params['channel_size']
+        self.full_size = params['channel_size'] + params['hidden_size']
+        # Create FC layer
+        self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])
+        # Define non-linearity
+        exec_str = 'self.nonlinearity = torch.' + params['nonlinearity']
+        exec(exec_str)
         # Initialize gate s
         self.Lambda = torch.ones(self.full_size, dtype=torch.float32)
-        self.recurrence = recurrence
+        self.recurrence = params['lambda']
 
     def make_gate(self, channel_pos_out: list, new_recurrence=None):
         # Define input channels
@@ -38,5 +44,5 @@ class FRNN(nn.Module):
         for idx in range(X.shape[0]):
             i[:self.visible_size] = X[idx, :]
             u = torch.mul(self.Lambda, self.W(r)) + torch.mul((1 - self.Lambda), i)
-            r = torch.tanh(u)
+            r = self.nonlinearity(u)
         return u[:self.visible_size]

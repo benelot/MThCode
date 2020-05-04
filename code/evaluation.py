@@ -14,7 +14,7 @@ import models
 
 
 # Load parameters
-params = pickle.load(open('../models/FRNN_03.pkl', 'rb'))
+params = pickle.load(open('../models/FRNN_tanh.pkl', 'rb'))
 
 # Load data
 X_train, X_test = util.data_loader(params)
@@ -33,7 +33,7 @@ Y = []
 for idx, X in enumerate(X_test):
     with torch.no_grad():
         Y_all = model(X).numpy()
-        Y_preds.append(Y_all[ch])
+        Y_preds.append(Y_all[-1, ch])
         Y.append(X[-1, ch].numpy())
 
 preds = np.asarray(Y_preds)
@@ -51,7 +51,7 @@ for i in range(len(ch)):
 
 fig.subplots_adjust(hspace=.8)
 plt.show()
-fig.savefig('../doc/figures/_predictions.png')
+fig.savefig('../doc/figures/pred_' + params['name'] + '.png')
 
 util.plot_weights(W=model.W.weight.data.numpy(), params=params, vmax=0.8,
-                  save2path='../doc/figures/_weights.png')
+                  save2path='../doc/figures/weights_' + params['name'] + '.png')

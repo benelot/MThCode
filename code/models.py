@@ -40,9 +40,10 @@ class FRNN(nn.Module):
         # Initialize r and i nodes
         r = torch.zeros(self.full_size, dtype=torch.float32)
         i = torch.zeros(self.full_size, dtype=torch.float32)
+        u = torch.zeros(X.shape[0], self.full_size, dtype=torch.float32)
         # Forward path
         for idx in range(X.shape[0]):
             i[:self.visible_size] = X[idx, :]
-            u = torch.mul(self.Lambda, self.W(r)) + torch.mul((1 - self.Lambda), i)
-            r = self.nonlinearity(u)
-        return u[:self.visible_size]
+            u[idx, :] = (torch.mul(self.Lambda, self.W(r)) + torch.mul((1 - self.Lambda), i))
+            r = self.nonlinearity(u[idx, :])
+        return u[:, :self.visible_size]

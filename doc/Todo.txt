@@ -1,11 +1,9 @@
 ToDo
-- All Outputs at the same time
-- Difference of sum of L or L_tau
-- Params as dict to pass on
-- show rotation cycle while training
 
 
 Questions
 - Bias?
 - Normalization?
 - Activation function?
+- All Outputs and from past or few outputs and from others?
+- How train to not overfitt one position?

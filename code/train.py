@@ -14,20 +14,21 @@ import utilities as util
 import models
 
 
-params = {'name': 'FRNN_03',
+params = {'name': 'FRNN_tanh',
           'path2data': '../data/ID02_1h.mat',
           # model parameters ------------------------
           'channel_size': 10,
           'hidden_size': 10,
           'lambda': 0.5,
-          'nonlinearity': 'sigmoid',
+          'nonlinearity': 'tanh',
           'bias': False,
           # train parameters -------------------------
-          'sample_size': 1500,
+          'sample_size': 1000,
           'window_size': 50,
           'normalization': True,
+          'loss_samples': 5,
           'epochs_per_cycle': 1,
-          'cycles': 2}
+          'cycles': 7}
 
 # Make rotation list
 ch_out_rotation = []
@@ -59,7 +60,7 @@ for cycle_nr in range(params['cycles']):
             for idx, X in enumerate(X_train):
                 optimizer.zero_grad()
                 Y_pred = model(X)
-                loss = criterion(Y_pred[ch_out], X[-1, ch_out])
+                loss = criterion(Y_pred[-params['loss_samples']:, ch_out], X[-params['loss_samples']:, ch_out])
                 loss.backward()
                 optimizer.step()
                 temp_loss.append(loss.item())
@@ -85,8 +86,7 @@ ax.set_ylabel('Loss')
 ax.set_xlabel('Cycle')
 ax.grid()
 fig.tight_layout()
-plt.show()
-fig.savefig('../doc/figures/_losses.png')
+fig.savefig('../doc/figures/losses_' + params['name'] + '.png')
 
 # Save model and params to file
 torch.save(model.state_dict(), '../models/' + params['name'] + '.pth')

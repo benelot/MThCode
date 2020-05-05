@@ -6,7 +6,6 @@ Part of master thesis Segessenmann J. (2020)
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
 import pickle
 
 import utilities as util
@@ -14,7 +13,7 @@ import models
 
 
 # Load parameters
-params = pickle.load(open('../models/FRNN_tanh.pkl', 'rb'))
+params = pickle.load(open('../models/FRNN_new2.pkl', 'rb'))
 
 # Load data
 X_train, X_test = util.data_loader(params)
@@ -26,14 +25,14 @@ model.load_state_dict(torch.load('../models/' + params['name'] + '.pth'))
 # Evaluate model
 model.eval()
 
-ch = [0, 5, 9]
+ch = [0, 5]
 model.make_gate(ch)
 Y_preds = []
 Y = []
 for idx, X in enumerate(X_test):
     with torch.no_grad():
         Y_all = model(X).numpy()
-        Y_preds.append(Y_all[-1, ch])
+        Y_preds.append(Y_all[ch])
         Y.append(X[-1, ch].numpy())
 
 preds = np.asarray(Y_preds)

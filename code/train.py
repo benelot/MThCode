@@ -14,11 +14,11 @@ import utilities as util
 import models
 
 
-params = {'name': 'FRNN_relu',
+params = {'name': 'FRNN_tanh',
           'path2data': '../data/ID02_1h.mat',
           # model parameters ------------------------
-          'channel_size': 10,
-          'hidden_size': 10,
+          'channel_size': 60,
+          'hidden_size': 60,
           'lambda': 0.5,
           'nonlinearity': 'tanh',
           'bias': False,
@@ -34,8 +34,13 @@ params = {'name': 'FRNN_relu',
 
 # Make rotation list
 ch_out_rotation = []
-for i in range(int(params['channel_size']/2)):
-    ch_out_rotation.append([i, i + int(params['channel_size']/2)])
+for i in range(10):
+    inner_rot = []
+    for k in range(int(params['channel_size'] / 10)):
+        inner_rot.append(i+k*10)
+    ch_out_rotation.append(inner_rot)
+#for i in range(int(params['channel_size']/2)):
+#    ch_out_rotation.append([i, i + int(params['channel_size']/2)])
 
 # Load data
 X_train, X_test = util.data_loader(params)
@@ -52,7 +57,7 @@ temp_loss = np.zeros([len(X_train), len(ch_out_rotation)])
 epoch_loss = np.zeros([params['epochs'], len(ch_out_rotation)])
 
 for epoch in range(params['epochs']):
-    if epoch is not 0 and epoch % 8 is 0:
+    if epoch is not 0 and epoch % 5 is 0:
         for param_group in optimizer.param_groups:
             param_group['lr'] = param_group['lr']/2
     for smpl_idx, X in enumerate(X_train):

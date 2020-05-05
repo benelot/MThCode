@@ -48,5 +48,5 @@ class FRNN(nn.Module):
         for idx in range(X.shape[0]):
             i[:self.visible_size] = X[idx, :]
             u = torch.mul(self.Lambda, self.W(r)) + torch.mul((1 - self.Lambda), i)
-            r = (self.nonlinearity(u)+1)/2
+            r = self.nonlinearity(u)
         return u[:self.visible_size]

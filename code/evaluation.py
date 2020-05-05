@@ -13,7 +13,7 @@ import models
 
 
 # Load parameters
-params = pickle.load(open('../models/FRNN_relu.pkl', 'rb'))  # rotearlyopt normal
+params = pickle.load(open('../models/FRNN_tanh.pkl', 'rb'))  # rotearlyopt normal
 
 # Load data
 X_train, X_test = util.data_loader(params)
@@ -25,7 +25,7 @@ model.load_state_dict(torch.load('../models/' + params['name'] + '.pth'))
 # Evaluate model
 model.eval()
 
-ch = [1, 5, 8]
+ch = [20, 39, 55]
 model.make_gate(ch)
 Y_preds = []
 Y = []
@@ -52,5 +52,5 @@ fig.subplots_adjust(hspace=.8)
 fig.savefig('../doc/figures/pred_' + params['name'] + '.png')
 
 W = model.W.weight.data.numpy()
-util.plot_weights(W=W, params=params, vmax=1,
+util.plot_weights(W=W, params=params, vmax=.5, linewidth=.0,
                   save2path='../doc/figures/weights_' + params['name'] + '.png')

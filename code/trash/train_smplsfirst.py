@@ -14,11 +14,11 @@ import utilities as util
 import models
 
 
-params = {'name': 'FRNN_relu',
+params = {'name': 'FRNN__normal',
           'path2data': '../data/ID02_1h.mat',
           # model parameters ------------------------
-          'channel_size': 10,
-          'hidden_size': 10,
+          'channel_size': 20,
+          'hidden_size': 20,
           'lambda': 0.5,
           'nonlinearity': 'tanh',
           'bias': False,
@@ -26,11 +26,9 @@ params = {'name': 'FRNN_relu',
           'sample_size': 1000,
           'window_size': 50,
           'normalization': True,
-          'epochs': 10,
-          # old parameters ---------------------------
           'loss_samples': 5,
           'epochs_per_cycle': 1,
-          'cycles': 7}
+          'cycles': 10}
 
 # Make rotation list
 ch_out_rotation = []
@@ -47,26 +45,33 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 # Train
 start_time = time.time()
+cycle_loss = []
 
-temp_loss = np.zeros([len(X_train), len(ch_out_rotation)])
-epoch_loss = np.zeros([params['epochs'], len(ch_out_rotation)])
-
-for epoch in range(params['epochs']):
-    if epoch is not 0 and epoch % 8 is 0:
+for cycle_nr in range(params['cycles']):
+    if cycle_nr is not 0 and cycle_nr % 8 is 0:
         for param_group in optimizer.param_groups:
             param_group['lr'] = param_group['lr']/2
-    for smpl_idx, X in enumerate(X_train):
-        optimizer.zero_grad()
-        loss = []
-        for rot_pos, ch_out in enumerate(ch_out_rotation):
-            model.make_gate(ch_out)
-            Y_pred = model(X)
-            loss.append(criterion(Y_pred[ch_out], X[-1, ch_out]))
-            temp_loss[smpl_idx, rot_pos] = loss[rot_pos].item()
-        torch.autograd.backward(loss)
-        optimizer.step()
-    epoch_loss[epoch, :] = np.mean(temp_loss, axis=0)
-    print(f'Epoch: {epoch} | Loss: {np.mean(temp_loss):.4}')
+    for rot_pos, ch_out in enumerate(ch_out_rotation):
+        temp_loss = []
+        epoch_loss = []
+        model.make_gate(ch_out)
+
+        for epoch in range(params['epochs_per_cycle']):
+            for idx, X in enumerate(X_train):
+                optimizer.zero_grad()
+                Y_pred = model(X)
+                loss = criterion(Y_pred[ch_out], X[-1:, ch_out])
+                loss.backward()
+                optimizer.step()
+                temp_loss.append(loss.item())
+
+            epoch_loss.append(np.mean(np.asarray(temp_loss)))
+            print(f'Cycle: {cycle_nr} | Rot. pos.: {rot_pos} | Epoch: {epoch} | Loss: {epoch_loss[epoch]:.4}')
+
+        if cycle_nr is 0:
+            cycle_loss.append(np.asarray(epoch_loss))
+        else:
+            cycle_loss[rot_pos] = np.concatenate((cycle_loss[rot_pos], np.asarray(epoch_loss)), 0)
 
 total_time = time.time() - start_time
 print(f'Time [min]: {total_time/60:.3}')
@@ -74,7 +79,7 @@ print(f'Time [min]: {total_time/60:.3}')
 # Plot loss
 fig, ax = plt.subplots(1, figsize=(5, 5))
 for i in range(len(ch_out_rotation)):
-    ax.plot(epoch_loss[:, i], label='Rot. pos. ' + str(i))
+    ax.plot(cycle_loss[i], label='Rot. pos. ' + str(i))
     ax.legend()
 ax.set_title('Losses')
 ax.set_ylabel('Loss')

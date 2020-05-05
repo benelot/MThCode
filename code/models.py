@@ -27,8 +27,11 @@ class FRNN(nn.Module):
     def make_gate(self, channel_pos_out: list, new_recurrence=None):
         # Define input channels
         channel_pos_in = list(range(0, self.visible_size))
-        for _, val in enumerate(channel_pos_out):
-            channel_pos_in.remove(val)
+        if type(channel_pos_out) is list:
+            for _, val in enumerate(channel_pos_out):
+                channel_pos_in.remove(val)
+        elif type(channel_pos_out) is int:
+            channel_pos_in.remove(channel_pos_out)
         # Optional new recurrence factor
         if new_recurrence is not None:
             self.recurrence = new_recurrence
@@ -45,5 +48,5 @@ class FRNN(nn.Module):
         for idx in range(X.shape[0]):
             i[:self.visible_size] = X[idx, :]
             u = torch.mul(self.Lambda, self.W(r)) + torch.mul((1 - self.Lambda), i)
-            r = self.nonlinearity(u)
+            r = (self.nonlinearity(u)+1)/2
         return u[:self.visible_size]

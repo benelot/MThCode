@@ -90,7 +90,7 @@ def plot_weights(W: float, params: dict, vmax=1, linewidth=.5, absolute=False, s
     fig.text(0.35, 0.08, 'from visible node', va='center', ha='center')
     fig.text(0.77, 0.08, 'from hidden node', va='center', ha='center')
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
-    plt.show()
+    #plt.show()
 
     if save2path is not None:
         fig.savefig(save2path)

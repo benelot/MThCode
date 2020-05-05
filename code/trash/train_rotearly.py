@@ -14,13 +14,13 @@ import utilities as util
 import models
 
 
-params = {'name': 'FRNN_new2',
+params = {'name': 'FRNN__rotearly',
           'path2data': '../data/ID02_1h.mat',
           # model parameters ------------------------
-          'channel_size': 10,
-          'hidden_size': 10,
+          'channel_size': 20,
+          'hidden_size': 20,
           'lambda': 0.5,
-          'nonlinearity': 'sigmoid',
+          'nonlinearity': 'tanh',
           'bias': False,
           # train parameters -------------------------
           'sample_size': 1000,
@@ -47,7 +47,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 start_time = time.time()
 
 
-epochs = 5
+epochs = 10
 loss = []
 temp_loss = np.zeros([len(X_train), len(ch_out_rotation)])
 epoch_loss = np.zeros([epochs, len(ch_out_rotation)])
@@ -58,15 +58,18 @@ for epoch in range(epochs):
             param_group['lr'] = param_group['lr']/2
 
     for smpl_idx, X in enumerate(X_train):
-        loss = []
-        optimizer.zero_grad()
+
+
         for rot_pos, ch_out in enumerate(ch_out_rotation):
+            optimizer.zero_grad()
             model.make_gate(ch_out)
             Y_pred = model(X)
-            loss.append(criterion(Y_pred[ch_out], X[-1, ch_out]))
-            temp_loss[smpl_idx, rot_pos] = loss[rot_pos].item()
-        torch.autograd.backward(loss)
-        optimizer.step()
+            l = criterion(Y_pred[ch_out], X[-1, ch_out])
+            l.backward()
+            optimizer.step()
+            #loss.append(l.item)
+            temp_loss[smpl_idx, rot_pos] = l.item()
+
     epoch_loss[epoch, :] = np.mean(temp_loss, axis=0)
     print(f'Epoch: {epoch} | Loss: {np.mean(temp_loss):.4}')
 

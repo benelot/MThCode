@@ -14,7 +14,7 @@ import utilities as util
 import models
 
 
-params = {'name': 'FRNN_tanh_big',
+params = {'name': 'FRNN_tanh',
           'path2data': '../data/ID02_1h.mat',
           # model parameters ------------------------
           'channel_size': 60,
@@ -40,8 +40,6 @@ for i in range(10):
     for k in range(int(params['channel_size'] / 10)):
         inner_rot.append(i+k*10)
     ch_out_rotation.append(inner_rot)
-#for i in range(int(params['channel_size']/2)):
-#    ch_out_rotation.append([i, i + int(params['channel_size']/2)])
 
 # Load data
 X_train, X_test = util.data_loader(params)

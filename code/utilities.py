@@ -11,7 +11,7 @@ from scipy.io import loadmat
 from sklearn.preprocessing import MinMaxScaler
 
 
-def data_loader(params: dict, train_portion=0.8):
+def data_loader(params: dict, train_portion=0.8, windowing=True):
     """ Loads and prepares iEEG data for NN model.
 
     """
@@ -30,6 +30,9 @@ def data_loader(params: dict, train_portion=0.8):
     # Split data into training and test set
     train_set = data[:int(train_portion * params['sample_size']), :]
     test_set = data[int(train_portion * params['sample_size']):, :]
+
+    if windowing is False:
+        return train_set.numpy(), test_set.numpy()
 
     # Prepare data for learning
     X_train, X_test = [], []

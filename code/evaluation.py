@@ -13,7 +13,7 @@ import models
 
 
 # Load parameters
-params = pickle.load(open('../models/FRNN_tanh.pkl', 'rb'))  # rotearlyopt normal
+params = pickle.load(open('../models/FRNN_tanh_big.pkl', 'rb'))  # rotearlyopt normal
 
 # Load data
 X_train, X_test = util.data_loader(params)

@@ -14,7 +14,7 @@ import utilities as util
 import models
 
 
-params = {'name': 'FRNN_tanh',
+params = {'name': 'FRNN_tanh_big',
           'path2data': '../data/ID02_1h.mat',
           # model parameters ------------------------
           'channel_size': 60,
@@ -23,10 +23,11 @@ params = {'name': 'FRNN_tanh',
           'nonlinearity': 'tanh',
           'bias': False,
           # train parameters -------------------------
-          'sample_size': 1000,
+          'sample_size': 20000,
           'window_size': 50,
           'normalization': True,
-          'epochs': 10,
+          'epochs': 20,
+          'lr_decay': 8,
           # old parameters ---------------------------
           'loss_samples': 5,
           'epochs_per_cycle': 1,
@@ -57,7 +58,7 @@ temp_loss = np.zeros([len(X_train), len(ch_out_rotation)])
 epoch_loss = np.zeros([params['epochs'], len(ch_out_rotation)])
 
 for epoch in range(params['epochs']):
-    if epoch is not 0 and epoch % 5 is 0:
+    if epoch is not 0 and epoch % params['lr_decay'] is 0:
         for param_group in optimizer.param_groups:
             param_group['lr'] = param_group['lr']/2
     for smpl_idx, X in enumerate(X_train):

@@ -15,13 +15,20 @@ plot_signal = True
 plot_weights = True
 plot_scatter = True
 plot_box = True
-ch_show = [4, 13, 26, 37]  # even number of channels
+ch_show = [12, 27, 33, 56]  # even number of channels
 
 # Load parameters
-params = pickle.load(open('../models/FRNN_parallel2.pkl', 'rb'))
+params = pickle.load(open('../../models/FRNN_tanh_big.pkl', 'rb'))
 
 # Load data
 X_train, X_test = util.data_loader(params)
+
+# Get trained model
+model = models.FRNN(params)
+model.load_state_dict(torch.load('../models/' + params['name'] + '.pth'))
+
+# Evaluate model
+model.eval()
 
 # Make rotation list
 ch_out_rotation = []
@@ -31,24 +38,17 @@ for i in range(10):
         inner_rot.append(i+k*10)
     ch_out_rotation.append(inner_rot)
 
-ch_out_rotation = list(range(params['channel_size']))
-
-# Get trained model
-model = models.FRNN_parallel(params, ch_out_rotation)
-model.load_state_dict(torch.load('../models/' + params['name'] + '.pth'))
-
-# Evaluate model
-model.eval()
-
 # predict test data
 test_preds = np.zeros((len(X_test), params['channel_size']))
 test_true = np.zeros((len(X_test), params['channel_size']))
 with torch.no_grad():
-    for window_idx, X in enumerate(X_test):
-        Y = model(X)
-        for setup, pos in enumerate(ch_out_rotation):
-            test_preds[window_idx, pos] = Y[setup, pos].numpy()
-            test_true[window_idx, pos] = X[-1, pos].numpy()
+    for _, ch_out in enumerate(ch_out_rotation):
+        print(f'Computing channel: {ch_out}')
+        model.make_gate(ch_out)
+        for smpl_idx, X in enumerate(X_test):
+            Y = model(X)
+            test_preds[smpl_idx, ch_out] = Y[ch_out].numpy()
+            test_true[smpl_idx, ch_out] = X[-1, ch_out].numpy()
 
 
 if plot_signal is True:

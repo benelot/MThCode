@@ -18,7 +18,7 @@ plot_box = True
 ch_show = [4, 13, 26, 37]  # even number of channels
 
 # Load parameters
-params = pickle.load(open('../models/FRNN_parallel2.pkl', 'rb'))
+params = pickle.load(open('../models/FRNN_parallel_big_sig.pkl', 'rb'))
 
 # Load data
 X_train, X_test = util.data_loader(params)

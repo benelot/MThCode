@@ -14,16 +14,16 @@ import utilities as util
 import models
 
 
-params = {'name': 'FRNN_parallel_big_tanh_bias',
+params = {'name': 'FRNN_parallel_big_relu_bias',
           'path2data': '../data/ID02_1h.mat',
           # model parameters ------------------------
           'channel_size': 60,
           'hidden_size': 60,
           'lambda': 0.5,
-          'nonlinearity': 'tanh',
+          'nonlinearity': 'relu',
           'bias': True,
           # train parameters -------------------------
-          'sample_size': 20000,
+          'sample_size': 2000,
           'window_size': 50,
           'normalization': True,
           'epochs': 20,

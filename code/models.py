@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 
 
-class FRNN(nn.Module):
+class FRNN_old(nn.Module):
     def __init__(self, params: dict):
         super().__init__()
         # Parameters
@@ -83,3 +83,34 @@ class FRNN_parallel(nn.Module):
             u = torch.mul(self.Lambda, self.W(r)) + torch.mul((1 - self.Lambda), i)
             r = self.nonlinearity(u)
         return u[:, :self.visible_size]
+
+
+class FRNN(nn.Module):
+    def __init__(self, params: dict):
+        super().__init__()
+        # Parameters
+        self.hidden_size = params['hidden_size']
+        self.visible_size = params['channel_size']
+        self.full_size = self.visible_size + self.hidden_size
+        # Create FC layer
+        self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])
+        # Define non-linearity
+        exec_str = 'self.phi = torch.' + params['nonlinearity']
+        exec(exec_str)
+        # Make gate Lambda
+        self.recurrence = params['lambda']
+        self.Lambda = torch.cat((torch.ones(self.visible_size, self.visible_size) * self.recurrence,
+                                 torch.ones(self.visible_size, self.hidden_size)), 1)
+        for idx in range(self.visible_size):
+            self.Lambda[idx, idx] = 1
+
+    def forward(self, X):
+        # Initialize r and i nodes
+        R = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
+        I = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
+        # Forward path
+        for t in range(X.shape[0]):
+            I[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
+            U = torch.mul(self.Lambda, self.W(R)) + torch.mul((1 - self.Lambda), I)
+            R = self.phi(U)
+        return torch.diag(U[:, :self.visible_size])

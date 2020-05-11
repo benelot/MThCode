@@ -6,6 +6,7 @@ Part of master thesis Segessenmann J. (2020)
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import pandas as pd
 from scipy.io import loadmat
 from sklearn.preprocessing import MinMaxScaler
 import time
@@ -69,9 +70,8 @@ def train(params: dict):
     pickle.dump(params, open('../models/' + params['name'] + '.pkl', 'wb'))
 
 
-def evaluation(model_name: str, ch_show: list, plot_signal=True, plot_W=True,
-               plot_scatter=True, plot_box=True, eval_train=False):
-    """ Evaluates model an returns evaluation values.
+def predict(model_name: str, train_set=False):
+    """ Tests model an returns predictions and correlations.
 
     """
     # Load parameters
@@ -90,74 +90,55 @@ def evaluation(model_name: str, ch_show: list, plot_signal=True, plot_W=True,
     with torch.no_grad():
         test_preds = np.zeros((len(X_test), params['channel_size']))
         test_true = np.zeros((len(X_test), params['channel_size']))
-        test_corr = []
         for T, X in enumerate(X_test):
             predictions = model(X)
             test_preds[T, :] = predictions.numpy()
             test_true[T, :] = X[-1, :].numpy()
-        for i in range(params['channel_size']):
-            test_corr.append(np.corrcoef(test_preds[:, i], test_true[:, i])[0, 1])
-        print(f'Mean test correlation: {np.mean(test_corr)}')
 
-        if eval_train:
+        pd.DataFrame(test_preds).to_csv('../results/' + params['name'] + '_preds.csv')
+        pd.DataFrame(test_true).to_csv('../results/' + params['name'] + '_true.csv')
+        if train_set is False:
+            return test_preds, test_true
+        else:
             train_preds = np.zeros((len(X_train), params['channel_size']))
             train_true = np.zeros((len(X_train), params['channel_size']))
-            train_corr = []
             with torch.no_grad():
                 for T, X in enumerate(X_train):
                     predictions = model(X)
                     train_preds[T, :] = predictions.numpy()
                     train_true[T, :] = X[-1, :].numpy()
-                for i in range(params['channel_size']):
-                    train_corr.append(np.corrcoef(train_preds[:, i], train_true[:, i])[0, 1])
-                print(f'Mean train correlation: {np.mean(train_corr)}')
 
-    if plot_signal is True:
-        fig, ax = plt.subplots(len(ch_show), figsize=(8, len(ch_show) * 2.5))
-        fig.tight_layout(pad=3)
-        for i, ch_out in enumerate(ch_show):
-            ax[i].set_title(f'Channel: {ch_out}')
-            ax[i].plot(test_true[:, ch_out], label='true')
-            ax[i].plot(test_preds[:, ch_out], label='predicted')
-            ax[i].set_xlabel('Samples [-]')
-            ax[i].set_ylabel('Magn. [-]')
-            ax[i].legend()
-        fig.subplots_adjust(hspace=.8)
-        fig.savefig('../doc/figures/pred_' + params['name'] + '.png')
+    pd.DataFrame(train_preds).to_csv('../results/' + params['name'] + '_preds-tr.csv')
+    pd.DataFrame(train_true).to_csv('../results/' + params['name'] + '_true-tr.csv')
+    return test_preds, test_true, train_preds, train_true
 
-    if plot_scatter is True:
-        idx = []
-        for i in range(int(len(ch_show) / 2)):
-            for k in range(int(len(ch_show) / 2)):
-                idx.append([i, k])
-        fig, ax = plt.subplots(int(len(ch_show) / 2), int(len(ch_show) / 2), figsize=(10, 10))
-        fig.tight_layout(pad=5)
-        for n, ch_out in enumerate(ch_show):
-            lim_max = np.max(test_true[:, ch_out])
-            lim_min = np.min(test_true[:, ch_out])
-            ax[idx[n][0]][idx[n][1]].set_title(f'Channel: {ch_out}')
-            ax[idx[n][0]][idx[n][1]].scatter(test_true[:, ch_out], test_preds[:, ch_out], s=1)
-            ax[idx[n][0]][idx[n][1]].plot([lim_min, lim_max], [lim_min, lim_max], ls="--", color='red')
-            ax[idx[n][0]][idx[n][1]].set_xlabel('True iEEG signal [-]')
-            ax[idx[n][0]][idx[n][1]].set_ylabel('Predicted iEEG signal [-]')
-        fig.savefig('../doc/figures/scatter_' + params['name'] + '.png')
 
-    if plot_box is True:
-        plt.figure(figsize=(5, 10))
-        plt.title('Correlation per channel')
-        plt.grid()
-        plt.ylim([0.5, 1])
-        plt.boxplot(test_corr)
-        plt.savefig('../doc/figures/box_' + params['name'] + '.png')
+def evaluate(model_name: str, preds: np.ndarray, true: np.ndarray):
+    """ Computes Correlation, MSE, MAE for evaluation.
 
-    if plot_W is True:
-        W = model.W.weight.data.numpy()
-        plot_weights(W=W, params=params, vmax=.5, linewidth=.0, save2path='../doc/figures/weights_' + params['name'] + '.png')
+    """
+    # Load parameters
+    params = pickle.load(open('../models/' + model_name + '.pkl', 'rb'))
 
-    if eval_train:
-        return test_corr, train_corr
-    else:
-        return test_corr
+    corr = []
+    # Calculate distances
+    for i in range(params['channel_size']):
+        corr.append(np.corrcoef(preds[:, i], true[:, i])[0, 1])
+    mse = np.mean((preds - true) ** 2, axis=0)
+    mae = np.mean(np.abs(preds - true), axis=0)
+
+    results = {'Name': [params['name'] for i in range(params['channel_size'])],
+               'Node': [i for i in range(params['channel_size'])],
+               'Non-Linearity': [params['nonlinearity'] for i in range(params['channel_size'])],
+               'Bias': [params['bias'] for i in range(params['channel_size'])],
+               'Recurrence': [params['lambda'] for i in range(params['channel_size'])],
+               'Correlation': corr,
+               'MSE': mse,
+               'MAE': mae}
+
+    pickle.dump(results, open('../results/' + params['name'] + '_results.pkl', 'wb'))
+
+    return results
 
 
 def data_loader(params: dict, train_portion=0.8, windowing=True):
@@ -193,14 +174,19 @@ def data_loader(params: dict, train_portion=0.8, windowing=True):
     return X_train, X_test
 
 
-def plot_weights(W: float, params: dict, vmax=1, linewidth=.5, absolute=False, save2path=None):
+def plot_weights(params: dict, vmax=1, linewidth=.5, absolute=False):
     """ Plots a heat map of weight matrix W.
 
     """
+    # Get trained model
+    model = models.FRNN(params)
+    model.load_state_dict(torch.load('../models/' + params['name'] + '.pth'))
+    W = model.W.weight.data.numpy()
+
     vmin = -vmax
     cmap = 'RdBu'
     ch = params['channel_size']
-    hticklabels = np.arange(ch, W.shape[0], 1)
+    #hticklabels = np.arange(ch, W.shape[0], 1)
 
     if absolute:
         vmin = 0
@@ -228,21 +214,83 @@ def plot_weights(W: float, params: dict, vmax=1, linewidth=.5, absolute=False, s
     ax3.get_yaxis().set_visible(False)
     ax3.set_xlabel('from hidden nodes')
 
-    sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth,
-                ax=ax0)
-    sns.heatmap(W[:ch, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth,
-                ax=ax1)
-    sns.heatmap(W[ch:, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth,
-                ax=ax2, yticklabels=hticklabels)
-    sns.heatmap(W[ch:, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth,
-                ax=ax3, xticklabels=hticklabels)
+    sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax0)
+    sns.heatmap(W[:ch, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax1)
+    sns.heatmap(W[ch:, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax2)
+    sns.heatmap(W[ch:, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax3)
 
     fig.text(0.08, 0.65, 'to visible node', va='center', ha='center', rotation='vertical')
     fig.text(0.08, 0.27, 'to hidden node', va='center', ha='center', rotation='vertical')
     fig.text(0.35, 0.08, 'from visible node', va='center', ha='center')
     fig.text(0.77, 0.08, 'from hidden node', va='center', ha='center')
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
+    fig.savefig('../doc/figures/weights_' + params['name'] + '.png')
 
-    if save2path is not None:
-        fig.savefig(save2path)
+
+def box_plots(results: pd.DataFrame, x: str, y: str, hue=None, ylim=None):
+    """ Makes and saves box plots of results.
+
+    """
+    plt.figure(figsize=(10, 8))
+    sns.set_style('darkgrid')
+    ax = sns.boxplot(x=x, y=y, data=results, hue=hue)
+    ax.set(xlabel='', ylabel=y)
+    sns.set_style('darkgrid')
+    if ylim:
+        plt.ylim(ylim[0], ylim[1])
+    plt.savefig('../doc/figures/boxplot_' + x + '.png')
+
+
+def scatter_plots(titles: list, preds: list, trues: list, save_name='default'):
+    """ Makes and saves scatter plots of predictions.
+
+    """
+    sns.set_style('darkgrid')
+    ax = [[] for i in range(len(titles))]
+
+    fig = plt.figure(figsize=(10, int(len(ax) / 2) * 5))
+    for i in range(len(ax)):
+        ax[i] = fig.add_subplot(int(len(ax)/2), 2, i + 1)
+        ax[i] = plt.scatter(preds[i], trues[i], s=.01)
+        ax[i] = plt.plot([-1, 1], [-1, 1], ls="--", color='red')
+        plt.axis([-1, 1, -1, 1])
+        plt.ylabel('Predicted value')
+        plt.xlabel('True value')
+        plt.title(titles[i])
+    plt.tight_layout()
+    plt.savefig('../doc/figures/scatter_' + save_name + '.png')
+
+
+def prediction_plots(titles: list, pred: np.ndarray, true: np.ndarray, save_name='default'):
+    """ Makes and saves line plots of predictions.
+
+    """
+    sns.set_style('darkgrid')
+    ax = [[] for i in range(len(titles))]
+    fig = plt.figure(figsize=(10, int(len(ax)) * 3))
+    for i in range(len(ax)):
+        ax[i] = fig.add_subplot(int(len(titles)), 1, i + 1)
+        ax[i] = plt.plot(pred[:, i])
+        ax[i] = plt.plot(true[:, i], ls="--", color='tab:red')
+        plt.ylabel('Magn. [-]')
+        plt.xlabel('Time steps [Samples]')
+        plt.title(titles[i])
+    plt.tight_layout()
+    plt.savefig('../doc/figures/prediction_' + save_name + '.png')
+
+
+def corr_map(params: dict, save_name='default'):
+    """ Makes and saves heat map of electrode correlation in train set.
+
+    """
+    params = pickle.load(open('../models/' + params['name'] + '.pkl', 'rb'))
+    train_set, test_set = data_loader(params, windowing=False)
+
+    df = pd.DataFrame(train_set[:2000, :].numpy())
+    corr = df.corr()
+
+    fig, ax = plt.subplots()
+    plt.title('Node correlation over 2000 samples')
+    sns.heatmap(corr, cmap='RdBu', vmin=-1, vmax=1, square=True)
+    fig.savefig('../doc/figures/corr_' + save_name + '.png')
 

@@ -3,8 +3,15 @@
 Part of master thesis Segessenmann J. (2020)
 """
 import utilities as util
+import models
 import pandas as pd
+import torch
 import pickle
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+util.plot_optim(model_id='gradient_norm')
 
 """
 preds = [[] for i in range(6)]
@@ -37,8 +44,6 @@ for i, name in enumerate(names):
     util.plot_weights(params, linewidth=.0)
 """
 
-params = pickle.load(open('../models/FRNN_parallel_big_tanh.pkl', 'rb'))
-util.corr_map(params)
 
 
 

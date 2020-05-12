@@ -95,7 +95,7 @@ class FRNN(nn.Module):
         # Create FC layer
         self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])
         # Define non-linearity
-        exec_str = 'self.phi = torch.' + params['nonlinearity']
+        exec_str = 'self.phi = torch.' + params['non-linearity']
         exec(exec_str)
         # Make gate Lambda
         self.recurrence = params['lambda']

@@ -1,10 +1,8 @@
 ToDo
-- Formalism on PP to show
-- evaluate different trained models
 - gradient norm plot for sigmoid vs tanh
 - clarify difference of u as output to r as output
 - maybe evaluate a model with all inputs while training
-- look at teacher forceing
+- look at teacher forcing
 - sleep annotation
 
 
@@ -12,5 +10,3 @@ Questions
 - Bias?
 - Normalization?
 - Activation function?
-- All Outputs and from past or few outputs and from others?
-- How train to not overfitt one position?

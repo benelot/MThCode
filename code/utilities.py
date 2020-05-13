@@ -154,14 +154,16 @@ def make_distances(id: str, train_set=False):
     mse = np.mean((pred - true) ** 2, axis=0)
     mae = np.mean(np.abs(pred - true), axis=0)
 
-    eval_distances = {'ID': [id for i in range(params['channel_size'])],
-                      'Node': [i for i in range(params['channel_size'])],
-                      'Non-Linearity': [params['non-linearity'] for i in range(params['channel_size'])],
-                      'Bias': [params['bias'] for i in range(params['channel_size'])],
-                      'Recurrence': [params['lambda'] for i in range(params['channel_size'])],
-                      'Correlation': corr,
-                      'MSE': mse,
-                      'MAE': mae}
+    eval_distances = {'id': [id for i in range(params['channel_size'])],
+                      'node_idx': [i for i in range(params['channel_size'])],
+                      'channel_size': [params['channel_size'] for i in range(params['channel_size'])],
+                      'hidden_size': [params['hidden_size'] for i in range(params['channel_size'])],
+                      'non-linearity': [params['non-linearity'] for i in range(params['channel_size'])],
+                      'bias': [params['bias'] for i in range(params['channel_size'])],
+                      'lambda': [params['lambda'] for i in range(params['channel_size'])],
+                      'correlation': corr,
+                      'mse': mse,
+                      'mae': mae}
 
     pickle.dump(eval_distances, open('../models/' + id + '/eval_distances.pkl', 'wb'))
     return eval_distances
@@ -243,6 +245,7 @@ def plot_optimization(id: str):
     for n, label in enumerate(ax[2].xaxis.get_ticklabels()):
         if n % every_nth != 0:
             label.set_visible(False)
+    plt.suptitle('Optimization of model ' + id)
     fig.savefig('../doc/figures/optim_' + eval_optimization['id'] + '.png')
 
 
@@ -270,40 +273,49 @@ def plot_weights(id: str, vmax=1, linewidth=.5, absolute=False):
 
     fig = plt.figure(figsize=(10, 10))
     gs = fig.add_gridspec(nrows=W.shape[0], ncols=W.shape[0])
-    cbar_ax = fig.add_axes([.925, .125, .02, .755])  # l,b,w,h
+    cbar_ax = fig.add_axes([.92, .11, .02, .77])  # x-pos,y-pos,width,height
 
-    ax0 = fig.add_subplot(gs[:ch, :ch])
-    ax0.set_ylabel('to visible nodes')
-    ax0.get_xaxis().set_visible(False)
+    if W.shape[0] == ch:
+        ax0 = fig.add_subplot(gs[:ch, :ch])
+        sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax0)
+        ax0.set_ylabel('to visible nodes')
+        ax0.set_xlabel('from visible nodes')
+        ax0.set_title('Weight matrix of ' + params['id'])
 
-    ax1 = fig.add_subplot(gs[:ch, ch:])
-    ax1.get_xaxis().set_visible(False), ax1.get_yaxis().set_visible(False)
-    ax1.set_ylabel('to hidden nodes')
-    ax1.set_xlabel('from visible nodes')
+    else:
+        ax0 = fig.add_subplot(gs[:ch, :ch])
+        ax0.get_xaxis().set_visible(False)
+        ax1 = fig.add_subplot(gs[:ch, ch:])
+        ax1.get_xaxis().set_visible(False), ax1.get_yaxis().set_visible(False)
+        ax2 = fig.add_subplot(gs[ch:, :ch])
 
-    ax2 = fig.add_subplot(gs[ch:, :ch])
-    ax2.set_ylabel('to hidden nodes')
-    ax2.set_xlabel('from visible nodes')
+        ax3 = fig.add_subplot(gs[ch:, ch:])
+        ax3.get_yaxis().set_visible(False)
 
-    ax3 = fig.add_subplot(gs[ch:, ch:])
-    ax3.get_yaxis().set_visible(False)
-    ax3.set_xlabel('from hidden nodes')
+        sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax0)
+        sns.heatmap(W[:ch, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax1)
+        sns.heatmap(W[ch:, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax2)
+        sns.heatmap(W[ch:, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax3)
+        """
+        ax2.set_yticklabels(hticklabels)
+        ax3.set_xticklabels(hticklabels)
+        every_nth = int(params['hidden_size']/20)
+        for n, label in enumerate(ax2.yaxis.get_ticklabels()):
+            if n % every_nth != 0:
+                label.set_visible(False)
+        """
 
-    sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax0)
-    sns.heatmap(W[:ch, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax1)
-    sns.heatmap(W[ch:, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax2)
-    sns.heatmap(W[ch:, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax3)
+        pos_to_vis = 0.8 / W.shape[0] * params['hidden_size'] + 0.8 / W.shape[0] * (ch / 2) + 0.1
+        pos_to_hid = 0.8 / W.shape[0] * (params['hidden_size'] / 2) + 0.1
+        pos_from_vis = 0.8 / W.shape[0] * (ch / 2) + 0.1
+        pos_from_hid = 0.8 / W.shape[0] * ch + 0.8 / W.shape[0] * (params['hidden_size'] / 2) + 0.1
+        fig.text(0.08, pos_to_vis, 'to visible node', va='center', ha='center', rotation='vertical')
+        fig.text(0.08, pos_to_hid, 'to hidden node', va='center', ha='center', rotation='vertical')
+        fig.text(pos_from_vis, 0.06, 'from visible node', va='center', ha='center')
+        fig.text(pos_from_hid, 0.06, 'from hidden node', va='center', ha='center')
+        fig.subplots_adjust(hspace=0.8, wspace=0.8)
 
-    every_nth = int(W.shape[0]/40)
-    for n, label in enumerate(ax2.yaxis.get_ticklabels()):
-        if n % every_nth != 0:
-            label.set_visible(False)
-
-    fig.text(0.08, 0.65, 'to visible node', va='center', ha='center', rotation='vertical')
-    fig.text(0.08, 0.27, 'to hidden node', va='center', ha='center', rotation='vertical')
-    fig.text(0.35, 0.08, 'from visible node', va='center', ha='center')
-    fig.text(0.77, 0.08, 'from hidden node', va='center', ha='center')
-    fig.subplots_adjust(hspace=0.3, wspace=0.3)
+    plt.suptitle('Weight matrix of model ' + params['id'])
     fig.savefig('../doc/figures/weights_' + id + '.png')
 
 
@@ -338,8 +350,9 @@ def plot_prediction(id: str, nodes_idx: list, lim_nr_samples=None, train_set=Fal
         plt.xlabel('Time steps [Samples]')
         plt.title('Node ' + str(nodes_idx[i]))
         plt.xlim(left=0)
-        plt.legend()
-    plt.tight_layout()
+        plt.legend(loc='upper right')
+    plt.suptitle('Predictions of model ' + id)
+    fig.subplots_adjust(hspace=.7)
 
     nodes_str = ''
     if nodes2path:
@@ -348,42 +361,53 @@ def plot_prediction(id: str, nodes_idx: list, lim_nr_samples=None, train_set=Fal
     plt.savefig('../doc/figures/prediction_' + id + nodes_str + '.png')
 
 
-def plot_multi_boxplots(eval_dists: pd.DataFrame, x: str, y: str, hue=None, ylim=None, save_name=None):
+def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_name=None):
     """ Makes and saves box plots of results to ../figures/.
 
         Saves:
             Figure "boxplot_[...]"
     """
+    df = pd.DataFrame()
+    for idx, id in enumerate(ids):
+        eval_distance = pickle.load(open('../models/' + id + '/eval_distances.pkl', 'rb'))
+        df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
+
     plt.figure(figsize=(10, 8))
     sns.set_style('darkgrid')
-    ax = sns.boxplot(x=x, y=y, data=eval_dists, hue=hue)
-    ax.set(xlabel='', ylabel=y)
-    sns.set_style('darkgrid')
+    ax = sns.boxplot(x=x, y=y, data=df, hue=hue)
+    ax.set(xlabel=x, ylabel=y)
     if ylim:
-        plt.ylim(ylim[0], ylim[1])
+        plt.ylim(ylim)
     if save_name is None:
-        save_name = x
+        save_name = y + '_of_' + x
+    plt.title(y + ' of ' + x)
     plt.savefig('../doc/figures/boxplots_' + save_name + '.png')
 
 
-def plot_multi_scatter(titles: list, preds: list, trues: list, save_name='default'):
+def plot_multi_scatter(ids: list, save_name='default'):
     """ Makes and saves scatter plots of predictions to ../figures/.
 
         Saves:
             Figure "scatter_[...]"
     """
-    sns.set_style('darkgrid')
-    ax = [[] for i in range(len(titles))]
+    eval_predictions = []
+    for idx, id in enumerate(ids):
+        eval_predictions.append(pickle.load(open('../models/' + id + '/eval_prediction.pkl', 'rb')))
 
-    fig = plt.figure(figsize=(10, int(len(ax) / 2) * 5))
+    sns.set_style('darkgrid')
+    ax = [[] for i in range(len(ids))]
+
+    fig = plt.figure(figsize=(10, int(np.ceil(len(ax) / 2)) * 5))
     for i in range(len(ax)):
-        ax[i] = fig.add_subplot(int(len(ax)/2), 2, i + 1)
-        ax[i] = plt.scatter(preds[i], trues[i], s=.01)
+        pred = eval_predictions[i]['test_pred']
+        true = eval_predictions[i]['test_true']
+        ax[i] = fig.add_subplot(int(np.ceil(len(ax)/2)), 2, i + 1)
+        ax[i] = plt.scatter(pred, true, s=.01)
         ax[i] = plt.plot([-1, 1], [-1, 1], ls="--", color='red')
         plt.axis([-1, 1, -1, 1])
         plt.ylabel('Predicted value')
         plt.xlabel('True value')
-        plt.title(titles[i])
+        plt.title(ids[i])
     plt.tight_layout()
     plt.savefig('../doc/figures/scatter_' + save_name + '.png')
 
@@ -409,3 +433,17 @@ def print_params(id: str):
     params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
     for keys, values in params.items():
         print(f'{keys}: {values}')
+
+
+def change_params(id: str, param: str, val):
+    params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
+    params[param] = val
+    pickle.dump(params, open('../models/' + id + '/params.pkl', 'wb'))
+
+
+def change_params_key(id: str, old_key: str, new_key: str):
+    params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
+    val = params[old_key]
+    del params[old_key]
+    params[new_key] = val
+    pickle.dump(params, open('../models/' + id + '/params.pkl', 'wb'))

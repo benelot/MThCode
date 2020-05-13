@@ -11,20 +11,20 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-id = ['test_0', 'test_1', 'test_2']
+ids = []
+titles = [0.1, 0.3, 0.5, 0.7, 0.9]
+for i in range(5):
+    ids.append('model_lambda_' + str(titles[i]))
+"""
+util.plot_multi_boxplots(ids, x='lambda', y='correlation')
+util.plot_multi_boxplots(ids, x='lambda', y='mse')
+util.plot_multi_boxplots(ids, x='lambda', y='mae')
+"""
+util.plot_multi_scatter(ids, save_name='lambda')
 
-# Todo: Make this in function (+ single function seperately?)
-eval_distances = pickle.load(open('../models/' + id[0] + '/eval_distances.pkl', 'rb'))
-df = pd.DataFrame(eval_distances)
-for i in range(len(id)-1):
-    eval_distances = pickle.load(open('../models/' + id[i+1] + '/eval_distances.pkl', 'rb'))
-    df = df.append(pd.DataFrame(eval_distances), ignore_index=True)
 
-print(df.head())
-util.plot_multi_boxplots(df, x='ID', y='Correlation', ylim=(0, 1))
 
-# Todo: Make this in function (+ single function seperately?)
-eval_prediction0 = pickle.load(open('../models/' + id[0] + '/eval_prediction.pkl', 'rb'))
-eval_prediction1 = pickle.load(open('../models/' + id[1] + '/eval_prediction.pkl', 'rb'))
-eval_prediction2 = pickle.load(open('../models/' + id[2] + '/eval_prediction.pkl', 'rb'))
-# util.plot_multi_scatter(id, )
+
+
+
+

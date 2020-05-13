@@ -11,22 +11,22 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-id = 'test_2'
-util.print_params(id)
+id = 'model_lambda_0.9'
 
+"""
 util.plot_optimization(id)
 
 util.make_prediction(id)
-
+"""
 df = pd.DataFrame(util.make_distances(id))
 print('---------')
-print('Mean Corr.: ' + str(df['Correlation'].mean()))
-print('Mean MSE.: ' + str(df['MSE'].mean()))
-print('Mean MAE.: ' + str(df['MAE'].mean()))
+print('Mean Corr.: ' + str(df['correlation'].mean()))
+print('Mean MSE.: ' + str(df['mse'].mean()))
+print('Mean MAE.: ' + str(df['mae'].mean()))
 
-util.plot_prediction(id, [5, 26, 46, 54])
+"""
+util.plot_prediction(id, [5, 26, 46, 54], lim_nr_samples=2000)
 
 util.plot_weights(id, linewidth=0)
-
-
+"""
 

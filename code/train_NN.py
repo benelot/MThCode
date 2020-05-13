@@ -11,51 +11,21 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-params0 = {'id': 'test_0',
-          'path2data': '../data/ID02_1h.mat',
-          # model parameters ------------------------
-          'channel_size': 60,
-          'hidden_size': 60,
-          'lambda': 0.5,
-          'non-linearity': 'tanh',
-          'bias': False,
-          # train parameters -------------------------
-          'sample_size': 500,
-          'window_size': 50,
-          'normalization': True,
-          'epochs': 15,
-          'lr_decay': 7}
 
-params1 = {'id': 'test_1',
-          'path2data': '../data/ID02_1h.mat',
-          # model parameters ------------------------
-          'channel_size': 60,
-          'hidden_size': 60,
-          'lambda': 0.5,
-          'non-linearity': 'sigmoid',
-          'bias': False,
-          # train parameters -------------------------
-          'sample_size': 500,
-          'window_size': 50,
-          'normalization': True,
-          'epochs': 15,
-          'lr_decay': 7}
+for i in range(3):
+    params = {'id': 'test_0',
+              'path2data': '../data/ID02_1h.mat',
+              # model parameters ------------------------
+              'visible_size': 60,
+              'hidden_size': 60,
+              'lambda': 0.5,
+              'non-linearity': 'tanh',
+              'bias': False,
+              # train parameters -------------------------
+              'sample_size': 500,
+              'window_size': 50,
+              'normalization': True,
+              'epochs': 15,
+              'lr_decay': 7}
 
-params2 = {'id': 'test_2',
-          'path2data': '../data/ID02_1h.mat',
-          # model parameters ------------------------
-          'channel_size': 60,
-          'hidden_size': 60,
-          'lambda': 0.5,
-          'non-linearity': 'tanh',
-          'bias': False,
-          # train parameters -------------------------
-          'sample_size': 500,
-          'window_size': 50,
-          'normalization': True,
-          'epochs': 15,
-          'lr_decay': 7}
-
-util.train(params0)
-util.train(params1)
-util.train(params2)
+    util.train(params)

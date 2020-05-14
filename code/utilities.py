@@ -14,7 +14,7 @@ import time
 import torch
 import torch.nn as nn
 import pickle
-import os
+from os import path
 
 import models
 
@@ -143,9 +143,11 @@ def make_distances(id: str, train_set=False):
     if train_set:
         pred = eval_prediction['train_pred']
         true = eval_prediction['train_true']
+        train_str = '_train'
     else:
         pred = eval_prediction['test_pred']
         true = eval_prediction['test_true']
+        train_str = ''
 
     # Calculate distances
     corr = []
@@ -156,6 +158,7 @@ def make_distances(id: str, train_set=False):
 
     eval_distances = {'id': [id for i in range(params['channel_size'])],
                       'node_idx': [i for i in range(params['channel_size'])],
+                      'train_set': [False for i in range(params['channel_size'])],
                       'channel_size': [params['channel_size'] for i in range(params['channel_size'])],
                       'hidden_size': [params['hidden_size'] for i in range(params['channel_size'])],
                       'non-linearity': [params['non-linearity'] for i in range(params['channel_size'])],
@@ -165,7 +168,10 @@ def make_distances(id: str, train_set=False):
                       'mse': mse,
                       'mae': mae}
 
-    pickle.dump(eval_distances, open('../models/' + id + '/eval_distances.pkl', 'wb'))
+    if train_set is True:
+        eval_distances['train_set'] = [True for i in range(params['channel_size'])]
+
+    pickle.dump(eval_distances, open('../models/' + id + '/eval_distances' + train_str + '.pkl', 'wb'))
     return eval_distances
 
 
@@ -371,6 +377,10 @@ def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_nam
     for idx, id in enumerate(ids):
         eval_distance = pickle.load(open('../models/' + id + '/eval_distances.pkl', 'rb'))
         df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
+        train_exists = path.exists('../models/' + id + '/eval_distances_train.pkl')
+        if train_exists:
+            eval_distance = pickle.load(open('../models/' + id + '/eval_distances_train.pkl', 'rb'))
+            df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
 
     plt.figure(figsize=(10, 8))
     sns.set_style('darkgrid')

@@ -16,7 +16,7 @@ for i in range(3):
     params = {'id': 'test_0',
               'path2data': '../data/ID02_1h.mat',
               # model parameters ------------------------
-              'visible_size': 60,
+              'channel_size': 60,
               'hidden_size': 60,
               'lambda': 0.5,
               'non-linearity': 'tanh',

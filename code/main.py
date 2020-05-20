@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-util.plot_optim(model_id='gradient_norm')
+util.print_params('pat03_hidden_0')
 
 """
 preds = [[] for i in range(6)]

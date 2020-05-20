@@ -111,5 +111,5 @@ class FRNN(nn.Module):
         for t in range(X.shape[0]):
             I[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
             U = torch.mul(self.Lambda, self.W(R)) + torch.mul((1 - self.Lambda), I)
-            R = self.phi(U)
+            R = self.phi(U)  #1 / (1 + torch.exp(-U*4))  #
         return torch.diag(U[:, :self.visible_size])

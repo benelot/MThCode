@@ -1,37 +1,48 @@
 ## Problems
 
-#### Fundamental problems
+#### Fundamental questions
 
 * Plausibility of ANN as neural population network.
 * Plausibility of iEEG as network output.
 
 
 
-#### Correspondence problems (biological - artificial)
-
-* Correspondence of $\mathbf{r}^{(t)}$, $\mathbf{u}^{(t)}$, $\mathbf{W}$,  and $\phi$.
-  * What is firing rate?
-* What constraints come with correspondence?
-* Problem of normalizing the inputs.
-
-
-
 #### Technical problems
 
 * How to enhance general performance?
-* Performance with $\phi$ correspondence constraints.
+* Performance with non-linearity correspondence constraints.
 
-  * Try modified $\sigma$.
 * Dynamics of full-semi-recurrence.
 
-  * Why is small $\lambda$ and higher numbers of hidden nodes better?
-
-  * Maybe constraint recurrent term to not be to small.
 * Dynamics of output  $\mathbf{u}^{(t)}$ before $\phi$.
-  * Toy-model for analyzation.
+  * Probably nothing special.
 
 
-* Introduction of dropout nodes?
-* Number of hidden nodes.
+* Influence of hidden nodes.
 
-  * Try on train data if 120 is still better.
+
+
+#### Tasks
+
+* (1) Find well-grounded choice for window size
+  * auto-correlation length $\rightarrow$ window size
+  * Fourier spectrum analysis $\rightarrow$ window size
+* (2) Make three networks:
+  * fully-semi recurrent
+  * semi-semi recurrent
+  * output recurrent
+* (3) Activation function
+  * Try $\textrm{relu}$ with positive and negative visible nodes
+  * Try $\sigma$ with positive and negative visible nodes
+  * Default NN with modified $\sigma$ 
+
+* Heatmap from blue ($0$) to red ($1$)
+* (4) Evaluate robustness of weights with multiple 40 second segments
+* Sleep scoring
+* (5) Analyze weights with video of $\mathbf{u}^{(t)}$
+
+
+
+#### Ideas
+
+* Introduction of dropout nodes.

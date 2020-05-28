@@ -12,22 +12,23 @@ import seaborn as sns
 import numpy as np
 
 ids = []
-window_sizes = [30, 50, 200, 500, 1000]
-for i, val in enumerate(window_sizes):
-    ids.append('wsize_' + str(val))
-    params = {'id': 'wsize_' + str(val),
+model_type = ['is', 'in', 'as']
+for i, val in enumerate(model_type):
+    ids.append('mtype_sig_sscaler_' + val)
+    params = {'id': 'mtype_sig_sscaler_' + val,
+              'model_type': val,
               'path2data': '../data/ID01_1h.mat',
               # model parameters ------------------------
               'channel_size': 60,
               'hidden_size': 60,
-              'lambda': 0.8,
+              'lambda': 0.5,
               'non-linearity': 'sigmoid',
               'bias': False,
               # train parameters -------------------------
-              'sample_size': 5000,
-              'window_size': val,
+              'sample_size': 10000,
+              'window_size': 50,
               'normalization': True,
-              'epochs': 16,
+              'epochs': 12,
               'lr_decay': 7}
     util.train(params)
 
@@ -35,9 +36,10 @@ for i, val in enumerate(ids):
     util.plot_optimization(val)
     util.make_prediction(val)
     util.make_distances(val)
-    util.plot_prediction(val, [5, 26, 46, 54], lim_nr_samples=2000)
+    util.plot_prediction(val, [2, 8, 12, 17])
     util.plot_weights(val, linewidth=0)
 
 
-util.plot_multi_boxplots(ids, x='id', y='correlation')
+
+util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='model_type_sig_sscaler')
 

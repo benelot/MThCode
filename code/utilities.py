@@ -10,6 +10,7 @@ import seaborn as sns
 import pandas as pd
 from scipy.io import loadmat
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 import time
 import torch
 import torch.nn as nn
@@ -32,7 +33,15 @@ def train(params: dict):
     X_train, X_test = data_loader(params=params)
 
     # Define model, criterion and optimizer
-    model = models.FRNN(params)
+    if params['model_type'] == 'as':
+        model = models.AS_RNN(params)
+    elif params['model_type'] == 'is':
+        model = models.IS_RNN(params)
+    elif params['model_type'] == 'in':
+        model = models.IN_RNN(params)
+    else:
+        print('No valid model type')
+
     criterion = nn.MSELoss(reduction='none')
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
@@ -43,6 +52,12 @@ def train(params: dict):
     temp_grad_norm = np.zeros(len(X_train))
 
     start_time = time.time()
+    """
+    model.W.weight.data[model.visible_size:, :model.visible_size] = 0  # Experimental
+    for i in range(model.hidden_size):
+        model.W.weight.data[model.visible_size+i, i] = 1
+    """
+
     for epoch in range(params['epochs']):
         if epoch is not 0 and epoch % params['lr_decay'] is 0:
             for param_group in optimizer.param_groups:
@@ -53,6 +68,7 @@ def train(params: dict):
             loss = criterion(prediction, X[-1, :])
             temp_loss[T, :] = loss.detach()
             torch.autograd.backward(loss.mean())
+            #model.W.weight.grad[model.visible_size:, :model.visible_size] = 0  # Experimental
             optimizer.step()
             for p in model.parameters():
                 temp_grad_norm[T] = p.grad.data.norm(2).item()
@@ -93,7 +109,15 @@ def make_prediction(id: str, train_set=False):
     X_train, X_test = data_loader(params=params)
 
     # Get trained model
-    model = models.FRNN(params)
+    if params['model_type'] == 'as':
+        model = models.AS_RNN(params)
+    elif params['model_type'] == 'is':
+        model = models.IS_RNN(params)
+    elif params['model_type'] == 'in':
+        model = models.IN_RNN(params)
+    else:
+        print('No valid model type')
+
     model.load_state_dict(torch.load('../models/' + id + '/model.pth'))
 
     # Evaluate model
@@ -176,7 +200,7 @@ def make_distances(id: str, train_set=False):
     return eval_distances
 
 
-def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=True):
+def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=True, reverse_channels=False):
     """ Loads and prepares iEEG data for NN model.
 
         Returns:
@@ -188,10 +212,13 @@ def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=Tr
         params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
     data_mat = loadmat(params['path2data'])
     data = data_mat['EEG'][:params['channel_size'], :params['sample_size']].transpose()
+    if reverse_channels:
+        # Todo
+        pass
 
     # Normalization
     if params['normalization']:
-        sc = MinMaxScaler(feature_range=(-1, 1))
+        sc = StandardScaler()  # MinMaxScaler(feature_range=(-1, 1))
         sc.fit(data)
         data = sc.transform(data)
 
@@ -256,7 +283,7 @@ def plot_optimization(id: str):
     fig.savefig('../doc/figures/optim_' + eval_optimization['id'] + '.png')
 
 
-def plot_weights(id: str, vmax=1, linewidth=.5, absolute=False):
+def plot_weights(id: str, vmax=1, linewidth=.5, absolute=False, firing_rates=False):
     """ Makes and saves a heat map of weight matrix W to ../figures/.
 
         Saves:
@@ -264,12 +291,21 @@ def plot_weights(id: str, vmax=1, linewidth=.5, absolute=False):
     """
     params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
     # Get trained model
-    model = models.FRNN(params)
+    if params['model_type'] == 'as':
+        model = models.AS_RNN(params)
+    elif params['model_type'] == 'is':
+        model = models.IS_RNN(params)
+    elif params['model_type'] == 'in':
+        model = models.IN_RNN(params)
+    else:
+        print('No valid model type')
     model.load_state_dict(torch.load('../models/' + id + '/model.pth'))
     W = model.W.weight.data.numpy()
+    if firing_rates:
+        W = model.phi(model.W.weight.data).numpy()
 
     vmin = -vmax
-    cmap = 'RdBu'
+    cmap = 'bwr'
     ch = params['channel_size']
     hticklabels = np.arange(ch, W.shape[0], 1)
 

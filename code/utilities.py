@@ -30,7 +30,7 @@ def train(params: dict):
             eval_optim.pkl
     """
     # Load data
-    X_train, X_test = data_loader(params=params)
+    X_train, X_test = data_loader(params=params, c=True)
 
     # Define model, criterion and optimizer
     if params['model_type'] == 'as':
@@ -106,7 +106,7 @@ def make_prediction(id: str, train_set=False):
     params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
 
     # Load data
-    X_train, X_test = data_loader(params=params)
+    X_train, X_test = data_loader(params=params, c=False)
 
     # Get trained model
     if params['model_type'] == 'as':
@@ -200,7 +200,7 @@ def make_distances(id: str, train_set=False):
     return eval_distances
 
 
-def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=True, reverse_channels=False):
+def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=True, c=False):
     """ Loads and prepares iEEG data for NN model.
 
         Returns:
@@ -211,14 +211,21 @@ def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=Tr
     if params is None:
         params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
     data_mat = loadmat(params['path2data'])
-    data = data_mat['EEG'][:params['channel_size'], :params['sample_size']].transpose()
-    if reverse_channels:
-        # Todo
-        pass
+    if c:
+        data = data_mat['EEG'][:params['channel_size'], :params['sample_size']].transpose()
+    else:
+        data = data_mat['EEG'][:int(params['channel_size']/2), :int(params['sample_size']/2)].transpose()
+    if params['reversed_nodes'] is True:
+        rev_data = np.zeros((data.shape[0], data.shape[1]*2))
+        rev_data[:, :data.shape[1]] = data
+        rev_data[:, data.shape[1]:] = data * (-1)
+        data = rev_data
+        if c:
+            params['channel_size'] = params['channel_size'] * 2
 
     # Normalization
     if params['normalization']:
-        sc = StandardScaler()  # MinMaxScaler(feature_range=(-1, 1))
+        sc = MinMaxScaler(feature_range=(-1, 1)) #StandardScaler()
         sc.fit(data)
         data = sc.transform(data)
 

@@ -13,15 +13,17 @@ import torch.nn as nn
 import pickle
 from os import path
 from pandas.plotting import autocorrelation_plot
+from scipy import signal
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from scipy.stats.kde import gaussian_kde
 from matplotlib.ticker import MaxNLocator
 
 import utilities as util
 import models
 
 
-def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_components=12):
+def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_components=12, sample_labels=None):
     """ Reduces node dimension to n_clusters.
 
     :param data: Data of size (n_samples, n_nodes)
@@ -83,6 +85,8 @@ def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_compo
     df['node'] = np.repeat(np.arange(0, n_nodes), n_samples)
     df['cluster'] = np.repeat(list(clusters.labels_), n_samples)
     df['value'] = data.T.flatten()
+    if sample_labels is not None:
+        df['sample_label'] = np.tile(sample_labels, n_nodes)
 
     return df
 
@@ -115,10 +119,20 @@ def acf(data: np.ndarray, n_lags, partial=False):
             acf_list.append(np.array(corr))
             acf_array = np.array(acf_list).T
 
-    return acf_array
+    # Confidence
+    conf = (1.96/np.sqrt(n_samples), -1.96/np.sqrt(n_samples))
+
+    return acf_array, conf
 
 
-def fft(data: np.ndarray, fs: float, filter=False):
+def fft(data: np.ndarray, fs: float, downscale_factor=None):
+    """
+
+    :param data:
+    :param fs:
+    :param downscale_factor:
+    :return:
+    """
     n_samples = data.shape[0]
     n_nodes = data.shape[1]
 
@@ -127,17 +141,102 @@ def fft(data: np.ndarray, fs: float, filter=False):
         spect[:, i] = np.abs(fftpack.fft(data[:, i]))
     freq = fftpack.fftfreq(n_samples) * fs
 
-    # Cut negavite frequencies
+    # Cut negative frequencies
     spect_pos = spect[:len(freq[freq >= 0])]
     freq_pos = freq[freq >= 0]
 
-    if filter:
-        filtered = np.zeros((spect_pos.shape[0], n_nodes))
+    if downscale_factor is not None:
+        spect_resampled = []
         for i in range(n_nodes):
-            filtered[:, i] = savgol_filter(np.abs(spect_pos[:, i]), 49, 3)
+            spect_filtered = savgol_filter(np.abs(spect_pos[:, i]), int(n_samples/200)-1, 3)
+            spect_resampled.append(signal.resample_poly(spect_filtered, up=3, down=3*downscale_factor))
+        freq_resampled = signal.resample_poly(freq_pos, up=3, down=3*downscale_factor)
 
-        return filtered, freq_pos
+        return np.array(spect_resampled).T, freq_resampled
 
     return spect_pos, freq_pos
 
+
+def distribution(data: np.ndarray, xlim: tuple=None):
+    """
+
+    :param data:
+    :param xlim:
+    :return:
+    """
+    n_nodes = data.shape[1]
+
+    if xlim is None:
+        xlim = (np.min(data), np.max(data))
+    kde_x = np.linspace(xlim[0], xlim[1], 500)
+    density = []
+    for i in range(n_nodes):
+        kde = gaussian_kde(data[:, i])
+        density.append(kde(kde_x))
+
+    return kde_x, np.array(density).T
+
+
+def plot_distribution(data: np.ndarray, xlim: tuple=None, n_clusters: int=6):
+    """
+
+    :param data:
+    :param xlim:
+    :param n_clusters:
+    :return:
+    """
+    kde_x, kde = distribution(data, xlim=xlim)
+
+    normal = np.sort(np.random.normal(size=data.shape[0]))
+    df_qq = node_reduction(np.sort(data, axis=0), n_clusters=n_clusters, sample_labels=normal)
+
+    df_kde = node_reduction(kde, n_clusters=n_clusters, sample_labels=kde_x)
+
+    sns.set_style('whitegrid')
+    fig = plt.figure(figsize=(8, 16))
+    gs = fig.add_gridspec(nrows=int(n_clusters / 2 + 1), ncols=2)
+    ax = [[] for i in range(n_clusters)]
+    ax[0] = fig.add_subplot(gs[:1, :])
+    sns.lineplot(x='sample_label', y='value', data=df_kde, hue='cluster', palette='colorblind', ax=ax[0])
+    ax[0].set_xlabel('Magnitude')
+    ax[0].set_ylabel('Density')
+
+    color_list = sns.color_palette('colorblind', n_clusters)
+    row = np.repeat(np.arange(1, int(n_clusters / 2 + 2)), 2)
+    col = np.tile(np.array([[0, 1], [1, 2]]), 3)
+    for i in range(n_clusters):
+        ax[i] = fig.add_subplot(gs[row[i]:row[i + 2], col[0, i]:col[1, i]])
+        for k in range(df_qq.shape[0]):
+            if df_qq['cluster'][k] == i:
+                node = df_qq['node'][k]
+                break
+        sns.scatterplot(x='sample_label', y='value', data=df_qq.where(df_qq['node'] == node),
+                        ax=ax[i], label='from cluster ' + str(i), edgecolor=None, color=color_list[i])
+        ax[i].set_xlabel('Theoretical quantiles')
+        ax[i].set_ylabel('Sample quantiles')
+        ax[i].legend()
+    plt.tight_layout()
+    plt.savefig('../doc/figures/preprocess_distribution.png')
+
+
+def acf_plot(data: np.ndarray, n_clusters=5, n_lags=1000):
+    """
+
+    :param data:
+    :param n_clusters:
+    :param n_lags:
+    :return:
+    """
+    acf, conf = acf(data, n_lags=n_lags)
+    df = node_reduction(acf, n_clusters)
+    plt.figure(figsize=(12, 8))
+    sns.set_style('whitegrid')
+    plt.plot([0, n_lags], [conf[1], conf[1]], color='black', ls='--')
+    plt.plot([0, n_lags], [conf[0], conf[0]], color='black', ls='--')
+    plt.xlim(0, n_lags)
+    sns.lineplot(x='sample', y='value', data=df, hue='cluster', palette='colorblind')
+    plt.xlabel('Lag')
+    plt.ylabel('Correlation')
+    plt.title('Autocorrelation')
+    plt.savefig('../doc/figures/preprocess_acf.png')
 

@@ -27,7 +27,7 @@ params = {'id': 'autocorr',
           'non-linearity': 'tanh',
           'bias': False,
           # train parameters -------------------------
-          'sample_size': 10000,
+          'sample_size': 3000,
           'window_size': 10,
           'normalization': True,
           'epochs': 20,
@@ -35,13 +35,21 @@ params = {'id': 'autocorr',
 
 train_set, test_set = util.data_loader(params=params, train_portion=1, windowing=False)
 
-spect, freq = pre.fft(train_set.numpy(), fs=512, filter=True)
+n_clusters = 5
 
-fig, ax = plt.subplots()
-ax.plot(freq, spect[:, 0])
-ax.set_xlabel('Frequency [Hz]')
-ax.set_ylabel('Frequency domain (spectrum) magnitude')
-ax.set_xlim(0, 50)
-plt.show()
+acf, conf = pre.acf(train_set.numpy(), n_lags=1000)
+df = pre.node_reduction(acf, n_clusters)
+plt.figure(figsize=(12, 8))
+sns.set_style('whitegrid')
+plt.plot([0, 1000], [conf[1], conf[1]], color='black', ls='--')
+plt.plot([0, 1000], [conf[0], conf[0]], color='black', ls='--')
+plt.xlim(0, 1000)
+sns.lineplot(x='sample', y='value', data=df, hue='cluster', palette='colorblind')
+plt.xlabel('Lag')
+plt.ylabel('Correlation')
+plt.title('Autocorrelation')
+plt.savefig('../doc/figures/preprocess_acf')
+
+
 
 

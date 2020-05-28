@@ -14,24 +14,26 @@ import numpy as np
 ids = []
 model_type = ['is', 'in', 'as']
 for i, val in enumerate(model_type):
-    ids.append('mtype_sig_sscaler_' + val)
-    params = {'id': 'mtype_sig_sscaler_' + val,
+    ids.append('rvds_relu_' + val)
+    """
+    params = {'id': 'rvds_relu_' + val,
               'model_type': val,
               'path2data': '../data/ID01_1h.mat',
               # model parameters ------------------------
-              'channel_size': 60,
-              'hidden_size': 60,
+              'channel_size': 20,
+              'reversed_nodes': True,
+              'hidden_size': 20,
               'lambda': 0.5,
-              'non-linearity': 'sigmoid',
+              'non-linearity': 'relu',
               'bias': False,
               # train parameters -------------------------
-              'sample_size': 10000,
+              'sample_size': 1000,
               'window_size': 50,
               'normalization': True,
               'epochs': 12,
               'lr_decay': 7}
     util.train(params)
-
+    """
 for i, val in enumerate(ids):
     util.plot_optimization(val)
     util.make_prediction(val)
@@ -41,5 +43,5 @@ for i, val in enumerate(ids):
 
 
 
-util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='model_type_sig_sscaler')
+util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='rvds_relu')
 

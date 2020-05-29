@@ -148,7 +148,7 @@ def fft(data: np.ndarray, fs: float, downscale_factor=None):
     if downscale_factor is not None:
         spect_resampled = []
         for i in range(n_nodes):
-            spect_filtered = savgol_filter(np.abs(spect_pos[:, i]), int(n_samples/200)-1, 3)
+            spect_filtered = savgol_filter(np.abs(spect_pos[:, i]), int(n_samples/500)-1, 3)
             spect_resampled.append(signal.resample_poly(spect_filtered, up=3, down=3*downscale_factor))
         freq_resampled = signal.resample_poly(freq_pos, up=3, down=3*downscale_factor)
 
@@ -231,12 +231,42 @@ def acf_plot(data: np.ndarray, n_clusters=5, n_lags=1000):
     df = node_reduction(acf, n_clusters)
     plt.figure(figsize=(12, 8))
     sns.set_style('whitegrid')
-    plt.plot([0, n_lags], [conf[1], conf[1]], color='black', ls='--')
-    plt.plot([0, n_lags], [conf[0], conf[0]], color='black', ls='--')
     plt.xlim(0, n_lags)
     sns.lineplot(x='sample', y='value', data=df, hue='cluster', palette='colorblind')
+    plt.plot([0, n_lags], [conf[1], conf[1]], color='black', ls='--')
+    plt.plot([0, n_lags], [conf[0], conf[0]], color='black', ls='--')
     plt.xlabel('Lag')
     plt.ylabel('Correlation')
     plt.title('Autocorrelation')
     plt.savefig('../doc/figures/preprocess_acf.png')
+
+
+def fft_plot(data: np.ndarray, n_clusters=5):
+    """
+
+    :param data:
+    :param n_clusters:
+    :return:
+    """
+    spect, freq = pre.fft(train_set.numpy(), fs=512, downscale_factor=20)
+    df = pre.node_reduction(spect, n_clusters, sample_labels=freq)
+    plt.figure(figsize=(12, 8))
+    sns.set_style('whitegrid')
+    # for i in range(60):
+    #    plt.plot(freq, spect[:, i], color='tab:blue')
+    sns.lineplot(x='sample_label', y='value', data=df, hue='cluster', palette='colorblind')
+
+    plt.plot([120, 120], [0, 800], color='black', ls='--')
+    plt.xlabel('Frequency [Hz]')
+    plt.ylabel('Amplitude [-]')
+    title = ['High frequency spectrum', 'Low frequency spectrum']
+    save_name = ['fft_high', 'fft_low']
+    xlim = [150, 25]
+    for i in range(2):
+        plt.xlim(0, xlim[i])
+        plt.ylim(0, 800)
+        plt.title(title[i])
+        if i == 1:
+            plt.plot([.5, .5], [0, 800], color='black', ls='--')
+        plt.savefig('../doc/figures/preprocess_' + save_name[i])
 

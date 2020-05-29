@@ -30,7 +30,7 @@ def train(params: dict):
             eval_optim.pkl
     """
     # Load data
-    X_train, X_test = data_loader(params=params, c=True)
+    X_train, X_test = data_loader(params=params)
 
     # Define model, criterion and optimizer
     if params['model_type'] == 'as':
@@ -46,8 +46,8 @@ def train(params: dict):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Training
-    temp_loss = np.zeros([len(X_train), params['channel_size']])
-    epoch_loss = np.zeros([params['epochs'], params['channel_size']])
+    temp_loss = np.zeros([len(X_train), model.visible_size])
+    epoch_loss = np.zeros([params['epochs'], model.visible_size])
     epoch_grad_norm = np.zeros(params['epochs'])
     temp_grad_norm = np.zeros(len(X_train))
 
@@ -106,7 +106,7 @@ def make_prediction(id: str, train_set=False):
     params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
 
     # Load data
-    X_train, X_test = data_loader(params=params, c=False)
+    X_train, X_test = data_loader(params=params)
 
     # Get trained model
     if params['model_type'] == 'as':
@@ -124,8 +124,8 @@ def make_prediction(id: str, train_set=False):
     model.eval()
 
     with torch.no_grad():
-        test_pred = np.zeros((len(X_test), params['channel_size']))
-        test_true = np.zeros((len(X_test), params['channel_size']))
+        test_pred = np.zeros((len(X_test), model.visible_size))
+        test_true = np.zeros((len(X_test), model.visible_size))
         for T, X in enumerate(X_test):
             predictions = model(X)
             test_pred[T, :] = predictions.numpy()
@@ -138,8 +138,8 @@ def make_prediction(id: str, train_set=False):
             pickle.dump(eval_prediction, open('../models/' + id + '/eval_prediction.pkl', 'wb'))
             return eval_prediction
         else:
-            train_pred = np.zeros((len(X_train), params['channel_size']))
-            train_true = np.zeros((len(X_train), params['channel_size']))
+            train_pred = np.zeros((len(X_train), model.visible_size))
+            train_true = np.zeros((len(X_train), model.visible_size))
             with torch.no_grad():
                 for T, X in enumerate(X_train):
                     predictions = model(X)
@@ -165,6 +165,10 @@ def make_distances(id: str, train_set=False):
     params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
     eval_prediction = pickle.load(open('../models/' + id + '/eval_prediction.pkl', 'rb'))
 
+    node_size = params['channel_size']
+    if params['reverse_nodes'] is True:
+        node_size = node_size * 2
+
     if train_set:
         pred = eval_prediction['train_pred']
         true = eval_prediction['train_true']
@@ -176,31 +180,31 @@ def make_distances(id: str, train_set=False):
 
     # Calculate distances
     corr = []
-    for i in range(params['channel_size']):
+    for i in range(node_size):
         corr.append(np.corrcoef(pred[:, i], true[:, i])[0, 1])
     mse = np.mean((pred - true) ** 2, axis=0)
     mae = np.mean(np.abs(pred - true), axis=0)
 
-    eval_distances = {'id': [id for i in range(params['channel_size'])],
-                      'node_idx': [i for i in range(params['channel_size'])],
-                      'train_set': [False for i in range(params['channel_size'])],
-                      'channel_size': [params['channel_size'] for i in range(params['channel_size'])],
-                      'hidden_size': [params['hidden_size'] for i in range(params['channel_size'])],
-                      'non-linearity': [params['non-linearity'] for i in range(params['channel_size'])],
-                      'bias': [params['bias'] for i in range(params['channel_size'])],
-                      'lambda': [params['lambda'] for i in range(params['channel_size'])],
+    eval_distances = {'id': [id for i in range(node_size)],
+                      'node_idx': [i for i in range(node_size)],
+                      'train_set': [False for i in range(node_size)],
+                      'channel_size': [node_size for i in range(node_size)],
+                      'hidden_size': [params['hidden_size'] for i in range(node_size)],
+                      'non-linearity': [params['non-linearity'] for i in range(node_size)],
+                      'bias': [params['bias'] for i in range(node_size)],
+                      'lambda': [params['lambda'] for i in range(node_size)],
                       'correlation': corr,
                       'mse': mse,
                       'mae': mae}
 
     if train_set is True:
-        eval_distances['train_set'] = [True for i in range(params['channel_size'])]
+        eval_distances['train_set'] = [True for i in range(node_size)]
 
     pickle.dump(eval_distances, open('../models/' + id + '/eval_distances' + train_str + '.pkl', 'wb'))
     return eval_distances
 
 
-def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=True, c=False):
+def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=True):
     """ Loads and prepares iEEG data for NN model.
 
         Returns:
@@ -211,17 +215,13 @@ def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=Tr
     if params is None:
         params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
     data_mat = loadmat(params['path2data'])
-    if c:
-        data = data_mat['EEG'][:params['channel_size'], :params['sample_size']].transpose()
-    else:
-        data = data_mat['EEG'][:int(params['channel_size']/2), :int(params['sample_size']/2)].transpose()
-    if params['reversed_nodes'] is True:
+    data = data_mat['EEG'][:params['channel_size'], :params['sample_size']].transpose()
+
+    if params['reverse_nodes'] is True:
         rev_data = np.zeros((data.shape[0], data.shape[1]*2))
         rev_data[:, :data.shape[1]] = data
         rev_data[:, data.shape[1]:] = data * (-1)
         data = rev_data
-        if c:
-            params['channel_size'] = params['channel_size'] * 2
 
     # Normalization
     if params['normalization']:

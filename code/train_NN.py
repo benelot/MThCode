@@ -14,26 +14,27 @@ import numpy as np
 ids = []
 model_type = ['is', 'in', 'as']
 for i, val in enumerate(model_type):
-    ids.append('rvds_relu_' + val)
+    ids.append('mtype_rv_relu_' + val)
     """
-    params = {'id': 'rvds_relu_' + val,
+    params = {'id': 'mtype_rv_relu_' + val,
               'model_type': val,
               'path2data': '../data/ID01_1h.mat',
               # model parameters ------------------------
               'channel_size': 20,
-              'reversed_nodes': True,
+              'reverse_nodes': True,
               'hidden_size': 20,
               'lambda': 0.5,
               'non-linearity': 'relu',
               'bias': False,
               # train parameters -------------------------
-              'sample_size': 1000,
+              'sample_size': 3000,
               'window_size': 50,
               'normalization': True,
               'epochs': 12,
               'lr_decay': 7}
+
     util.train(params)
-    """
+"""
 for i, val in enumerate(ids):
     util.plot_optimization(val)
     util.make_prediction(val)
@@ -42,6 +43,5 @@ for i, val in enumerate(ids):
     util.plot_weights(val, linewidth=0)
 
 
-
-util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='rvds_relu')
+util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='mtype_rv_relu')
 

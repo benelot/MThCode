@@ -36,7 +36,7 @@
   * Try $\sigma$ with positive and negative visible nodes
   * Default NN with modified $\sigma$ 
 
-* Heatmap from blue ($0$) to red ($1$)
+
 * (4) Evaluate robustness of weights with multiple 40 second segments
 * Sleep scoring
 * (5) Analyze weights with video of $\mathbf{u}^{(t)}$

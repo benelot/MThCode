@@ -45,6 +45,8 @@ class IS_RNN(nn.Module):
         # Parameters
         self.hidden_size = params['hidden_size']
         self.visible_size = params['channel_size']
+        if params['reverse_nodes'] is True:
+            self.visible_size = self.visible_size * 2
         self.full_size = self.visible_size + self.hidden_size
         # Create FC layer
         self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])
@@ -76,6 +78,8 @@ class IN_RNN(nn.Module):
         # Parameters
         self.hidden_size = params['hidden_size']
         self.visible_size = params['channel_size']
+        if params['reverse_nodes'] is True:
+            self.visible_size = self.visible_size * 2
         self.full_size = self.visible_size + self.hidden_size
         # Create FC layer
         self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])
@@ -106,6 +110,8 @@ class AS_RNN(nn.Module):
         # Parameters
         self.hidden_size = params['hidden_size']
         self.visible_size = params['channel_size']
+        if params['reverse_nodes'] is True:
+            self.visible_size = self.visible_size * 2
         self.full_size = self.visible_size + self.hidden_size
         # Create FC layer
         self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])

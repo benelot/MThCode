@@ -34,7 +34,7 @@ for i, val in enumerate(model_type):
               'lr_decay': 7}
 
     util.train(params)
-"""
+
 for i, val in enumerate(ids):
     util.plot_optimization(val)
     util.make_prediction(val)
@@ -42,6 +42,6 @@ for i, val in enumerate(ids):
     util.plot_prediction(val, [2, 8, 12, 17])
     util.plot_weights(val, linewidth=0)
 
-
+"""
 util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='mtype_rv_relu')
 

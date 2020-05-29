@@ -314,6 +314,8 @@ def plot_weights(id: str, vmax=1, linewidth=.5, absolute=False, firing_rates=Fal
     vmin = -vmax
     cmap = 'bwr'
     ch = params['channel_size']
+    if params['reverse_nodes'] is True:
+        ch = ch * 2
     hticklabels = np.arange(ch, W.shape[0], 1)
 
     if absolute:

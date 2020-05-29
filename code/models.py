@@ -59,15 +59,17 @@ class IS_RNN(nn.Module):
                                  torch.ones(self.visible_size, self.hidden_size)), 1)
         for idx in range(self.visible_size):
             self.Lambda[idx, idx] = 1
+            if params['reverse_nodes'] is True:
+                self.Lambda[idx, idx + int(self.visible_size/2)] = 1
 
     def forward(self, X):
         # Initialize r and i nodes
         R = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
-        I = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
+        Y = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
         # Forward path
         for t in range(X.shape[0]):
-            I[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
-            U = torch.mul(self.Lambda, self.W(R)) + torch.mul((1 - self.Lambda), I)
+            Y[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
+            U = torch.mul(self.Lambda, self.W(R)) + torch.mul((1 - self.Lambda), Y)
             R = self.phi(U)  #1 / (1 + torch.exp(-U*4))  #
         return torch.diag(U[:, :self.visible_size])
 
@@ -91,6 +93,8 @@ class IN_RNN(nn.Module):
                                  torch.ones(self.visible_size, self.hidden_size)), 1)
         for idx in range(self.visible_size):
             self.Lambda[idx, idx] = 1
+            if params['reverse_nodes'] is True:
+                self.Lambda[idx, idx + int(self.visible_size/2)] = 1
 
     def forward(self, X):
         # Initialize r and i nodes

@@ -14,8 +14,8 @@ import numpy as np
 ids = []
 model_type = ['is', 'in', 'as']
 for i, val in enumerate(model_type):
-    ids.append('mtype_rv_relu_' + val)
-    """
+    ids.append('test_' + val)
+
     params = {'id': 'mtype_rv_relu_' + val,
               'model_type': val,
               'path2data': '../data/ID01_1h.mat',
@@ -42,6 +42,6 @@ for i, val in enumerate(ids):
     util.plot_prediction(val, [2, 8, 12, 17])
     util.plot_weights(val, linewidth=0)
 
-"""
+
 util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='mtype_rv_relu')
 

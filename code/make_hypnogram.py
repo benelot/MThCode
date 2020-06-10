@@ -2,7 +2,7 @@ from scipy.io import loadmat
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
-from mne.time_frequency import tfr_multitaper
+#from mne.time_frequency import tfr_multitaper
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 

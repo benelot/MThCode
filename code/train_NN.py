@@ -12,7 +12,7 @@ import seaborn as sns
 import numpy as np
 
 ids = []
-model_type = ['is', 'in', 'as']
+model_type = ['is', 'in']
 for i, val in enumerate(model_type):
     ids.append('test_' + val)
 
@@ -27,8 +27,9 @@ for i, val in enumerate(model_type):
               'non-linearity': 'relu',
               'bias': False,
               # train parameters -------------------------
+              'sample_begin': 3000,
               'sample_size': 3000,
-              'window_size': 50,
+              'window_size': 30,
               'normalization': True,
               'epochs': 12,
               'lr_decay': 7}
@@ -43,5 +44,5 @@ for i, val in enumerate(ids):
     util.plot_weights(val, linewidth=0)
 
 
-util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='mtype_rv_relu')
+#util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='mtype_rv_relu')
 

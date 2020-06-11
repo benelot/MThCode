@@ -215,7 +215,9 @@ def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=Tr
     if params is None:
         params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
     data_mat = loadmat(params['path2data'])
-    data = data_mat['EEG'][:params['channel_size'], :params['sample_size']].transpose()
+    sample_begin = params['sample_begin']
+    sample_end = sample_begin + params['sample_size']
+    data = data_mat['EEG'][:params['channel_size'], sample_begin:sample_end].transpose()
 
     if params['reverse_nodes'] is True:
         rev_data = np.zeros((data.shape[0], data.shape[1]*2))

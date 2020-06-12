@@ -17,14 +17,14 @@ for i, val in enumerate(model_type):
     ids.append('test_' + val)
 
     params = {'id': 'mtype_rv_relu_' + val,
-              'model_type': val,
-              'path2data': '../data/ID01_1h.mat',
+              'model_type': 'in',
+              'path2data': '../data/ID02_1h.mat',
               # model parameters ------------------------
-              'channel_size': 20,
-              'reverse_nodes': True,
-              'hidden_size': 20,
+              'channel_size': 66,
+              'reverse_nodes': False,
+              'hidden_size': 66,
               'lambda': 0.5,
-              'non-linearity': 'relu',
+              'non-linearity': 'sigmoid',
               'bias': False,
               # train parameters -------------------------
               'sample_begin': 3000,

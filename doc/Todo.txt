@@ -1,12 +1,13 @@
-ToDo
-- gradient norm plot for sigmoid vs tanh
-- clarify difference of u as output to r as output
-- maybe evaluate a model with all inputs while training
-- look at teacher forcing
-- sleep annotation
+ToDo:
+
+ data
+ - implement a better sleep scoring algorithm
+ - gain access to sleep stage annotated iEEG data
+
+ main hypothesis
+ - train various models on sleep data
+ - find ways to analyze results
 
 
 Questions
-- Bias?
-- Normalization?
-- Activation function?
+

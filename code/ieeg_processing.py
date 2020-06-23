@@ -20,6 +20,7 @@ from scipy.stats.kde import gaussian_kde
 from matplotlib.ticker import MaxNLocator
 from matplotlib import animation, rc
 
+
 import utilities as util
 import models
 

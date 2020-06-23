@@ -12,22 +12,22 @@ import seaborn as sns
 import numpy as np
 
 ids = []
-model_type = ['is', 'in']
+model_type = ['norm01_sigm']
 for i, val in enumerate(model_type):
     ids.append('test_' + val)
 
-    params = {'id': 'mtype_rv_relu_' + val,
+    params = {'id': 'test_' + val,
               'model_type': 'in',
               'path2data': '../data/ID02_1h.mat',
               # model parameters ------------------------
-              'channel_size': 66,
+              'channel_size': 20,
               'reverse_nodes': False,
-              'hidden_size': 66,
+              'hidden_size': 20,
               'lambda': 0.5,
-              'non-linearity': 'sigmoid',
+              'non-linearity': 'sigm',
               'bias': False,
               # train parameters -------------------------
-              'sample_begin': 3000,
+              'sample_begin': 0,
               'sample_size': 3000,
               'window_size': 30,
               'normalization': True,
@@ -40,9 +40,8 @@ for i, val in enumerate(ids):
     util.plot_optimization(val)
     util.make_prediction(val)
     util.make_distances(val)
-    util.plot_prediction(val, [2, 8, 12, 17])
+    util.plot_prediction(val, [2, 6, 14, 18])
     util.plot_weights(val, linewidth=0)
 
-
-#util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='mtype_rv_relu')
+util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='norm01', ylim=(0, 1))
 

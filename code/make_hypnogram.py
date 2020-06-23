@@ -30,7 +30,7 @@ fs = float(info['fs'])
 
 # Signal processing
 window = int(2*60*fs)
-f_bands_hz = np.array([[0.5, 2], [4, 8], [8, 12], [12, 15]])
+f_bands_hz = np.array([[0.5, 4], [4, 8], [8, 12], [12, 15]])
 
 hypnograms = []
 for i, val in enumerate(channel_labels):

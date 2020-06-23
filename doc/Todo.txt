@@ -1,13 +1,4 @@
 ToDo:
 
- data
- - implement a better sleep scoring algorithm
- - gain access to sleep stage annotated iEEG data
-
- main hypothesis
- - train various models on sleep data
- - find ways to analyze results
-
-
-Questions
-
+- Ask Joern for score table for M thesis.
+- Ask for mid-time feedback.

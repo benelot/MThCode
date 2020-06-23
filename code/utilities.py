@@ -59,7 +59,7 @@ def train(params: dict):
     """
 
     for epoch in range(params['epochs']):
-        if epoch is not 0 and epoch % params['lr_decay'] is 0:
+        if epoch != 0 and epoch % params['lr_decay'] == 0:
             for param_group in optimizer.param_groups:
                 param_group['lr'] = param_group['lr'] / 2
         for T, X in enumerate(X_train):
@@ -227,7 +227,7 @@ def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=Tr
 
     # Normalization
     if params['normalization']:
-        sc = MinMaxScaler(feature_range=(-1, 1)) #StandardScaler()
+        sc = MinMaxScaler(feature_range=(0, 1)) #StandardScaler()
         sc.fit(data)
         data = sc.transform(data)
 
@@ -292,7 +292,7 @@ def plot_optimization(id: str):
     fig.savefig('../doc/figures/optim_' + eval_optimization['id'] + '.png')
 
 
-def plot_weights(id: str, vmax=1, linewidth=.5, absolute=False, firing_rates=False):
+def plot_weights(id: str, vmax=1, linewidth=.5, absolute=False):
     """ Makes and saves a heat map of weight matrix W to ../figures/.
 
         Saves:
@@ -310,8 +310,6 @@ def plot_weights(id: str, vmax=1, linewidth=.5, absolute=False, firing_rates=Fal
         print('No valid model type')
     model.load_state_dict(torch.load('../models/' + id + '/model.pth'))
     W = model.W.weight.data.numpy()
-    if firing_rates:
-        W = model.phi(model.W.weight.data).numpy()
 
     vmin = -vmax
     cmap = 'bwr'
@@ -415,7 +413,7 @@ def plot_prediction(id: str, nodes_idx: list, lim_nr_samples=None, train_set=Fal
     plt.savefig('../doc/figures/prediction_' + id + nodes_str + '.png')
 
 
-def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_name=None):
+def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_name=None, split_id=False):
     """ Makes and saves box plots of results to ../figures/.
 
         Saves:
@@ -429,6 +427,14 @@ def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_nam
         if train_exists:
             eval_distance = pickle.load(open('../models/' + id + '/eval_distances_train.pkl', 'rb'))
             df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
+
+    if split_id:
+        id1, id2 = [], []
+        for i, val in enumerate(df['id']):
+            id1.append(df['id'][i][:-7])
+            id2.append(df['id'][i][-6:])
+        df['architecture'] = id1
+        df['time'] = id2
 
     plt.figure(figsize=(10, 8))
     sns.set_style('darkgrid')
@@ -505,3 +511,58 @@ def change_params_key(id: str, old_key: str, new_key: str):
     del params[old_key]
     params[new_key] = val
     pickle.dump(params, open('../models/' + id + '/params.pkl', 'wb'))
+
+
+def mean_weights(ids: list, hidden=True, save_name='default'):
+    """
+
+    """
+    id1, id2 = [], []
+    mean_, mean_abs = [], []
+    for i, id in enumerate(ids):
+        params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
+        # Get trained model
+        if params['model_type'] == 'as':
+            model = models.AS_RNN(params)
+        elif params['model_type'] == 'is':
+            model = models.IS_RNN(params)
+        elif params['model_type'] == 'in':
+            model = models.IN_RNN(params)
+        else:
+            print('No valid model type')
+        model.load_state_dict(torch.load('../models/' + id + '/model.pth'))
+        W = model.W.weight.data.numpy()
+        mean_.append(np.mean(W))
+        mean_abs.append(np.mean(np.abs(W)))
+        id1.append(id[:-7])
+        id2.append(id[-6:])
+
+        if hidden is False:
+            ch = params['channel_size']
+            if params['reverse_nodes'] is True:
+                ch = ch * 2
+            mean_[i] = np.mean(W[:ch, :ch])
+            mean_abs[i] = np.mean(np.abs(W[:ch, :ch]))
+
+    df = pd.DataFrame()
+    df['Architecture'] = id1
+    df['Time'] = id2
+    df['Mean weight'] = mean_
+    df['Mean abs. weight'] = mean_abs
+
+
+
+    plt.figure(figsize=(10, 8))
+    sns.set_style('darkgrid')
+    ax = sns.barplot(x='Mean weight', y='Architecture', hue='Time', data=df)
+    ax.set(xlabel='Mean weight', ylabel='Architecture')
+    ax.set_title('Mean weight RELU')
+    plt.savefig('../doc/figures/barplots_mean_' + save_name + '.png')
+
+    plt.figure(figsize=(10, 8))
+    sns.set_style('darkgrid')
+    ax = sns.barplot(x='Mean abs. weight', y='Architecture', hue='Time', data=df)
+    ax.set(xlabel='Mean abs. weight', ylabel='Architecture')
+    ax.set_title('Mean abs. weight')
+    plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
+

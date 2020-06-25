@@ -19,6 +19,7 @@ from sklearn.decomposition import PCA
 from scipy.stats.kde import gaussian_kde
 from matplotlib.ticker import MaxNLocator
 from matplotlib import animation, rc
+import hdf5storage
 
 
 import utilities as util
@@ -273,20 +274,14 @@ def fft_plot(data: np.ndarray, n_clusters=5):
         plt.savefig('../doc/figures/preprocess_' + save_name[i])
 
 
-def emp_connectome_anim(patient_ID: str, hour: str, sperseg: float, soverlap: float, fps=10):
+def emp_connectome(patient_ID: str, hour: str, sperseg: float, soverlap: float, save=False, anim=True, fps=10):
     """
 
-    :param patient_ID:
-    :param hour:
-    :param sperseg:
-    :param soverlap:
-    :param fps:
-    :return:
     """
     # Import signal
     ID = patient_ID
     h = hour
-    data = loadmat('../data/ID' + ID + '_' + h + 'h.mat')
+    data = hdf5storage.loadmat('../data/ID' + ID + '_' + h + '.mat')
     info = loadmat('../data/ID' + ID + '_info.mat')
     data = data['EEG']
     fs = float(info['fs'])
@@ -299,44 +294,49 @@ def emp_connectome_anim(patient_ID: str, hour: str, sperseg: float, soverlap: fl
         corrmats[:, :, i] = np.corrcoef(data[:, int(i * (nperseg - noverlap)):int(i * (nperseg - noverlap) + nperseg)])
     corr_val = np.mean(np.mean(np.abs(corrmats), axis=0), axis=0)
 
-    # equivalent to rcParams['animation.html'] = 'html5'
-    rc('animation', html='html5')
+    if save:
+        np.save('../data/corrmat_ID' + ID + '_' + h + '.npy', corrmats)
+        np.save('../data/corrmean_ID' + ID + '_' + h + '.npy', corr_val)
 
-    def update(frame):
-        level.set_array(corrmats[:, :, frame].ravel())
-        dot.set_data(t[frame], corr_val[frame])
-        line.set_data([t[frame], t[frame]], [0, 30])
-        return level
+    if anim:
+        # equivalent to rcParams['animation.html'] = 'html5'
+        rc('animation', html='html5')
 
-    corr = np.ones((corrmats.shape[0], corrmats.shape[0]))
-    sns.set_style('whitegrid')
+        def update(frame):
+            level.set_array(corrmats[:, :, frame].ravel())
+            dot.set_data(t[frame], corr_val[frame])
+            line.set_data([t[frame], t[frame]], [0, 30])
+            return level
 
-    fig = plt.figure(figsize=(10, 10))
-    gs = fig.add_gridspec(2, 2)
+        corr = np.ones((corrmats.shape[0], corrmats.shape[0]))
+        sns.set_style('whitegrid')
 
-    ax0 = fig.add_subplot(gs[:1, :])
-    f, t, Sxx = signal.spectrogram(data[0, :], fs, nperseg=nperseg, noverlap=noverlap)
-    t = t[:-1] / 60
-    ax0.pcolormesh(t, f, Sxx[:, :-1], vmin=0, vmax=20, cmap='viridis')
-    ax0.set_title('ID' + ID + ' h' + h + ' Spectrogram of Channel 00')
-    ax0.set_ylabel('Frequency [Hz]')
-    ax0.set_ylim(0, 30)
-    ax0.set_xlabel('Time [min]')
-    line, = ax0.plot([], [], color='red')
+        fig = plt.figure(figsize=(10, 10))
+        gs = fig.add_gridspec(2, 2)
 
-    ax1 = fig.add_subplot(gs[1:, :1])
-    level = ax1.pcolormesh(corr, cmap='bwr', vmin=-1, vmax=1)
-    ax1.invert_yaxis()
-    ax1.set_title('Correlation matrix')
+        ax0 = fig.add_subplot(gs[:1, :])
+        f, t, Sxx = signal.spectrogram(data[0, :], fs, nperseg=nperseg, noverlap=noverlap)
+        t = t[:-1] / 60
+        ax0.pcolormesh(t, f, Sxx[:, :-1], vmin=0, vmax=20, cmap='viridis')
+        ax0.set_title('ID' + ID + ' h' + h + ' Spectrogram of Channel 00')
+        ax0.set_ylabel('Frequency [Hz]')
+        ax0.set_ylim(0, 30)
+        ax0.set_xlabel('Time [min]')
+        line, = ax0.plot([], [], color='red')
 
-    ax2 = fig.add_subplot(gs[1:, 1:])
-    ax2.plot(t, corr_val)
-    ax2.set_title('Mean abs. correlation')
-    ax2.set_xlim(0, t[-1])
-    ax2.set_ylim(0, np.max(corr_val) + 0.2)
-    ax2.set_xlabel('Time [min]')
-    dot, = ax2.plot([], [], 'o', color='red')
+        ax1 = fig.add_subplot(gs[1:, :1])
+        level = ax1.pcolormesh(corr, cmap='bwr', vmin=-1, vmax=1)
+        ax1.invert_yaxis()
+        ax1.set_title('Correlation matrix')
 
-    ani = animation.FuncAnimation(fig, update, frames=corrmats.shape[2], interval=20)
+        ax2 = fig.add_subplot(gs[1:, 1:])
+        ax2.plot(t, corr_val)
+        ax2.set_title('Mean abs. correlation')
+        ax2.set_xlim(0, t[-1])
+        ax2.set_ylim(0, np.max(corr_val) + 0.2)
+        ax2.set_xlabel('Time [min]')
+        dot, = ax2.plot([], [], 'o', color='red')
 
-    ani.save('../doc/figures/corr_ID' + ID + '_' + h + 'h.gif', writer='imagemagick', fps=fps)
+        ani = animation.FuncAnimation(fig, update, frames=corrmats.shape[2], interval=20)
+
+        ani.save('../doc/figures/corr_ID' + ID + '_' + h + '.gif', writer='imagemagick', fps=fps)

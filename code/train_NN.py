@@ -12,29 +12,36 @@ import seaborn as sns
 import numpy as np
 
 ids = []
-model_type = ['norm01_sigm']
-for i, val in enumerate(model_type):
-    ids.append('test_' + val)
+model_type = [['relu'],
+              ['sigmoid0'],
+              ['sigmoid1'],
+              ['sigmoid2'],
+              ['sigmoid3'],
+              ['linear']]
 
-    params = {'id': 'test_' + val,
-              'model_type': 'in',
-              'path2data': '../data/ID02_1h.mat',
+for i, val in enumerate(model_type):
+    ids.append('test_' + val[0])
+
+    params = {'id': ids[-1],
+              'model_type': 'general',
+              'path2data': '../data/ID07_32h.mat',
               # model parameters ------------------------
               'channel_size': 20,
               'reverse_nodes': False,
-              'hidden_size': 20,
-              'lambda': 0.5,
-              'non-linearity': 'sigm',
+              'hidden_size': 10,
+              'lambda': 0,
+              'non-linearity': val[0],
               'bias': False,
               # train parameters -------------------------
               'sample_begin': 0,
-              'sample_size': 3000,
+              'sample_size': 2*512,
               'window_size': 30,
               'normalization': True,
-              'epochs': 12,
-              'lr_decay': 7}
+              'epochs': 20,
+              'lr_decay': 5}
 
     util.train(params)
+
 
 for i, val in enumerate(ids):
     util.plot_optimization(val)
@@ -43,5 +50,5 @@ for i, val in enumerate(ids):
     util.plot_prediction(val, [2, 6, 14, 18])
     util.plot_weights(val, linewidth=0)
 
-util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='norm01', ylim=(0, 1))
+util.plot_multi_boxplots(ids, x='id', y='correlation', save_name='test_models', ylim=(0, 1))
 

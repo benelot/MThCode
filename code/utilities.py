@@ -39,11 +39,14 @@ def train(params: dict):
         model = models.IS_RNN(params)
     elif params['model_type'] == 'in':
         model = models.IN_RNN(params)
+    elif params['model_type'] == 'general':
+        model = models.general_RNN(params)
     else:
         print('No valid model type')
 
     criterion = nn.MSELoss(reduction='none')
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    lr = 0.0005
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     # Training
     temp_loss = np.zeros([len(X_train), model.visible_size])
@@ -52,23 +55,17 @@ def train(params: dict):
     temp_grad_norm = np.zeros(len(X_train))
 
     start_time = time.time()
-    """
-    model.W.weight.data[model.visible_size:, :model.visible_size] = 0  # Experimental
-    for i in range(model.hidden_size):
-        model.W.weight.data[model.visible_size+i, i] = 1
-    """
 
     for epoch in range(params['epochs']):
-        if epoch != 0 and epoch % params['lr_decay'] == 0:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = param_group['lr'] / 2
+        lr = lr * (0.2 ** (epoch // params['lr_decay']))
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
         for T, X in enumerate(X_train):
             optimizer.zero_grad()
             prediction = model(X)
             loss = criterion(prediction, X[-1, :])
             temp_loss[T, :] = loss.detach()
             torch.autograd.backward(loss.mean())
-            #model.W.weight.grad[model.visible_size:, :model.visible_size] = 0  # Experimental
             optimizer.step()
             for p in model.parameters():
                 temp_grad_norm[T] = p.grad.data.norm(2).item()
@@ -115,6 +112,8 @@ def make_prediction(id: str, train_set=False):
         model = models.IS_RNN(params)
     elif params['model_type'] == 'in':
         model = models.IN_RNN(params)
+    elif params['model_type'] == 'general':
+        model = models.general_RNN(params)
     else:
         print('No valid model type')
 
@@ -306,6 +305,8 @@ def plot_weights(id: str, vmax=1, linewidth=.5, absolute=False):
         model = models.IS_RNN(params)
     elif params['model_type'] == 'in':
         model = models.IN_RNN(params)
+    elif params['model_type'] == 'general':
+        model = models.general_RNN(params)
     else:
         print('No valid model type')
     model.load_state_dict(torch.load('../models/' + id + '/model.pth'))
@@ -528,6 +529,8 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
             model = models.IS_RNN(params)
         elif params['model_type'] == 'in':
             model = models.IN_RNN(params)
+        elif params['model_type'] == 'general':
+            model = models.general_RNN(params)
         else:
             print('No valid model type')
         model.load_state_dict(torch.load('../models/' + id + '/model.pth'))
@@ -549,8 +552,6 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
     df['Time'] = id2
     df['Mean weight'] = mean_
     df['Mean abs. weight'] = mean_abs
-
-
 
     plt.figure(figsize=(10, 8))
     sns.set_style('darkgrid')

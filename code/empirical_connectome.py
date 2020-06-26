@@ -17,4 +17,4 @@ model_type = [['in', '57h', '58m', int(58*60*1024), int(1*60*1024)],
               ['is', '60h', '14m', int(14*60*1024), int(1*60*1024)],
               ['is', '64h', '40m', int(40*60*1024), int(1*60*1024)]]
 """
-ieeg.emp_connectome_anim(patient_ID='07', hour='29to39_all', sperseg=120, soverlap=20)
+ieeg.emp_connectome(patient_ID='07', hour='29to39_all', sperseg=120, soverlap=20)

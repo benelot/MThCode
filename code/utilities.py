@@ -9,6 +9,7 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 from scipy.io import loadmat
+from scipy.stats import mode
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 import time
@@ -41,6 +42,21 @@ def train(params: dict):
         model = models.IN_RNN(params)
     elif params['model_type'] == 'general':
         model = models.general_RNN(params)
+    elif params['model_type'] == 'corr':
+        inv_diagmat = np.abs(np.identity(params['channel_size']) - 1)
+        best_nodes = np.zeros((len(X_train), params['channel_size']))
+        for T, X in enumerate(X_train):
+            corrmat = np.multiply(np.corrcoef(X.T), inv_diagmat)
+            best_nodes[T, :] = np.argmax(np.abs(corrmat), axis=0)
+        # most frequent node
+        best_node = (mode(best_nodes, axis=0)[0][0]).astype(int)
+        # Save best node
+        directory = '../models/' + params['id']
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+        np.save(directory + '/best_node.npy', best_node)
+        pickle.dump(params, open(directory + '/params.pkl', 'wb'))
+        return None
     else:
         print('No valid model type')
 
@@ -57,7 +73,7 @@ def train(params: dict):
     start_time = time.time()
 
     for epoch in range(params['epochs']):
-        lr = lr * (0.2 ** (epoch // params['lr_decay']))
+        lr = lr * (0.4 ** (epoch // params['lr_decay']))
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
         for T, X in enumerate(X_train):
@@ -114,6 +130,22 @@ def make_prediction(id: str, train_set=False):
         model = models.IN_RNN(params)
     elif params['model_type'] == 'general':
         model = models.general_RNN(params)
+    elif params['model_type'] == 'corr':
+        best_node = np.load('../models/' + id + '/best_node.npy')
+        test_pred = np.zeros((len(X_test), best_node.shape[0]))
+        test_true = np.zeros((len(X_test), best_node.shape[0]))
+        for T, X in enumerate(X_test):
+            test_pred[T, :] = X[-1, best_node.tolist()].numpy()
+            test_true[T, :] = X[-1, :].numpy()
+        eval_prediction = {'id': id,
+                            'test_pred': test_pred,
+                            'test_true': test_true}
+        if train_set is False:
+            pickle.dump(eval_prediction, open('../models/' + id + '/eval_prediction.pkl', 'wb'))
+            return eval_prediction
+        else:
+            # Todo
+            return eval_prediction
     else:
         print('No valid model type')
 

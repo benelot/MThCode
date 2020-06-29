@@ -7,12 +7,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-class RNN_experimental(nn.Module):
+
+class parallel_RNN(nn.Module):
     def __init__(self, params: dict):
         super().__init__()
         # Parameters
         self.hidden_size = params['hidden_size']
         self.visible_size = params['channel_size']
+        if params['reverse_nodes'] is True:
+            self.visible_size = self.visible_size * 2
         self.full_size = self.visible_size + self.hidden_size
         # Create FC layer
         self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])
@@ -20,23 +23,31 @@ class RNN_experimental(nn.Module):
         exec_str = 'self.phi = torch.' + params['non-linearity']
         exec(exec_str)
         # Make gate Lambda
-        self.recurrence = params['lambda']
-        self.Lambda = torch.cat((torch.ones(self.visible_size, self.visible_size) * self.recurrence,
+        self.Lambda = torch.cat((torch.zeros(self.visible_size, self.visible_size),
                                  torch.ones(self.visible_size, self.hidden_size)), 1)
         for idx in range(self.visible_size):
             self.Lambda[idx, idx] = 1
+            if params['reverse_nodes'] is True:
+                self.Lambda[idx, idx + int(self.visible_size/2)] = 1
 
     def forward(self, X):
         # Initialize r and i nodes
-        R = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
-        I = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
+        n_window = int(X.shape[1]/self.visible_size)
+        vs = self.visible_size
+        Lambda_parallel = torch.from_numpy(np.tile(self.Lambda.numpy(), (n_window, 1)))
+        R = torch.zeros((X.shape[1], self.full_size), dtype=torch.float32)
+        Y = torch.zeros((X.shape[1], self.full_size), dtype=torch.float32)
+        out = torch.zeros((X.shape[1]))
         # Forward path
         for t in range(X.shape[0]):
-            I[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
-            U = torch.mul(self.Lambda, self.W(R)) + torch.mul((1 - self.Lambda), I)
-            #R = self.phi(U)
-            R = (1 / (1 + torch.exp(-U))) + U*0.3
-        return U
+            X_t_stacked = torch.from_numpy(np.tile(X[t, :], (vs, 1)))
+            for i in range(n_window):
+                Y[i*vs : i*vs+vs, :vs] = X_t_stacked[:, i*vs : i*vs+vs]
+            U = torch.mul(Lambda_parallel, self.W(R)) + torch.mul((1 - Lambda_parallel), Y)
+            R = self.phi(U)
+        for i in range(n_window):
+            out[i*vs : i*vs+vs] = torch.diag(U[i * vs: i * vs + vs, :vs])
+        return out
 
 
 class IS_RNN(nn.Module):

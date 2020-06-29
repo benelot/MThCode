@@ -61,7 +61,7 @@ def train(params: dict):
         print('No valid model type')
 
     criterion = nn.MSELoss(reduction='none')
-    lr = 0.0005
+    lr = 0.001
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     # Training
@@ -73,9 +73,6 @@ def train(params: dict):
     start_time = time.time()
 
     for epoch in range(params['epochs']):
-        lr = lr * (0.4 ** (epoch // params['lr_decay']))
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
         for T, X in enumerate(X_train):
             optimizer.zero_grad()
             prediction = model(X)
@@ -339,6 +336,8 @@ def plot_weights(id: str, vmax=1, linewidth=.5, absolute=False):
         model = models.IN_RNN(params)
     elif params['model_type'] == 'general':
         model = models.general_RNN(params)
+    elif params['model_type'] == 'parallel':
+        model = models.parallel_RNN(params)
     else:
         print('No valid model type')
     model.load_state_dict(torch.load('../models/' + id + '/model.pth'))
@@ -599,3 +598,101 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
     ax.set_title('Mean abs. weight')
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
 
+
+def train_parallel(params: dict):
+    model = models.parallel_RNN(params)
+    # Load data
+    X_train, X_test = data_loader(params=params)
+    X_train_mat = X_train[0]
+    for i in range(1, len(X_train)):
+        X_train_mat = np.append(X_train_mat, X_train[i], axis=1)
+
+    criterion = nn.L1Loss(reduction='none')
+    lr = 0.001
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+    # Training
+    epoch_loss = np.zeros([params['epochs'], X_train_mat.shape[1]])
+    epoch_grad_norm = np.zeros(params['epochs'])
+
+    start_time = time.time()
+
+    for epoch in range(params['epochs']):
+        optimizer.zero_grad()
+        prediction = model(X_train_mat)
+        loss = criterion(prediction, torch.from_numpy(X_train_mat[-1, :]))
+        torch.autograd.backward(loss.mean())
+        optimizer.step()
+        for p in model.parameters():
+            epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
+        epoch_loss[epoch, :] = loss.detach().numpy()
+        if epoch % 50 == 0:
+            print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
+
+    total_time = time.time() - start_time
+    print(f'Time [min]: {total_time / 60:.3}')
+
+    # Make optimizer evaluation dictionary
+    eval_optimization = {'id': params['id'],
+                         'loss': epoch_loss,
+                         'grad_norm': epoch_grad_norm}
+
+    # Save model
+    directory = '../models/' + params['id']
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    torch.save(model.state_dict(), directory + '/model.pth')
+    pickle.dump(params, open(directory + '/params.pkl', 'wb'))
+    pickle.dump(eval_optimization, open(directory + '/eval_optimization.pkl', 'wb'))
+
+
+def make_prediction_parallel(id: str, train_set=False):
+    """ Tests model an returns and saves distance metrics.
+
+        Returns:
+            eval_prediction
+
+        Saves:
+            eval_prediction.pkl
+    """
+    # Load parameters
+    params = pickle.load(open('../models/' + id + '/params.pkl', 'rb'))
+
+    # Load data
+    X_train, X_test = data_loader(params=params)
+    X_test_mat = X_train[0]
+    for i in range(1, len(X_test)):
+        X_test_mat = np.append(X_test_mat, X_test[i], axis=1)
+
+    model = models.parallel_RNN(params)
+    model.load_state_dict(torch.load('../models/' + id + '/model.pth'))
+
+    # Evaluate model
+    model.eval()
+
+    with torch.no_grad():
+        test_pred = np.zeros((len(X_test), model.visible_size))
+        test_true = np.zeros((len(X_test), model.visible_size))
+        predictions = model(X_test_mat)
+        test_pred = predictions.numpy().reshape((len(X_test), model.visible_size))
+        test_true = X_test_mat[-1, :].reshape((len(X_test), model.visible_size))
+
+        eval_prediction = {'id': id,
+                           'test_pred': test_pred,
+                           'test_true': test_true}
+        if train_set is False:
+            pickle.dump(eval_prediction, open('../models/' + id + '/eval_prediction.pkl', 'wb'))
+            return eval_prediction
+        else:
+            train_pred = np.zeros((len(X_train), model.visible_size))
+            train_true = np.zeros((len(X_train), model.visible_size))
+            with torch.no_grad():
+                for T, X in enumerate(X_train):
+                    predictions = model(X)
+                    train_pred[T, :] = predictions.numpy()
+                    train_true[T, :] = X[-1, :].numpy()
+
+    eval_prediction['train_pred'] = train_pred
+    eval_prediction['train_true'] = train_true
+    pickle.dump(eval_prediction, open('../models/' + id + '/eval_prediction.pkl', 'wb'))
+    return eval_prediction

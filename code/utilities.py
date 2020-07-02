@@ -612,7 +612,7 @@ def train_parallel(params: dict):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     # Training
-    epoch_loss = np.zeros([params['epochs'], X_train_mat.shape[1]])
+    epoch_loss = np.zeros([params['epochs'], model.visible_size])
     epoch_grad_norm = np.zeros(params['epochs'])
 
     start_time = time.time()
@@ -625,7 +625,7 @@ def train_parallel(params: dict):
         optimizer.step()
         for p in model.parameters():
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
-        epoch_loss[epoch, :] = loss.detach().numpy()
+        epoch_loss[epoch, :] = np.mean(loss.detach().numpy().reshape((-1, model.visible_size)), axis=0)
         if epoch % 50 == 0:
             print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 

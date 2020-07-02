@@ -13,8 +13,8 @@ import numpy as np
 
 ids = []
 paramses = []
-model_type = [['parallel', 1000],
-              ['general', 20]]
+model_type = [['parallel', 100],
+              ['general', 10]]
 
 for i, val in enumerate(model_type):
     ids.append('test_' + val[0])
@@ -43,7 +43,7 @@ util.train(paramses[1])
 
 for i, val in enumerate(ids):
     if i == 0:
-        #util.plot_optimization(val)
+        util.plot_optimization(val)
         util.make_prediction_parallel(val)
         util.make_distances(val)
         util.plot_prediction(val, [2, 6, 14, 18])

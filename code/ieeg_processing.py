@@ -6,6 +6,7 @@ from scipy.io import loadmat
 from scipy.signal import hilbert
 from scipy.signal import savgol_filter
 from scipy import fftpack
+from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 import time
 import torch
@@ -20,13 +21,14 @@ from scipy.stats.kde import gaussian_kde
 from matplotlib.ticker import MaxNLocator
 from matplotlib import animation, rc
 import hdf5storage
+import pwlf
 
 
 import utilities as util
 import models
 
 
-def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_components=12, sample_labels=None):
+def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_components=12, sample_labels=None, plot=True):
     """ Reduces node dimension to n_clusters.
 
     :param data: Data of size (n_samples, n_nodes)
@@ -42,13 +44,14 @@ def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_compo
     pca = PCA(n_components=n_components)
     pca_result = pca.fit_transform(data.T)
 
-    fig, ax = plt.subplots(figsize=(5, 5))
-    ax.scatter(pca_result[:, 0], pca_result[:, 1], c=pca_result[:, 2])
-    ax.set_xlabel('1st principal component')
-    ax.set_ylabel('2nd principal component')
-    ax.set_title('First 3 principal components')
-    plt.tight_layout()
-    fig.savefig('../doc/figures/preprocess_pca.png')
+    if plot:
+        fig, ax = plt.subplots(figsize=(5, 5))
+        ax.scatter(pca_result[:, 0], pca_result[:, 1], c=pca_result[:, 2])
+        ax.set_xlabel('1st principal component')
+        ax.set_ylabel('2nd principal component')
+        ax.set_title('First 3 principal components')
+        plt.tight_layout()
+        fig.savefig('../doc/figures/preprocess_pca.png')
 
     # Check score of K-Means for max_n_clusters
     n_clusters_list = list(range(1, max_n_clusters + 1))
@@ -58,15 +61,16 @@ def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_compo
         clusters = km.fit(pca_result)
         score.append(clusters.inertia_ / n_nodes)
 
-    fig = plt.figure(figsize=(5, 5))
-    ax = fig.gca()
-    plt.plot(n_clusters_list, score)
-    plt.xlabel('Number of clusters')
-    plt.ylabel('Mean squared distance')
-    plt.title('Distance to nearest cluster center')
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.tight_layout()
-    fig.savefig('../doc/figures/preprocess_kmeans_n_clusters.png')
+    if plot:
+        fig = plt.figure(figsize=(5, 5))
+        ax = fig.gca()
+        plt.plot(n_clusters_list, score)
+        plt.xlabel('Number of clusters')
+        plt.ylabel('Mean squared distance')
+        plt.title('Distance to nearest cluster center')
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.tight_layout()
+        fig.savefig('../doc/figures/preprocess_kmeans_n_clusters.png')
 
     # Perform K-Means on data
     km = KMeans(n_clusters=n_clusters)
@@ -74,13 +78,16 @@ def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_compo
 
     df = pd.DataFrame(pca_result)
     df['Cluster'] = clusters.labels_
-    fig = plt.figure(figsize=(5, 5))
-    sns.scatterplot(x=0, y=1, data=df, s=50, hue='Cluster', style='Cluster', palette='colorblind')
-    plt.xlabel('1st principal component')
-    plt.ylabel('2nd principal component')
-    plt.title('Clustering of the first two princ. components')
-    plt.tight_layout()
-    fig.savefig('../doc/figures/preprocess_kmeans_result.png')
+
+    if plot:
+        fig = plt.figure(figsize=(5, 5))
+        palette = sns.color_palette('muted', n_clusters)
+        sns.scatterplot(x=0, y=1, data=df, s=50, hue='Cluster', style='Cluster', palette=palette)
+        plt.xlabel('1st principal component')
+        plt.ylabel('2nd principal component')
+        plt.title('Clustering of the first two princ. components')
+        plt.tight_layout()
+        fig.savefig('../doc/figures/preprocess_kmeans_result.png')
 
     # Make DataFrame
     df = pd.DataFrame()
@@ -180,46 +187,50 @@ def distribution(data: np.ndarray, xlim: tuple=None):
     return kde_x, np.array(density).T
 
 
-def plot_distribution(data: np.ndarray, xlim: tuple=None, n_clusters: int=6):
-    """
-
-    :param data:
-    :param xlim:
-    :param n_clusters:
-    :return:
-    """
+def plot_distribution(data: np.ndarray, xlim: tuple=None, n_clusters: int=6, qq_plot: bool=True, title: str=''):
     kde_x, kde = distribution(data, xlim=xlim)
 
-    normal = np.sort(np.random.normal(size=data.shape[0]))
-    df_qq = node_reduction(np.sort(data, axis=0), n_clusters=n_clusters, sample_labels=normal)
-
-    df_kde = node_reduction(kde, n_clusters=n_clusters, sample_labels=kde_x)
+    df_kde = node_reduction(kde, n_clusters=n_clusters, sample_labels=kde_x, plot=False)
 
     sns.set_style('whitegrid')
-    fig = plt.figure(figsize=(8, 16))
-    gs = fig.add_gridspec(nrows=int(n_clusters / 2 + 1), ncols=2)
-    ax = [[] for i in range(n_clusters)]
-    ax[0] = fig.add_subplot(gs[:1, :])
-    sns.lineplot(x='sample_label', y='value', data=df_kde, hue='cluster', palette='colorblind', ax=ax[0])
-    ax[0].set_xlabel('Magnitude')
-    ax[0].set_ylabel('Density')
+    palette = sns.color_palette('muted', n_clusters)
 
-    color_list = sns.color_palette('colorblind', n_clusters)
-    row = np.repeat(np.arange(1, int(n_clusters / 2 + 2)), 2)
-    col = np.tile(np.array([[0, 1], [1, 2]]), 3)
-    for i in range(n_clusters):
-        ax[i] = fig.add_subplot(gs[row[i]:row[i + 2], col[0, i]:col[1, i]])
-        for k in range(df_qq.shape[0]):
-            if df_qq['cluster'][k] == i:
-                node = df_qq['node'][k]
-                break
-        sns.scatterplot(x='sample_label', y='value', data=df_qq.where(df_qq['node'] == node),
-                        ax=ax[i], label='from cluster ' + str(i), edgecolor=None, color=color_list[i])
-        ax[i].set_xlabel('Theoretical quantiles')
-        ax[i].set_ylabel('Sample quantiles')
-        ax[i].legend()
-    plt.tight_layout()
-    plt.savefig('../doc/figures/preprocess_distribution.png')
+    if qq_plot:
+        normal = np.sort(np.random.normal(size=data.shape[0]))
+        df_qq = node_reduction(np.sort(data, axis=0), n_clusters=n_clusters, sample_labels=normal)
+
+        fig = plt.figure(figsize=(8, 16))
+        gs = fig.add_gridspec(nrows=int(n_clusters / 2 + 1), ncols=2)
+        ax = [[] for i in range(n_clusters)]
+        ax[0] = fig.add_subplot(gs[:1, :])
+        sns.lineplot(x='sample_label', y='value', data=df_kde, hue='cluster', palette=palette, ax=ax[0])
+        ax[0].set_xlabel('Magnitude')
+        ax[0].set_ylabel('Density')
+        ax[0].set_title(title)
+
+        row = np.repeat(np.arange(1, int(n_clusters / 2 + 2)), 2)
+        col = np.tile(np.array([[0, 1], [1, 2]]), 3)
+        for i in range(n_clusters):
+            ax[i] = fig.add_subplot(gs[row[i]:row[i + 2], col[0, i]:col[1, i]])
+            for k in range(df_qq.shape[0]):
+                if df_qq['cluster'][k] == i:
+                    node = df_qq['node'][k]
+                    break
+            sns.scatterplot(x='sample_label', y='value', data=df_qq.where(df_qq['node'] == node),
+                            ax=ax[i], label='from cluster ' + str(i), edgecolor=None, color=palette[i])
+            ax[i].set_xlabel('Theoretical quantiles')
+            ax[i].set_ylabel('Sample quantiles')
+            ax[i].legend()
+        plt.tight_layout()
+
+    else:
+        plt.figure(figsize=(8, 6))
+        sns.lineplot(x='sample_label', y='value', data=df_kde, hue='cluster', palette=palette)
+        plt.xlabel('Magnitude')
+        plt.ylabel('Density')
+        plt.title(title)
+
+    plt.savefig('../doc/figures/preprocess_distribution_' + title + '.png')
 
 
 def acf_plot(data: np.ndarray, n_clusters=5, n_lags=1000):
@@ -340,3 +351,31 @@ def emp_connectome(patient_ID: str, hour: str, sperseg: float, soverlap: float, 
         ani = animation.FuncAnimation(fig, update, frames=corrmats.shape[2], interval=20)
 
         ani.save('../doc/figures/corr_ID' + ID + '_' + h + '.gif', writer='imagemagick', fps=fps)
+
+
+def correlation_metrics(x: np.ndarray, y: np.ndarray, t_shift: int):
+    break_locs = np.linspace(-5, 5, 50)
+    h2_shift = []
+    r_shift = []
+
+    for i in range(2 * t_shift):
+        # Cut data to time shift
+        y_data = y[2 * t_shift - i: len(y)-i]
+        x_data = x[t_shift: -t_shift]
+        # Normalize data
+        y_norm = (y_data - np.mean(y_data)) / np.std(y_data)
+        x_norm = (x_data - np.mean(x_data)) / np.std(x_data)
+        # Non-linear fit
+        g = pwlf.PiecewiseLinFit(x_norm, y_norm)
+        g.fit_with_breaks(break_locs)
+        expect = np.mean(np.abs(y_norm - g.predict(x_norm)))  # Uniform distribution
+        h2_shift.append(1 - expect**2 / np.var(y_norm))
+        # Linear fit
+        r_shift.append(np.corrcoef(x_norm, y_norm)[0, 1])
+
+    h2 = h2_shift[int(np.argmax(np.asarray(h2_shift)))]
+    h2_x_to_y = int(np.argmax(np.asarray(h2_shift))-t_shift)
+    r = r_shift[int(np.argmax(np.asarray(r_shift)))]
+    r_x_to_y = int(np.argmax(np.asarray(r_shift)) - t_shift)
+
+    return h2, r, h2_x_to_y, r_x_to_y, h2_shift, r_shift

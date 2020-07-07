@@ -255,9 +255,13 @@ def data_loader(id: str=None, params: dict=None, train_portion=0.8, windowing=Tr
 
     # Normalization
     if params['normalization']:
-        sc = MinMaxScaler(feature_range=(0, 1)) #StandardScaler()
-        sc.fit(data)
-        data = sc.transform(data)
+        mean = np.mean(data)
+        std = np.std(data)
+        data = (data - mean) / (3 * std)
+        data = (data/2) + 0.5
+        #sc = MinMaxScaler(feature_range=(0, 1)) #StandardScaler()
+        #sc.fit(data)
+        #data = sc.transform(data)
 
     # To tensor
     data = torch.FloatTensor(data)

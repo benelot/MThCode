@@ -29,7 +29,7 @@ Tasks:
 		- Shortly check for non-linear behavior
 			(Scatterplot correlation)
 	(1.2) Analyze.
-		- Negative diagonal?
+		- Negative diagonal? (It is still '0'?)
 	(1.3) Find good statistical methods.
 	(1.4) Conduct experiments.
 

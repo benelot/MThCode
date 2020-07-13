@@ -26,8 +26,10 @@ Tasks:
 		- Scaler
 		- Bias
 		- Check for parallel model (for longer periods of time)
+		  - Compute parts
 		- Shortly check for non-linear behavior
-			(Scatterplot correlation)
+		  - FC comparison
+		  - tanh vs linear
 	(1.2) Analyze.
 		- Negative diagonal? (It is still '0'?)
 	(1.3) Find good statistical methods.

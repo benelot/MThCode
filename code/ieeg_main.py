@@ -10,7 +10,7 @@ from sklearn.feature_selection import mutual_info_classif
 import pyinform as pyinform
 import pwlf
 
-import ieeg_processing as ieeg
+import ieeg_utilities as ieeg
 
 # Load data
 data_mat = loadmat('../data/ID11_60h.mat')

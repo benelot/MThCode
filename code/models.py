@@ -13,22 +13,23 @@ class parallel_RNN(nn.Module):
         super().__init__()
         # Parameters
         self.hidden_size = params['hidden_size']
-        self.visible_size = params['channel_size']
-        if params['reverse_nodes'] is True:
-            self.visible_size = self.visible_size * 2
+        self.visible_size = params['visible_size']
         self.full_size = self.visible_size + self.hidden_size
         # Create FC layer
         self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])
         # Define non-linearity
-        exec_str = 'self.phi = torch.' + params['non-linearity']
-        exec(exec_str)
+        if params['af'] == 'linear':
+            def linear(in_):
+                return in_
+            self.phi = linear
+        else:
+            exec_str = 'self.phi = torch.' + params['af']
+            exec(exec_str)
         # Make gate Lambda
         self.Lambda = torch.cat((torch.zeros(self.visible_size, self.visible_size),
                                  torch.ones(self.visible_size, self.hidden_size)), 1)
         for idx in range(self.visible_size):
             self.Lambda[idx, idx] = 1
-            if params['reverse_nodes'] is True:
-                self.Lambda[idx, idx + int(self.visible_size/2)] = 1
 
     def forward(self, X):
         # Initialize r and i nodes
@@ -150,11 +151,12 @@ class AS_RNN(nn.Module):
         return U[:self.visible_size]
 
 
-class general_RNN(nn.Module):
+class general_RNN_old(nn.Module):
     def __init__(self, params: dict):
         super().__init__()
 
         # Parameters
+        self.flag = False  # flag for AF between r -> u
         self.hidden_size = params['hidden_size']
         self.visible_size = params['channel_size']
         if params['reverse_nodes'] is True:
@@ -165,24 +167,22 @@ class general_RNN(nn.Module):
         self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])
 
         # Define non-linearity
-        if params['non-linearity'] == 'relu':
+        if params['non-linearity'] == 'relu_0':
             self.phi = torch.relu
-        elif params['non-linearity'] == 'sigmoid0':
+        elif params['non-linearity'] == 'relu_1n':
+            def relu_1n(in_):
+                relu = 0.5 * in_ + 0.5
+                relu[relu < 0] = 0
+                return relu
+            self.phi = relu_1n
+            self.flag = True
+        elif params['non-linearity'] == 'tanh':
+            self.phi = torch.tanh
+        elif params['non-linearity'] == 'sigmoid':
             def sigmoid(in_):
-                return 1 / (1 + torch.exp(-4 * (in_ - 0.5)))
+                return 2 * (1 / (1 + torch.exp(-2 * in_))) -1
             self.phi = sigmoid
-        elif params['non-linearity'] == 'sigmoid1':
-            def sigmoid(in_):
-                return 1 / (1 + torch.exp(-6 * (in_ - 0.5)))
-            self.phi = sigmoid
-        elif params['non-linearity'] == 'sigmoid2':
-            def sigmoid(in_):
-                return 1 / (1 + torch.exp(-8 * (in_ - 0.5)))
-            self.phi = sigmoid
-        elif params['non-linearity'] == 'sigmoid3':
-            def sigmoid(in_):
-                return 1 / (1 + torch.exp(-10 * (in_ - 0.5)))
-            self.phi = sigmoid
+            self.flag = False
         elif params['non-linearity'] == 'linear':
             def linear(in_):
                 return in_
@@ -202,8 +202,76 @@ class general_RNN(nn.Module):
         R = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
         Y = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
         # Forward path
-        for t in range(X.shape[0]):
-            Y[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
-            U = torch.mul(self.Lambda, self.W(R)) + torch.mul((1 - self.Lambda), Y)
-            R = self.phi(U)
+        if self.flag is False:
+            for t in range(X.shape[0]):
+                Y[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
+                U = torch.mul(self.Lambda, self.W(R)) + torch.mul((1 - self.Lambda), Y)
+                R = self.phi(U)
+        elif self.flag is True:
+            for t in range(X.shape[0]):
+                Y[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
+                U = torch.mul(self.Lambda, (2 * self.W(R) - 1)) + torch.mul((1 - self.Lambda), Y)
+                R = self.phi(U)
+        return torch.diag(U[:, :self.visible_size])
+
+
+class general_RNN(nn.Module):
+    def __init__(self, params: dict):
+        super().__init__()
+
+        # Parameters
+        self.flag = False  # flag for AF between r -> u
+        self.hidden_size = params['hidden_size']
+        self.visible_size = params['visible_size']
+        self.full_size = self.hidden_size + self.visible_size
+
+        # Create FC layer
+        self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])
+
+        # Define non-linearity
+        if params['af'] == 'relu':
+            self.phi = torch.relu
+        elif params['af'] == 'relu_1n':
+            def relu_1n(in_):
+                relu = 0.5 * in_ + 0.5
+                relu[relu < 0] = 0
+                return relu
+            self.phi = relu_1n
+            self.flag = True
+        elif params['af'] == 'tanh':
+            self.phi = torch.tanh
+        elif params['af'] == 'sigmoid':
+            def sigmoid(in_):
+                return 2 * (1 / (1 + torch.exp(-2 * in_))) -1
+            self.phi = sigmoid
+            self.flag = False
+        elif params['af'] == 'linear':
+            def linear(in_):
+                return in_
+            self.phi = linear
+        else:
+            print('Error; No valid activation function.')
+
+        # Make gate Lambda
+        self.recurrence = params['lambda']
+        self.Lambda = torch.cat((torch.ones(self.visible_size, self.visible_size) * self.recurrence,
+                                 torch.ones(self.visible_size, self.hidden_size)), 1)
+        for idx in range(self.visible_size):
+            self.Lambda[idx, idx] = 1
+
+    def forward(self, X):
+        # Initialize r and i nodes
+        R = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
+        Y = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
+        # Forward path
+        if self.flag is False:
+            for t in range(X.shape[0]):
+                Y[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
+                U = torch.mul(self.Lambda, self.W(R)) + torch.mul((1 - self.Lambda), Y)
+                R = self.phi(U)
+        elif self.flag is True:
+            for t in range(X.shape[0]):
+                Y[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
+                U = torch.mul(self.Lambda, (2 * self.W(R) - 1)) + torch.mul((1 - self.Lambda), Y)
+                R = self.phi(U)
         return torch.diag(U[:, :self.visible_size])

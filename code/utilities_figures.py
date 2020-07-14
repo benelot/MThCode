@@ -264,8 +264,8 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
     """
 
     """
-    id1, id2 = [], []
-    mean_, mean_abs = [], []
+    id1, id2, id3 = [], [], []
+    mean_abs = []
     for i, id_ in enumerate(ids):
         params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
         # Get trained model
@@ -279,27 +279,28 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
 
         model.load_state_dict(torch.load('../models/' + id_ + '/model.pth'))
         W = model.W.weight.data.numpy()
-        mean_.append(np.mean(W))
         mean_abs.append(np.mean(np.abs(W)))
-        id1.append(id_[:-7])
-        id2.append(id_[-6:])
+        split_str = id_.split('_')
+        id1.append(split_str[0])
+        id2.append(split_str[1])
+        id3.append(split_str[2])
 
         if hidden is False:
             ch = params['channel_size']
             if params['reverse_nodes'] is True:
                 ch = ch * 2
-            mean_[i] = np.mean(W[:ch, :ch])
             mean_abs[i] = np.mean(np.abs(W[:ch, :ch]))
 
     df = pd.DataFrame()
-    df['Architecture'] = id1
+    df['Patient ID'] = id1
     df['Time'] = id2
+    df['Experiment Number'] = id3
     df['Mean abs. weight'] = mean_abs
 
     plt.figure(figsize=(10, 8))
     sns.set_style('darkgrid')
-    ax = sns.barplot(x='Mean abs. weight', y='Architecture', hue='Time', data=df)
-    ax.set(xlabel='Mean abs. weight', ylabel='Architecture')
+    ax = sns.barplot(x='Mean abs. weight', y='Patient ID', hue='Time', data=df)
+    ax.set(xlabel='Mean abs. weight', ylabel='Patient ID')
     ax.set_title('Mean abs. weight')
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
     plt.close()

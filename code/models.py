@@ -215,12 +215,11 @@ class general_RNN_old(nn.Module):
         return torch.diag(U[:, :self.visible_size])
 
 
-class general_RNN(nn.Module):
+class GeneralRNN(nn.Module):
     def __init__(self, params: dict):
         super().__init__()
 
         # Parameters
-        self.flag = False  # flag for AF between r -> u
         self.hidden_size = params['hidden_size']
         self.visible_size = params['visible_size']
         self.full_size = self.hidden_size + self.visible_size
@@ -231,20 +230,8 @@ class general_RNN(nn.Module):
         # Define non-linearity
         if params['af'] == 'relu':
             self.phi = torch.relu
-        elif params['af'] == 'relu_1n':
-            def relu_1n(in_):
-                relu = 0.5 * in_ + 0.5
-                relu[relu < 0] = 0
-                return relu
-            self.phi = relu_1n
-            self.flag = True
         elif params['af'] == 'tanh':
             self.phi = torch.tanh
-        elif params['af'] == 'sigmoid':
-            def sigmoid(in_):
-                return 2 * (1 / (1 + torch.exp(-2 * in_))) -1
-            self.phi = sigmoid
-            self.flag = False
         elif params['af'] == 'linear':
             def linear(in_):
                 return in_
@@ -261,17 +248,14 @@ class general_RNN(nn.Module):
 
     def forward(self, X):
         # Initialize r and i nodes
-        R = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
-        Y = torch.zeros((self.visible_size, self.full_size), dtype=torch.float32)
+        n_batches = X.shape[0]
+        R = torch.zeros((n_batches, self.visible_size, self.full_size), dtype=torch.float32)
+        Y = torch.zeros((n_batches, self.visible_size, self.full_size), dtype=torch.float32)
+        Lambda_batch = self.Lambda.repeat(n_batches, 1).view(n_batches, self.visible_size, self.full_size)
         # Forward path
-        if self.flag is False:
-            for t in range(X.shape[0]):
-                Y[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
-                U = torch.mul(self.Lambda, self.W(R)) + torch.mul((1 - self.Lambda), Y)
-                R = self.phi(U)
-        elif self.flag is True:
-            for t in range(X.shape[0]):
-                Y[:, :self.visible_size] = X[t, :].repeat(self.visible_size).view(-1, self.visible_size)
-                U = torch.mul(self.Lambda, (2 * self.W(R) - 1)) + torch.mul((1 - self.Lambda), Y)
-                R = self.phi(U)
-        return torch.diag(U[:, :self.visible_size])
+        for t in range(X.shape[1]):
+            Y[:, :, :self.visible_size] = X[:, t, :].repeat(self.visible_size, 1)\
+                .view(self.visible_size, n_batches, self.visible_size).transpose(0, 1)
+            U = torch.mul(Lambda_batch, self.W(R)) + torch.mul((1 - Lambda_batch), Y)
+            R = self.phi(U)
+        return torch.diagonal(U[:, :, :self.visible_size], dim1=-1, dim2=-2)

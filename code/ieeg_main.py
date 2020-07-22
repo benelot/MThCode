@@ -12,26 +12,12 @@ import pwlf
 
 import ieeg_utilities as ieeg
 
-# Load data
-data_mat = loadmat('../data/ID11_60h.mat')
-info_mat = loadmat('../data/ID11_info.mat')
-fs = info_mat['fs']
-sample_begin = int(5*60*fs)
-sample_end = sample_begin + int(60*fs)
-data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
+patient_id = 'ID11'
+time_begin = [62, 12]
+duration = 20
+ieeg.make_corr_connectivity(patient_id, time_begin, duration, t_shift=0.1, plot_name=patient_id + '_1')
 
-x = data_raw[:10000, 0]
-y = data_raw[:10000, 1]
-t_shift = int(0.5*fs)  # samples
-
-
-h2, r, h2_x_to_y, r_x_to_y, h2_shift, r_shift = ieeg.correlation_metrics(x, y, t_shift=t_shift)
-
-plt.figure()
-plt.plot(h2_shift), plt.grid(), plt.show()
-
-plt.figure()
-plt.plot(r_shift), plt.grid(), plt.show()
-
-print('h2: ' + str(h2) + ' shift: ' + str(h2_x_to_y))
-print('r: ' + str(r) + ' shift: ' + str(r_x_to_y))
+patient_id = 'ID11'
+time_begin = [65, 0]
+duration = 20
+ieeg.make_corr_connectivity(patient_id, time_begin, duration, t_shift=0.1, plot_name=patient_id + '_2')

@@ -151,39 +151,37 @@ class AS_RNN(nn.Module):
         return U[:self.visible_size]
 
 
-class general_RNN_old(nn.Module):
+class general_RNN(nn.Module):
     def __init__(self, params: dict):
         super().__init__()
 
         # Parameters
         self.flag = False  # flag for AF between r -> u
         self.hidden_size = params['hidden_size']
-        self.visible_size = params['channel_size']
-        if params['reverse_nodes'] is True:
-            self.visible_size = self.visible_size * 2
+        self.visible_size = params['visible_size']
         self.full_size = self.visible_size + self.hidden_size
 
         # Create FC layer
         self.W = nn.Linear(self.full_size, self.full_size, bias=params['bias'])
 
         # Define non-linearity
-        if params['non-linearity'] == 'relu_0':
+        if params['af'] == 'relu':
             self.phi = torch.relu
-        elif params['non-linearity'] == 'relu_1n':
+        elif params['af'] == 'relu_1n':
             def relu_1n(in_):
                 relu = 0.5 * in_ + 0.5
                 relu[relu < 0] = 0
                 return relu
             self.phi = relu_1n
             self.flag = True
-        elif params['non-linearity'] == 'tanh':
+        elif params['af'] == 'tanh':
             self.phi = torch.tanh
-        elif params['non-linearity'] == 'sigmoid':
+        elif params['af'] == 'sigmoid':
             def sigmoid(in_):
                 return 2 * (1 / (1 + torch.exp(-2 * in_))) -1
             self.phi = sigmoid
             self.flag = False
-        elif params['non-linearity'] == 'linear':
+        elif params['af'] == 'linear':
             def linear(in_):
                 return in_
             self.phi = linear
@@ -194,8 +192,6 @@ class general_RNN_old(nn.Module):
                                  torch.ones(self.visible_size, self.hidden_size)), 1)
         for idx in range(self.visible_size):
             self.Lambda[idx, idx] = 1
-            if params['reverse_nodes'] is True:
-                self.Lambda[idx, idx + int(self.visible_size/2)] = 1
 
     def forward(self, X):
         # Initialize r and i nodes

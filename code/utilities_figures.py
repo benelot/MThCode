@@ -260,6 +260,8 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
     """
     id1, id2, id3 = [], [], []
     mean_abs = []
+    k = ['beginning', 'middle', 'end']
+    k_num = 0
     for i, id_ in enumerate(ids):
         params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
         # Get trained model
@@ -270,7 +272,11 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
         mean_abs.append(np.mean(np.abs(W)))
         split_str = id_.split('_')
         id1.append(split_str[1])
-        id2.append(split_str[2])
+        id2.append(k[k_num])  # split_str[2]
+        if k_num == 2:
+            k_num = 0
+        else:
+            k_num = k_num + 1
         id3.append(split_str[3])
 
         if hidden is False:
@@ -279,14 +285,15 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
 
     df = pd.DataFrame()
     df['Patient ID'] = id1
-    df['Time'] = id2
+    df['Pos. in sleep cylce'] = id2
     df['Experiment Number'] = id3
     df['Mean abs. weight'] = mean_abs
 
     plt.figure(figsize=(10, 8))
-    sns.set_style('darkgrid')
-    ax = sns.barplot(x='Mean abs. weight', y='Patient ID', hue='Time', data=df)
+    sns.set_style('whitegrid')
+    ax = sns.barplot(x='Mean abs. weight', y='Patient ID', hue='Pos. in sleep cylce', data=df)
     ax.set(xlabel='Mean abs. weight', ylabel='Patient ID')
     ax.set_title('Mean abs. weight')
+    ax.set_xlim(0.08, 0.13)
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
     plt.close()

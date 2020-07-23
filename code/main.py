@@ -3,7 +3,7 @@ import utilities_figures as ufig
 
 if __name__ == '__main__':
 
-    for attempt in range(20):
+    for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         pre = 'linear_'
         post = '_' + str(attempt)
@@ -30,9 +30,9 @@ if __name__ == '__main__':
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
-                      'duration': 60,  # seconds
+                      'duration': 5,  # seconds
                       # model parameters ------------------------
-                      'visible_size': 'all',  # 'all' or scalar
+                      'visible_size': 30,  # 'all' or scalar
                       'hidden_size': 0,  # improve: portion
                       'lambda': 0,
                       'af': 'linear',  # 'relu', 'linear', 'sigmoid'
@@ -40,9 +40,9 @@ if __name__ == '__main__':
                       'window_size': 30,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
-                      'lr': 0.0003,
+                      'lr': 0.0002,
                       'normalization': 'standard',  # 'min_max', 'standard', None
-                      'epochs': 100}
+                      'epochs': 400}
 
             utrain.train_and_test(params)
             utrain.test_train_set(ids[-1])

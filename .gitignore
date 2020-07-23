@@ -2,4 +2,4 @@ code/trash
 data/*.mat
 data/*.npy
 models/
-doc/figures/*png
+doc/figures/*.png

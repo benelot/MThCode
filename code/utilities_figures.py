@@ -15,9 +15,9 @@ import models
 import utilities_train as utrain
 
 
-def plot_train_test(id_: str, pred_nodes: list, lim_nr_samples=None, train_set=False):
+def plot_train_test(id_: str, pred_nodes: list, lim_nr_samples=None, predict_train_set=False):
     plot_optimization(id_)
-    plot_prediction(id_, pred_nodes, lim_nr_samples=lim_nr_samples, train_set=train_set)
+    plot_prediction(id_, pred_nodes, lim_nr_samples=lim_nr_samples, train_set=predict_train_set)
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
     if params['model_type'] != 'single':
         plot_weights(id_)
@@ -73,13 +73,7 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
     """
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
     # Get trained model
-    model = None
-    if params['model_type'] == 'general':
-        model = models.general_RNN(params)
-    elif params['model_type'] == 'parallel':
-        model = models.parallel_RNN(params)
-    else:
-        print('Error: No valid model type.')
+    model = models.GeneralRNN(params)
 
     model.load_state_dict(torch.load('../models/' + id_ + '/model.pth'))
     W = model.W.weight.data.numpy()
@@ -102,7 +96,7 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
         sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax0)
         ax0.set_ylabel('to visible nodes')
         ax0.set_xlabel('from visible nodes')
-        ax0.set_title('Weight matrix of ' + params['id'])
+        ax0.set_title('Weight matrix of ' + params['id_'])
 
     else:
         ax0 = fig.add_subplot(gs[:ch, :ch])
@@ -269,26 +263,18 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
     for i, id_ in enumerate(ids):
         params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
         # Get trained model
-        model = None
-        if params['model_type'] == 'general':
-            model = models.general_RNN(params)
-        elif params['model_type'] == 'parallel':
-            model = models.parallel_RNN(params)
-        else:
-            print('Error: No valid model type.')
+        model = models.GeneralRNN(params)
 
         model.load_state_dict(torch.load('../models/' + id_ + '/model.pth'))
         W = model.W.weight.data.numpy()
         mean_abs.append(np.mean(np.abs(W)))
         split_str = id_.split('_')
-        id1.append(split_str[0])
-        id2.append(split_str[1])
-        id3.append(split_str[2])
+        id1.append(split_str[1])
+        id2.append(split_str[2])
+        id3.append(split_str[3])
 
         if hidden is False:
-            ch = params['channel_size']
-            if params['reverse_nodes'] is True:
-                ch = ch * 2
+            ch = params['visible_size']
             mean_abs[i] = np.mean(np.abs(W[:ch, :ch]))
 
     df = pd.DataFrame()

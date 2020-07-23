@@ -195,8 +195,9 @@ def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_nam
         df['time'] = id2
 
     plt.figure(figsize=(10, 8))
-    sns.set_style('darkgrid')
-    ax = sns.boxplot(x=x, y=y, data=df, hue=hue)
+    sns.set_style('whitegrid')
+    # mask = df['train_set'].isin([True])
+    ax = sns.boxplot(x=x, y=y, data=df, hue=hue)  # df[~mask]
     ax.set(xlabel=x, ylabel=y)
     if ylim:
         plt.ylim(ylim)
@@ -217,7 +218,7 @@ def plot_multi_scatter(ids: list, save_name='default'):
     for idx, id_ in enumerate(ids):
         eval_predictions.append(pickle.load(open('../models/' + id_ + '/eval_prediction.pkl', 'rb')))
 
-    sns.set_style('darkgrid')
+    sns.set_style('whitegrid')
     ax = [[] for i in range(len(ids))]
 
     fig = plt.figure(figsize=(10, int(np.ceil(len(ax) / 2)) * 5))
@@ -289,11 +290,12 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
     df['Experiment Number'] = id3
     df['Mean abs. weight'] = mean_abs
 
-    plt.figure(figsize=(10, 8))
-    sns.set_style('whitegrid')
-    ax = sns.barplot(x='Mean abs. weight', y='Patient ID', hue='Pos. in sleep cylce', data=df)
-    ax.set(xlabel='Mean abs. weight', ylabel='Patient ID')
-    ax.set_title('Mean abs. weight')
-    ax.set_xlim(0.08, 0.13)
+    with sns.color_palette('colorblind', 3):
+        plt.figure(figsize=(10, 8))
+        sns.set_style('whitegrid')
+        ax = sns.barplot(x='Mean abs. weight', y='Patient ID', hue='Pos. in sleep cylce', data=df)
+        ax.set(xlabel='Mean abs. weight', ylabel='Patient ID')
+        ax.set_title('Mean abs. weight')
+        ax.set_xlim(0.08, 0.13)
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
     plt.close()

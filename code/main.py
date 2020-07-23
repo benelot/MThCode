@@ -3,7 +3,7 @@ import utilities_figures as ufig
 
 if __name__ == '__main__':
 
-    for attempt in range(3):
+    for attempt in range(8):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         pre = 'linear_'
         post = '_' + str(attempt)
@@ -30,9 +30,9 @@ if __name__ == '__main__':
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
-                      'duration': 5,  # seconds
+                      'duration': 60,  # seconds
                       # model parameters ------------------------
-                      'visible_size': 30,  # 'all' or scalar
+                      'visible_size': 'all',  # 'all' or scalar
                       'hidden_size': 0,  # improve: portion
                       'lambda': 0,
                       'af': 'linear',  # 'relu', 'linear', 'sigmoid'

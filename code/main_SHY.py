@@ -43,13 +43,13 @@ for j in range(8):
         #           'epochs': 25}
 
         # utrain.train_test(params, train_set=False)
-        utrain.test_train_set(ids[-1])
-        ufig.plot_train_test(ids[-1], [3, 12, 23, 29], lim_nr_samples=2000, predict_train_set=True)
-        print(str(i))
+        # utrain.test_train_set(ids[-1])
+        # ufig.plot_train_test(ids[-1], [3, 12, 23, 29], lim_nr_samples=2000, predict_train_set=True)
+        # print(str(i))
 
-    print('--------------- Attempt: ' + str(j))
-    ufig.plot_multi_boxplots(ids=ids, x='id_', y='correlation', save_name='relu_shy' + post + '_corr')
+    #print('--------------- Attempt: ' + str(j))
+    #ufig.plot_multi_boxplots(ids=ids, x='id_', y='correlation', hue='train_set', save_name='relu_shy' + post + '_corr')
     # ufig.plot_multi_boxplots(ids=ids, x='id_', y='mae', save_name='relu_shy' + post + '_mae')
     # ufig.plot_multi_boxplots(ids=ids, x='id_', y='mse', save_name='relu_shy' + post + '_mse')
 
-#ufig.mean_weights(ids=ids, hidden=False, save_name='relu_shy_all')
+ufig.mean_weights(ids=ids, hidden=False, save_name='relu_shy_all')

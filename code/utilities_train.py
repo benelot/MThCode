@@ -243,8 +243,8 @@ def train(params):
         for p in model.parameters():
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
         epoch_loss[epoch, :] = np.mean(loss.detach().numpy(), axis=0)
-        # if epoch % 20 == 0:
-        print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
+        if epoch % 10 == 0:
+            print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     total_time = time.time() - start_time
     print(f'Time [min]: {total_time / 60:.3}')
@@ -501,7 +501,7 @@ def predict_old(id_: str, train_set=False):
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
 
     # Load data
-    X_train, X_test = data_loader(params=params)
+    X_train, X_test = pre_process(params=params, windowing=True)
 
     # Get trained model
     model = None

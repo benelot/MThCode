@@ -344,7 +344,6 @@ def emp_connectome(patient_ID: str, hour: str, sperseg: float, soverlap: float, 
 
 def correlation_metrics(x: np.ndarray, y: np.ndarray, t_shift: int):
     """
-
     :param x:
     :param y:
     :param t_shift: In samples
@@ -375,49 +374,67 @@ def correlation_metrics(x: np.ndarray, y: np.ndarray, t_shift: int):
     r2 = r2_shift[int(np.argmax(np.asarray(r2_shift)))]
     r2_dt = int(np.argmax(np.asarray(r2_shift)) - t_shift)  # dt for best correlation from x to y
 
-    return h2, r2, h2_dt, r2_dt, h2_shift, r2_shift
+    return r2, h2, r2_dt, h2_dt, r2_shift, h2_shift
 
 
-def plot_corr_connectivity(r2, h2, r2_dt, h2_dt, save_name='default'):
+def plot_corr_connectivity(r2, r2_dt, h2=None, h2_dt=None, save_name='default'):
     fs = 512
 
-    fig = plt.figure(figsize=(12, 10))
-    gs = fig.add_gridspec(2, 2)
-    cmap = 'viridis'
+    if h2 is not None:
+        fig = plt.figure(figsize=(12, 10))
+        gs = fig.add_gridspec(2, 2)
+        cmap = 'viridis'
 
-    ax0 = fig.add_subplot(gs[:1, :1])
-    sns.heatmap(r2, cmap=cmap)
-    ax0.set_title('r2 linear correlation')
-    ax0.get_xaxis().set_visible(False)
+        ax0 = fig.add_subplot(gs[:1, :1])
+        sns.heatmap(r2, cmap=cmap)
+        ax0.set_title('r2 linear correlation')
+        ax0.get_xaxis().set_visible(False)
 
-    ax1 = fig.add_subplot(gs[:1, 1:])
-    sns.heatmap(h2, cmap=cmap)
-    ax1.set_title('h2 non-linear correlation')
-    ax1.get_xaxis().set_visible(False), ax1.get_yaxis().set_visible(False)
+        ax1 = fig.add_subplot(gs[:1, 1:])
+        sns.heatmap(h2, cmap=cmap)
+        ax1.set_title('h2 non-linear correlation')
+        ax1.get_xaxis().set_visible(False), ax1.get_yaxis().set_visible(False)
 
-    ax2 = fig.add_subplot(gs[1:, :1])
-    vlim = np.max(np.abs(r2_dt))
-    sns.heatmap(r2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
-    ax2.set_title('r2 time shift [ms]')
+        ax2 = fig.add_subplot(gs[1:, :1])
+        vlim = np.max(np.abs(r2_dt))
+        sns.heatmap(r2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
+        ax2.set_title('r2 time shift [ms]')
 
-    ax3 = fig.add_subplot(gs[1:, 1:])
-    vlim = np.max(np.abs(h2_dt))
-    sns.heatmap(h2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
-    ax3.set_title('h2 time shift [ms]')
-    ax3.get_yaxis().set_visible(False)
+        ax3 = fig.add_subplot(gs[1:, 1:])
+        vlim = np.max(np.abs(h2_dt))
+        sns.heatmap(h2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
+        ax3.set_title('h2 time shift [ms]')
+        ax3.get_yaxis().set_visible(False)
+
+    else:
+        fig = plt.figure(figsize=(8, 10))
+        gs = fig.add_gridspec(2, 1)
+        cmap = 'viridis'
+
+        ax0 = fig.add_subplot(gs[:1, :1])
+        sns.heatmap(r2, cmap=cmap)
+        ax0.set_title('r2 linear correlation')
+        ax0.get_xaxis().set_visible(False)
+
+        ax2 = fig.add_subplot(gs[1:, :1])
+        vlim = np.max(np.abs(r2_dt))
+        sns.heatmap(r2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
+        ax2.set_title('r2 time shift [ms]')
 
     plt.tight_layout()
     plt.savefig('../doc/figures/fc_' + save_name + '.png')
     plt.close()
 
 
-def make_corr_connectivity(patient_id: str, time_begin: list, duration: float, t_shift=0.2, plot_name=None):
+def make_corr_connectivity(patient_id: str, time_begin: list, duration: float,
+                           t_shift=0.2, plot_name=None):
     """
 
     :param patient_id:
     :param time_begin: List with [hour, minute].
     :param duration: In seconds.
     :param t_shift: In seconds.
+    :param plot_name:
     :return:
     """
     # Load and prepare data
@@ -442,7 +459,7 @@ def make_corr_connectivity(patient_id: str, time_begin: list, duration: float, t
 
     for i in range(data_raw.shape[1]):
         for j in range(data_raw.shape[1]):
-            h2[i, j], r2[i, j], h2_dt[i, j], r2_dt[i, j], h2_shift, r2_shift = correlation_metrics(
+            r2[i, j], h2[i, j], r2_dt[i, j], h2_dt[i, j], r2_shift, h2_shift = correlation_metrics(
                 data_raw[:, i], data_raw[:, j], t_shift=int(t_shift * fs))
             h2_shift_list.append(h2_shift)
             r2_shift_list.append(r2_shift)
@@ -451,10 +468,10 @@ def make_corr_connectivity(patient_id: str, time_begin: list, duration: float, t
         print(f'Computed columns: {i}/{data_raw.shape[1]} | Time remaining [min]: {t_rem / 60:.3}')
 
     save_name = '../data/fc_' + patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'min'
-    np.save(save_name + '_h2.npy', h2)
-    np.save(save_name + '_h2_dt.npy', h2_dt)
     np.save(save_name + '_r2.npy', r2)
     np.save(save_name + '_r2_dt.npy', r2_dt)
+    np.save(save_name + '_h2.npy', h2)
+    np.save(save_name + '_h2_dt.npy', h2_dt)
 
     if plot_name is not None:
         plot_corr_connectivity(r2, h2, r2_dt, h2_dt, save_name=plot_name)

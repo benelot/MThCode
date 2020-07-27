@@ -203,6 +203,7 @@ def train(params):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Load data
+    print('Status: Start data preparation.')
     train_set, _ = pre_process(params=params)
     if params['visible_size'] == 'all':
         params['visible_size'] = train_set.shape[1]
@@ -231,6 +232,7 @@ def train(params):
     epoch_grad_norm = np.zeros(params['epochs'])
 
     start_time = time.time()
+    print('Status: Start training with cuda = ' + str(torch.cuda.is_available()) + '.')
 
     for epoch in range(params['epochs']):
         for X, y in data_generator:
@@ -243,7 +245,7 @@ def train(params):
         for p in model.parameters():
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
         epoch_loss[epoch, :] = np.mean(loss.detach().numpy(), axis=0)
-        if epoch % 10 == 0:
+        if epoch % 20 == 0:
             print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     total_time = time.time() - start_time
@@ -293,6 +295,7 @@ def predict(id_, predict_train_set=False):
     pred_all = []
     true_all = []
 
+    print('Status: Start prediction with cuda = ' + str(torch.cuda.is_available()) + '.')
     with torch.no_grad():
         for X, y in data_generator:
             X, y = X.to(device), y.to(device)
@@ -338,6 +341,7 @@ def distance(id_: str, predict_train_set=False):
         train_str = ''
 
     # Calculate distances
+    print('Status: Get distance metrics.')
     corr = []
     for i in range(node_size):
         corr.append(np.corrcoef(pred[:, i], true[:, i])[0, 1])

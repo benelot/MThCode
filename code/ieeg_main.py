@@ -1,14 +1,3 @@
-from scipy.io import loadmat
-import numpy as np
-from scipy import signal
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import mutual_info_classif
-import pyinform as pyinform
-import pwlf
 
 import ieeg_utilities as ieeg
 

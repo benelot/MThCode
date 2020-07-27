@@ -196,8 +196,8 @@ def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_nam
 
     plt.figure(figsize=(10, 8))
     sns.set_style('whitegrid')
-    # mask = df['train_set'].isin([True])
-    ax = sns.boxplot(x=x, y=y, data=df, hue=hue)  # df[~mask]
+    mask = df['train_set'].isin([True])
+    ax = sns.boxplot(x=x, y=y, data=df[~mask], hue=hue)  # df[~mask]
     ax.set(xlabel=x, ylabel=y)
     if ylim:
         plt.ylim(ylim)

@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     ids_all = []
     pre = 'linear_'
-    for attempt in range(2):
+    for attempt in range(8):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
@@ -46,9 +46,9 @@ if __name__ == '__main__':
                       'window_size': 30,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
-                      'lr': 0.0001,
+                      'lr': 0.0002,
                       'normalization': None,  # 'min_max', 'standard', None
-                      'epochs': 5}
+                      'epochs': 400}
 
             utrain.train_and_test(params)
             utrain.test_train_set(ids_attempt[-1])

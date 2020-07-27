@@ -244,7 +244,7 @@ def train(params):
             optimizer.step()
         for p in model.parameters():
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
-        epoch_loss[epoch, :] = np.mean(loss.detach().numpy(), axis=0)
+        epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
         if epoch % 20 == 0:
             print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
@@ -300,8 +300,8 @@ def predict(id_, predict_train_set=False):
         for X, y in data_generator:
             X, y = X.to(device), y.to(device)
             predictions = model(X)
-            pred_all.append(predictions)
-            true_all.append(y)
+            pred_all.append(predictions.cpu().numpy())
+            true_all.append(y.cpu().numpy())
         pred_all, true_all = np.concatenate(pred_all), np.concatenate(true_all)
 
     # Save predictions to file

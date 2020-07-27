@@ -48,7 +48,7 @@ if __name__ == '__main__':
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.0001,
                       'normalization': None,  # 'min_max', 'standard', None
-                      'epochs': 400}
+                      'epochs': 5}
 
             utrain.train_and_test(params)
             utrain.test_train_set(ids_attempt[-1])

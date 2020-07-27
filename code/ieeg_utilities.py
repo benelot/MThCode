@@ -494,4 +494,8 @@ def fast_corr_gpu(patient_id: str, time_begin: list, duration: float, t_shift=0.
     sample_end = sample_begin + int(duration * fs)
     data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
 
+    test = 1
+
+
+
 

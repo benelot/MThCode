@@ -140,8 +140,8 @@ def train(params):
         for p in model.parameters():
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
         epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
-        #if epoch % 20 == 0:
-        print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
+        if epoch % 10 == 0:
+            print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     total_time = time.time() - start_time
     print(f'Time [min]: {total_time / 60:.3}')

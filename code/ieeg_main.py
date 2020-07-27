@@ -8,16 +8,7 @@ time_begin = [[32, 7], [35, 15], [38, 22], [57, 58], [60, 10], [64, 40], [60, 5]
 duration = 60
 
 for i in range(len(patient_id)):
-    if time_begin[i][1] > 9:
-        name = 'fc_' + patient_id[i] + '_' + str(time_begin[i][0]) + 'h' + str(time_begin[i][1]) + 'min'
-    else:
-        name = 'fc_' + patient_id[i] + '_' + str(time_begin[i][0]) + 'h' + str(time_begin[i][1]) + 'min'
-
-    r2 = np.load('../data/' + name + '_r2.npy')
-    r2_dt = np.load('../data/' + name + '_r2_dt.npy')
-    h2 = np.load('../data/' + name + '_h2.npy')
-    h2_dt = np.load('../data/' + name + '_h2_dt.npy')
-    print(name + ': ' + str(np.mean(np.abs(r2))))
+    ieeg.fast_corr_gpu(patient_id[i], time_begin[i], duration, t_shift=0.05)
 
     #ieeg.plot_corr_connectivity(r2, r2_dt, h2, h2_dt, save_name=name)
     #ieeg.make_corr_connectivity(patient_id[i], time_begin[i], duration, t_shift=0.05, plot_name=patient_id[i] + '_0')

@@ -46,9 +46,9 @@ if __name__ == '__main__':
                       'window_size': 30,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
-                      'lr': 0.0002,
+                      'lr': 0.0001,
                       'normalization': None,  # 'min_max', 'standard', None
-                      'epochs': 400}
+                      'epochs': 20}
 
             utrain.train_and_test(params)
             utrain.test_train_set(ids_attempt[-1])

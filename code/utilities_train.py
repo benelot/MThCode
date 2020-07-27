@@ -208,7 +208,7 @@ def train(params):
     if params['visible_size'] == 'all':
         params['visible_size'] = train_set.shape[1]
     data_set = iEEG_DataSet(train_set, params['window_size'])
-    data_generator = torch.utils.data.DataLoader(data_set, batch_size=200, shuffle=True)
+    data_generator = torch.utils.data.DataLoader(data_set, batch_size=int(20*512), shuffle=True)
 
     # Make model
     model = models.GeneralRNN(params)
@@ -245,8 +245,8 @@ def train(params):
         for p in model.parameters():
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
         epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
-        if epoch % 20 == 0:
-            print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
+        #if epoch % 20 == 0:
+        print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     total_time = time.time() - start_time
     print(f'Time [min]: {total_time / 60:.3}')
@@ -257,6 +257,7 @@ def train(params):
                          'grad_norm': epoch_grad_norm}
 
     # Save model
+    print('Status: Save trained model to file.')
     directory = '../models/' + params['id_']
     if not os.path.exists(directory):
         os.mkdir(directory)
@@ -275,6 +276,7 @@ def predict(id_, predict_train_set=False):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Load data and parameters
+    print('Status: Load and process data for prediction.')
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
     train_set, test_set = pre_process(params=params)
     if predict_train_set is True:
@@ -283,7 +285,7 @@ def predict(id_, predict_train_set=False):
     else:
         data_set = iEEG_DataSet(test_set, params['window_size'])
         prefix = 'test'
-    data_generator = torch.utils.data.DataLoader(data_set, batch_size=200, shuffle=False)
+    data_generator = torch.utils.data.DataLoader(data_set, batch_size=1000, shuffle=False)
 
     # Make model
     model = models.GeneralRNN(params)
@@ -305,16 +307,21 @@ def predict(id_, predict_train_set=False):
         pred_all, true_all = np.concatenate(pred_all), np.concatenate(true_all)
 
     # Save predictions to file
+    print('Status: Save predictions to file.')
     directory = '../models/' + id_ + '/eval_prediction.pkl'
     if os.path.exists(directory):
+        print('S0')
         eval_prediction = pickle.load(open(directory, 'rb'))
         eval_prediction[prefix + '_pred'] = pred_all
         eval_prediction[prefix + '_true'] = true_all
     else:
+        print('S1')
         eval_prediction = {'id_': id_,
                            prefix + '_pred': pred_all,
                            prefix + '_true': true_all}
+    print('S3')
     pickle.dump(eval_prediction, open('../models/' + id_ + '/eval_prediction.pkl', 'wb'))
+    print('Status: Saved.')
 
     return eval_prediction
 

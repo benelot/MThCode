@@ -477,3 +477,21 @@ def make_corr_connectivity(patient_id: str, time_begin: list, duration: float,
         plot_corr_connectivity(r2, h2, r2_dt, h2_dt, save_name=plot_name)
 
 
+def fast_corr_gpu(patient_id: str, time_begin: list, duration: float, t_shift=0.2):
+    """
+
+    :param patient_id:
+    :param time_begin: List with [hour, minute].
+    :param duration: In seconds.
+    :param t_shift: In seconds.
+    :return:
+    """
+    # Load and prepare data
+    data_mat = loadmat('../data/' + patient_id + '_' + str(time_begin[0]) + 'h.mat')
+    info_mat = loadmat('../data/' + patient_id + '_info.mat')
+    fs = float(info_mat['fs'])
+    sample_begin = int(time_begin[1] * 60 * fs)
+    sample_end = sample_begin + int(duration * fs)
+    data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
+
+

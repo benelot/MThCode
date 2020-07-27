@@ -48,7 +48,7 @@ if __name__ == '__main__':
                       'window_size': 30,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
-                      'lr': 0.0005,
+                      'lr': 0.001,
                       'batch_size': int(10*512),
                       'normalization': None,  # 'min_max', 'standard', None
                       'epochs': 500}

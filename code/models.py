@@ -243,11 +243,12 @@ class GeneralRNN(nn.Module):
             self.Lambda[idx, idx] = 1
 
     def forward(self, X):
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # Initialize r and i nodes
-        n_batches = X.shape[0]
-        R = torch.zeros((n_batches, self.visible_size, self.full_size), dtype=torch.float32)
-        Y = torch.zeros((n_batches, self.visible_size, self.full_size), dtype=torch.float32)
-        Lambda_batch = self.Lambda.repeat(n_batches, 1).view(n_batches, self.visible_size, self.full_size)
+        n_batches = X.shape[0].to(device)
+        R = torch.zeros((n_batches, self.visible_size, self.full_size), dtype=torch.float32).to(device)
+        Y = torch.zeros((n_batches, self.visible_size, self.full_size), dtype=torch.float32).to(device)
+        Lambda_batch = self.Lambda.repeat(n_batches, 1).view(n_batches, self.visible_size, self.full_size).to(device)
         # Forward path
         for t in range(X.shape[1]):
             Y[:, :, :self.visible_size] = X[:, t, :].repeat(self.visible_size, 1)\

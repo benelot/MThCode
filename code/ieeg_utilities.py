@@ -1,4 +1,7 @@
+import copy
+
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import seaborn as sns
 import pandas as pd
@@ -506,46 +509,77 @@ def fast_corr_numpy(patient_id: str, time_begin: list, duration: float, t_lag=0.
             y = data_norm[n_lag:-n_lag, from_]
             cctl[from_, to_, :] = cross_correlation.correlate_template(x, y)
 
-    # Calculate peak cross correlation (cc) and peak time lag (tl)
+    # Calculate peak cross correlation (cc) and corresponding time lag (tl)
     sign = np.sign(np.max(cctl, axis=2) - np.abs(np.min(cctl, axis=2)))
     cc = np.multiply(np.max(np.abs(cctl), axis=2), sign)
-    mask = np.where(np.abs(cc) > critical_corr, 1, 0)
-    tl_n = np.argmax(np.abs(cctl), axis=2)
-    tl = (tl_n - n_lag) * mask / fs * 1000  # [ms]
+    mask = np.where(np.abs(cc) > critical_corr, 1, np.nan)
+    tl_n = np.nanargmax(np.abs(cctl), axis=2)
+    tl = (tl_n - n_lag) * mask / fs * 1000  # in [ms]
 
     # Calculate mean tau
-    arg_tau = np.exp(-1) * np.dstack([cc] * cctl.shape[2])
-    close_vals = np.isclose(cctl, arg_tau, rtol=1e-1) * cctl
+    # Tile and stack values for future operations
+    tl_n_stacked = np.dstack([tl_n] * cctl.shape[2])
+    arg_tau_stacked = np.exp(-1) * np.dstack([cc] * cctl.shape[2])
+    mask_stacked = np.dstack([np.where(np.abs(cc) > critical_corr, 1, 0)] * cctl.shape[2])
+    t_indices_tiled = np.tile(np.arange(0, cctl.shape[2]), (cctl.shape[0], cctl.shape[0], 1))
+    # Get indices of values close to np.exp(-1) of peak cross correlation
+    close_indices = np.isclose(cctl, arg_tau_stacked, rtol=1e-1) * t_indices_tiled
+    # Create mask to separate negative and positive tau
+    higher_tau_mask = np.where(close_indices - tl_n_stacked > 0, 1, 0)
+    lower_tau_mask = np.where(tl_n_stacked - close_indices > 0, 1, 0)
+    # Apply separation mask and min. peak cross correlation mask
+    higher_tau_masked = close_indices * higher_tau_mask * mask_stacked
+    lower_tau_masked = close_indices * lower_tau_mask * mask_stacked
+    # Compute median along time lag axis and ignore zero entries
+    higher_tau = np.ma.median(np.ma.masked_where(higher_tau_masked == 0, higher_tau_masked), axis=2).filled(0)
+    lower_tau = np.ma.median(np.ma.masked_where(lower_tau_masked == 0, lower_tau_masked), axis=2).filled(0)
+    tau_n = (higher_tau - lower_tau) / 2
+    tau = np.where(tau_n == 0, np.nan, tau_n) / fs * 1000  # in [ms]
 
-    for from_ in range(data_norm.shape[1]):
-        for to_ in range(data_norm.shape[1]):
-            if mask[from_, to_] == 1:
-                arg_tau = np.ones((cctl.shape[2])) * np.exp(-1) * cc[from_, to_]
-                close_vals = np.isclose(cctl[from_, to_, :], arg_tau, rtol=1e-1) * cctl[from_, to_, :]
-                lower_tau, higher_tau = np.median(close_vals[close_vals < cc[from_, to_]]),\
-                                        np.median(close_vals[close_vals < cc[from_, to_]])
-
-    return cc, tl, cctl  # in [ms]
+    return cc, tl, tau, cctl
 
 
-def fast_corr_numpy_plot(cc, tl, patient_id: str, time_begin: list):
-    fig = plt.figure(figsize=(8, 13))
-    gs = fig.add_gridspec(2, 1)
-    cmap = 'seismic'
+def fast_corr_numpy_plot(cc, tl, tau, patient_id: str, time_begin: list):
+    sns.set_style('white')
+    fig = plt.figure(figsize=(10, 13))
+    gs = fig.add_gridspec(3, 2)
+    cmap_div = copy.copy(mpl.cm.get_cmap('seismic'))
+    cmap_div.set_bad('grey')
+    cmap_uni = copy.copy(mpl.cm.get_cmap('viridis'))
+    cmap_uni.set_bad('grey')
 
     ax0 = fig.add_subplot(gs[:1, :1])
-    sns.heatmap(cc, cmap=cmap, vmin=-1, vmax=1)
-    ax0.set_title('Max. correlation value')
-    ax0.get_xaxis().set_visible(False)
-    ax0.set_ylabel('Node idx')
+    sns.heatmap(cc, cmap=cmap_div, vmin=-1, vmax=1)
+    ax0.set_title('Peak cross correlation')
+    ax0.set_ylabel('Node idx'), ax0.set_ylabel('Node idx')
 
-    ax1 = fig.add_subplot(gs[1:, :1])
-    vlim = np.max(np.abs(tl))
-    sns.heatmap(tl, cmap=cmap, vmin=-vlim, vmax=vlim)
-    ax1.set_title('Time lag [ms]')
-    ax1.set_xlabel('Node idx'), ax1.set_ylabel('Node idx')
+    ax1 = fig.add_subplot(gs[:1, 1:])
+    sns.distplot(cc, kde=False)
+    ax1.set_title('Peak cross correlation histogram')
+    ax1.set_xlabel('Peak cross correlation [-]'), ax1.set_ylabel('Frequency [-]')
+
+    ax2 = fig.add_subplot(gs[1:2, :1])
+    vlim = np.nanmax(np.abs(tl))
+    sns.heatmap(tl, cmap=cmap_div, vmin=-vlim, vmax=vlim)
+    ax2.set_title('Corresponding time lag [ms]')
+    ax2.set_xlabel('Node idx'), ax2.set_ylabel('Node idx')
+
+    ax3 = fig.add_subplot(gs[1:2, 1:])
+    sns.distplot(tl, kde=False)
+    ax3.set_title('Time lag histogram')
+    ax3.set_xlabel('Time [ms]'), ax3.set_ylabel('Frequency [-]')
+
+    ax4 = fig.add_subplot(gs[2:, :1])
+    sns.heatmap(tau, cmap=cmap_uni, vmin=0)
+    ax4.set_title('Corresponding tau [ms]')
+    ax4.set_xlabel('Node idx'), ax4.set_ylabel('Node idx')
+
+    ax5 = fig.add_subplot(gs[2:, 1:])
+    sns.distplot(tau, kde=False)
+    ax5.set_title('Tau histogram')
+    ax5.set_xlabel('Time [ms]'), ax5.set_ylabel('Frequency [-]')
 
     plt.tight_layout()
-    save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'min'
+    save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'
     plt.savefig('../doc/figures/cc_' + save_name + '.png')
     plt.close()

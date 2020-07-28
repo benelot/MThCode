@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'linear_'
+    pre = 'relu_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -44,15 +44,15 @@ if __name__ == '__main__':
                       'visible_size': 'all',  # 'all' or scalar
                       'hidden_size': 0,  # improve: portion
                       'lambda': 0,
-                      'af': 'linear',  # 'relu', 'linear', 'sigmoid'
+                      'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
-                      'batch_size': int(5*512),
-                      'normalization': None,  # 'min_max', 'standard', None
-                      'epochs': 150}
+                      'batch_size': int(20*512),
+                      'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
+                      'epochs': 200}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)

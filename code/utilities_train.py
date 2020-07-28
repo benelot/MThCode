@@ -62,6 +62,9 @@ def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False
     elif params['normalization'] == 'min_max_positive':
         sc = MinMaxScaler(feature_range=(0, 1))
         data = sc.fit_transform(data)
+    elif params['normalization'] == 'all_standard_positive':
+        data = (data - np.mean(data)) / (8 * np.std(data))
+        data = data / 2 + 0.5
     elif params['normalization'] is not None:
         print('Error: No valid normalization method.')
 
@@ -143,7 +146,7 @@ def train(params):
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
         epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
         #epoch_time[epoch + 1] = time.time() - epoch_time[epoch]
-        if epoch % 5 == 0:
+        if epoch % 10 == 0:
             print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     total_time = time.time() - start_time

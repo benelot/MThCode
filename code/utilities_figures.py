@@ -254,9 +254,9 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
         model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
         W = model.W.weight.data.numpy()
         mean_abs.append(np.mean(np.abs(W)))
-        if id_[5:10] == 'ID11a':
+        if id_[5:7] == 'ID11a':  # [7:12]
             patient_id.append('ID11a')
-        elif id_[5:10] == 'ID11b':
+        elif id_[5:7] == 'ID11b':
             patient_id.append('ID11b')
         else:
             patient_id.append(params['patient_id'])

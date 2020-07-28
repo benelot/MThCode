@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'linear_'
+    pre = 'relu_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -50,8 +50,8 @@ if __name__ == '__main__':
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
-                      'batch_size': 1,
-                      'normalization': None,  # 'min_max', 'standard', None
+                      'batch_size': int(1*512),
+                      'normalization': 'standard_positive',  # 'min_max', 'standard', None
                       'epochs': 50}
 
             utrain.train_and_test(params)

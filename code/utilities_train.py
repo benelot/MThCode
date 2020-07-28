@@ -125,8 +125,10 @@ def train(params):
     loss = None
     epoch_loss = np.zeros([params['epochs'], model.visible_size])
     epoch_grad_norm = np.zeros(params['epochs'])
+    epoch_time = np.zeros(params['epochs'] + 1)
 
     start_time = time.time()
+    epoch_time[0] = start_time.copy()
     print('Status: Start training with cuda = ' + str(torch.cuda.is_available()) + '.')
 
     for epoch in range(params['epochs']):
@@ -140,8 +142,10 @@ def train(params):
         for p in model.parameters():
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
         epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
+        epoch_time[epoch + 1] = time.time() - epoch_time[epoch]
         if epoch % 10 == 0:
-            print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
+            print(f'Epoch: {epoch} | Time/Epoch [min]: {np.mean(epoch_time[epoch - 9:epoch_time + 1])}'
+                  f' | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     total_time = time.time() - start_time
     print(f'Time [min]: {total_time / 60:.3}')

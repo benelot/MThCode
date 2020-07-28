@@ -250,10 +250,16 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
         # Get trained model
         model = models.GeneralRNN(params)
 
-        model.load_state_dict(torch.load('../models/' + id_ + '/model.pth'))
+        device = torch.device('cpu')
+        model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
         W = model.W.weight.data.numpy()
         mean_abs.append(np.mean(np.abs(W)))
-        patient_id.append(params['patient_id'])
+        if id_[5:10] == 'ID11a':
+            patient_id.append('ID11a')
+        elif id_[5:10] == 'ID11b':
+            patient_id.append('ID11b')
+        else:
+            patient_id.append(params['patient_id'])
         brain_state.append(params['brain_state'])
 
         if hidden is False:
@@ -271,6 +277,6 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
         ax = sns.barplot(x='Mean abs. weight', y='Patient ID', hue='Pos. in sleep cylce', data=df)
         ax.set(xlabel='Mean abs. weight', ylabel='Patient ID')
         ax.set_title('Mean abs. weight')
-        ax.set_xlim(0.08, 0.13)
+        #ax.set_xlim(0.08, 0.13)
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
     plt.close()

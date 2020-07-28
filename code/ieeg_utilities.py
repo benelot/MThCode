@@ -15,6 +15,8 @@ import hdf5storage
 import pwlf
 import time
 from IPython.display import display, clear_output
+from sklearn.preprocessing import StandardScaler
+from obspy.signal import cross_correlation
 
 
 def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_components=12, sample_labels=None, plot=True):
@@ -477,7 +479,7 @@ def make_corr_connectivity(patient_id: str, time_begin: list, duration: float,
         plot_corr_connectivity(r2, h2, r2_dt, h2_dt, save_name=plot_name)
 
 
-def fast_corr_gpu(patient_id: str, time_begin: list, duration: float, t_shift=0.2):
+def fast_corr_numpy(patient_id: str, time_begin: list, duration: float, t_lag=0.1, critical_corr=0.7):
     """
 
     :param patient_id:
@@ -493,9 +495,42 @@ def fast_corr_gpu(patient_id: str, time_begin: list, duration: float, t_shift=0.
     sample_begin = int(time_begin[1] * 60 * fs)
     sample_end = sample_begin + int(duration * fs)
     data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
+    data_norm = data_raw
 
-    test = 1
+    n_lag = int(t_lag * fs)
+
+    cctl = np.zeros((data_norm.shape[1], data_norm.shape[1], (n_lag * 2) + 1))
+    for from_ in range(data_norm.shape[1]):
+        for to_ in range(data_norm.shape[1]):
+            x = data_norm[:, to_]
+            y = data_norm[n_lag:-n_lag, from_]
+            cctl[from_, to_, :] = cross_correlation.correlate_template(x, y)
+
+    sign = np.sign(np.max(cctl, axis=2) - np.abs(np.min(cctl, axis=2)))
+    cc = np.multiply(np.max(np.abs(cctl), axis=2), sign)
+    tl = (np.argmax(np.abs(cctl), axis=2) - n_lag) * np.where(np.abs(cc) > critical_corr, 1, 0)
+
+    return cc, tl / fs * 1000, cctl  # in [ms]
 
 
+def fast_corr_numpy_plot(cc, tl, patient_id: str, time_begin: list):
+    fig = plt.figure(figsize=(8, 13))
+    gs = fig.add_gridspec(2, 1)
+    cmap = 'seismic'
 
+    ax0 = fig.add_subplot(gs[:1, :1])
+    sns.heatmap(cc, cmap=cmap, vmin=-1, vmax=1)
+    ax0.set_title('Max. correlation value')
+    ax0.get_xaxis().set_visible(False)
+    ax0.set_ylabel('Node idx')
 
+    ax1 = fig.add_subplot(gs[1:, :1])
+    vlim = np.max(np.abs(tl))
+    sns.heatmap(tl, cmap=cmap, vmin=-vlim, vmax=vlim)
+    ax1.set_title('Time lag [ms]')
+    ax1.set_xlabel('Node idx'), ax1.set_ylabel('Node idx')
+
+    plt.tight_layout()
+    save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'min'
+    plt.savefig('../doc/figures/cc_' + save_name + '.png')
+    plt.close()

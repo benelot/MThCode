@@ -1,5 +1,6 @@
 import utilities_train as utrain
 import utilities_figures as ufig
+import utilities_various as uvar
 import os
 
 if __name__ == '__main__':
@@ -8,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'relu_'
+    pre = 'linear_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -43,14 +44,14 @@ if __name__ == '__main__':
                       'visible_size': 'all',  # 'all' or scalar
                       'hidden_size': 0,  # improve: portion
                       'lambda': 0,
-                      'af': 'relu',  # 'relu', 'linear', 'sigmoid'
-                      'bias': False,
+                      'af': 'linear',  # 'relu', 'linear', 'sigmoid'
+                      'bias': True,
                       'window_size': 30,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
                       'batch_size': int(10*512),
-                      'normalization': 'standard_positive',  # 'min_max', 'standard', None
+                      'normalization': None,  # 'min_max', 'standard', None
                       'epochs': 250}
 
             utrain.train_and_test(params)

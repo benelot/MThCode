@@ -506,11 +506,26 @@ def fast_corr_numpy(patient_id: str, time_begin: list, duration: float, t_lag=0.
             y = data_norm[n_lag:-n_lag, from_]
             cctl[from_, to_, :] = cross_correlation.correlate_template(x, y)
 
+    # Calculate peak cross correlation (cc) and peak time lag (tl)
     sign = np.sign(np.max(cctl, axis=2) - np.abs(np.min(cctl, axis=2)))
     cc = np.multiply(np.max(np.abs(cctl), axis=2), sign)
-    tl = (np.argmax(np.abs(cctl), axis=2) - n_lag) * np.where(np.abs(cc) > critical_corr, 1, 0)
+    mask = np.where(np.abs(cc) > critical_corr, 1, 0)
+    tl_n = np.argmax(np.abs(cctl), axis=2)
+    tl = (tl_n - n_lag) * mask / fs * 1000  # [ms]
 
-    return cc, tl / fs * 1000, cctl  # in [ms]
+    # Calculate mean tau
+    arg_tau = np.exp(-1) * np.dstack([cc] * cctl.shape[2])
+    close_vals = np.isclose(cctl, arg_tau, rtol=1e-1) * cctl
+
+    for from_ in range(data_norm.shape[1]):
+        for to_ in range(data_norm.shape[1]):
+            if mask[from_, to_] == 1:
+                arg_tau = np.ones((cctl.shape[2])) * np.exp(-1) * cc[from_, to_]
+                close_vals = np.isclose(cctl[from_, to_, :], arg_tau, rtol=1e-1) * cctl[from_, to_, :]
+                lower_tau, higher_tau = np.median(close_vals[close_vals < cc[from_, to_]]),\
+                                        np.median(close_vals[close_vals < cc[from_, to_]])
+
+    return cc, tl, cctl  # in [ms]
 
 
 def fast_corr_numpy_plot(cc, tl, patient_id: str, time_begin: list):

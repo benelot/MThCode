@@ -44,15 +44,15 @@ if __name__ == '__main__':
                       'visible_size': 'all',  # 'all' or scalar
                       'hidden_size': 0,  # improve: portion
                       'lambda': 0,
-                      'af': 'linear',  # 'relu', 'linear', 'sigmoid'
+                      'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
-                      'batch_size': int(10*512),
+                      'batch_size': 1,
                       'normalization': None,  # 'min_max', 'standard', None
-                      'epochs': 250}
+                      'epochs': 50}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)

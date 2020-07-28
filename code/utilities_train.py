@@ -103,7 +103,7 @@ def train(params):
     if params['visible_size'] == 'all':
         params['visible_size'] = data_pre.shape[1]
     data_set = iEEG_DataSet(data_pre, params['window_size'])
-    data_generator = torch.utils.data.DataLoader(data_set, batch_size=params['batch_size'], shuffle=True)
+    data_generator = torch.utils.data.DataLoader(data_set, batch_size=params['batch_size'], shuffle=False)
 
     # Make model
     model = models.GeneralRNN(params)
@@ -125,7 +125,7 @@ def train(params):
     loss = None
     epoch_loss = np.zeros([params['epochs'], model.visible_size])
     epoch_grad_norm = np.zeros(params['epochs'])
-    epoch_time = np.zeros(params['epochs'] + 1)
+    #epoch_time = np.zeros(params['epochs'] + 1)
 
     start_time = time.time()
     #epoch_time[0] = time.time()
@@ -143,7 +143,7 @@ def train(params):
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
         epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
         #epoch_time[epoch + 1] = time.time() - epoch_time[epoch]
-        if epoch % 10 == 0:
+        if epoch % 2 == 0:
             print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     total_time = time.time() - start_time

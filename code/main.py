@@ -38,7 +38,7 @@ if __name__ == '__main__':
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
-                      'duration': 30,  # seconds
+                      'duration': 3,  # seconds
                       'brain_state': val[3],
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
@@ -49,10 +49,10 @@ if __name__ == '__main__':
                       'window_size': 30,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
-                      'lr': 0.0002,
-                      'batch_size': 1,
+                      'lr': 0.001,
+                      'batch_size': int(512),
                       'normalization': 'standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 20}
+                      'epochs': 150}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)

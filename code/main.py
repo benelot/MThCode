@@ -50,9 +50,9 @@ if __name__ == '__main__':
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
-                      'batch_size': int(512),
+                      'batch_size': 100,
                       'normalization': 'standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 250}
+                      'epochs': 500}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)

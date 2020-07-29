@@ -488,7 +488,8 @@ def fast_corr_numpy(patient_id: str, time_begin: list, duration: float, t_lag=0.
     :param patient_id:
     :param time_begin: List with [hour, minute].
     :param duration: In seconds.
-    :param t_shift: In seconds.
+    :param t_lag: In seconds.
+    :param critical_corr:
     :return:
     """
     # Load and prepare data

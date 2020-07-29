@@ -106,7 +106,7 @@ def train(params):
     if params['visible_size'] == 'all':
         params['visible_size'] = data_pre.shape[1]
     data_set = iEEG_DataSet(data_pre, params['window_size'])
-    data_generator = torch.utils.data.DataLoader(data_set, batch_size=params['batch_size'], shuffle=False)
+    data_generator = torch.utils.data.DataLoader(data_set, batch_size=params['batch_size'], shuffle=params['shuffle'])
 
     # Make model
     model = models.GeneralRNN(params)

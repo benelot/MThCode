@@ -52,7 +52,7 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': int(512),
                       'normalization': 'standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 150}
+                      'epochs': 250}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)

@@ -15,9 +15,9 @@ import models
 import utilities_train as utrain
 
 
-def plot_train_test(id_: str, pred_nodes: list, lim_nr_samples=None, predict_train_set=False):
+def plot_train_test(id_: str, pred_nodes: list, lim_nr_samples=None):
     plot_optimization(id_)
-    plot_prediction(id_, pred_nodes, lim_nr_samples=lim_nr_samples, train_set=predict_train_set)
+    plot_prediction(id_, pred_nodes, lim_nr_samples=lim_nr_samples)
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
     if params['model_type'] != 'single':
         plot_weights(id_)
@@ -43,7 +43,7 @@ def plot_optimization(id_: str):
     df[['Epoch', 'Node']] = df[['Epoch', 'Node']].astype('int32')
     df['Node'] = df['Node'].astype('str')
 
-    sns.set_style('darkgrid')
+    sns.set_style('whitegrid')
     fig = plt.figure(figsize=(10, 10))
     gs = fig.add_gridspec(nrows=2, ncols=2)
     ax = [[], [], []]
@@ -128,7 +128,7 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
     plt.close()
 
 
-def plot_prediction(id_: str, nodes_idx: list, lim_nr_samples=None, train_set=False, nodes2path=False):
+def plot_prediction(id_: str, nodes_idx: list, lim_nr_samples=None, nodes2path=False):
     """ Makes and saves line plots of predictions to ../figures/.
 
         Saves:
@@ -136,19 +136,13 @@ def plot_prediction(id_: str, nodes_idx: list, lim_nr_samples=None, train_set=Fa
     """
     # Get data
     eval_prediction = pickle.load(open('../models/' + id_ + '/eval_prediction.pkl', 'rb'))
-    if train_set:
-        if lim_nr_samples is None:
-            lim_nr_samples = eval_prediction['train_pred'].shape[0]
-        pred = eval_prediction['train_pred'][-lim_nr_samples:, nodes_idx]
-        true = eval_prediction['train_true'][-lim_nr_samples:, nodes_idx]
-    else:
-        if lim_nr_samples is None:
-            lim_nr_samples = eval_prediction['test_pred'].shape[0]
-        pred = eval_prediction['test_pred'][-lim_nr_samples:, nodes_idx]
-        true = eval_prediction['test_true'][-lim_nr_samples:, nodes_idx]
+    if lim_nr_samples is None:
+        lim_nr_samples = eval_prediction['true'].shape[0]
+    pred = eval_prediction['prediction'][-lim_nr_samples:, nodes_idx]
+    true = eval_prediction['true'][-lim_nr_samples:, nodes_idx]
 
     # Make plot
-    sns.set_style('darkgrid')
+    sns.set_style('whitegrid')
     ax = [[] for i in range(len(nodes_idx))]
     fig = plt.figure(figsize=(10, int(len(ax)) * 3))
     for i in range(len(ax)):
@@ -181,23 +175,10 @@ def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_nam
     for idx, id_ in enumerate(ids):
         eval_distance = pickle.load(open('../models/' + id_ + '/eval_distances.pkl', 'rb'))
         df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
-        train_exists = path.exists('../models/' + id_ + '/eval_distances_train.pkl')
-        if train_exists:
-            eval_distance = pickle.load(open('../models/' + id_ + '/eval_distances_train.pkl', 'rb'))
-            df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
-
-    if split_id:
-        id1, id2 = [], []
-        for i, val in enumerate(df['id']):
-            id1.append(df['id'][i][:-7])
-            id2.append(df['id'][i][-6:])
-        df['architecture'] = id1
-        df['time'] = id2
 
     plt.figure(figsize=(10, 8))
     sns.set_style('whitegrid')
-    # mask = df['train_set'].isin([True])
-    ax = sns.boxplot(x=x, y=y, data=df, hue=hue)  # df[~mask]
+    ax = sns.boxplot(x=x, y=y, data=df, hue=hue)
     ax.set(xlabel=x, ylabel=y)
     if ylim:
         plt.ylim(ylim)
@@ -261,33 +242,33 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
     """
     id1, id2, id3 = [], [], []
     mean_abs = []
-    k = ['beginning', 'middle', 'end']
-    k_num = 0
+    patient_id = []
+    brain_state = []
+
     for i, id_ in enumerate(ids):
         params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
         # Get trained model
         model = models.GeneralRNN(params)
 
-        model.load_state_dict(torch.load('../models/' + id_ + '/model.pth'))
+        device = torch.device('cpu')
+        model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
         W = model.W.weight.data.numpy()
         mean_abs.append(np.mean(np.abs(W)))
-        split_str = id_.split('_')
-        id1.append(split_str[1])
-        id2.append(k[k_num])  # split_str[2]
-        if k_num == 2:
-            k_num = 0
+        if id_[5:7] == 'ID11a':  # [7:12]
+            patient_id.append('ID11a')
+        elif id_[5:7] == 'ID11b':
+            patient_id.append('ID11b')
         else:
-            k_num = k_num + 1
-        id3.append(split_str[3])
+            patient_id.append(params['patient_id'])
+        brain_state.append(params['brain_state'])
 
         if hidden is False:
             ch = params['visible_size']
             mean_abs[i] = np.mean(np.abs(W[:ch, :ch]))
 
     df = pd.DataFrame()
-    df['Patient ID'] = id1
-    df['Pos. in sleep cylce'] = id2
-    df['Experiment Number'] = id3
+    df['Patient ID'] = patient_id
+    df['Pos. in sleep cylce'] = brain_state
     df['Mean abs. weight'] = mean_abs
 
     with sns.color_palette('colorblind', 3):
@@ -296,6 +277,6 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
         ax = sns.barplot(x='Mean abs. weight', y='Patient ID', hue='Pos. in sleep cylce', data=df)
         ax.set(xlabel='Mean abs. weight', ylabel='Patient ID')
         ax.set_title('Mean abs. weight')
-        ax.set_xlim(0.08, 0.13)
+        #ax.set_xlim(0.08, 0.13)
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
     plt.close()

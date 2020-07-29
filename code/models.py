@@ -243,15 +243,15 @@ class GeneralRNN(nn.Module):
             self.Lambda[idx, idx] = 1
 
     def forward(self, X):
-        # Initialize r and i nodes
-        n_batches = X.shape[0]
-        R = torch.zeros((n_batches, self.visible_size, self.full_size), dtype=torch.float32)
-        Y = torch.zeros((n_batches, self.visible_size, self.full_size), dtype=torch.float32)
-        Lambda_batch = self.Lambda.repeat(n_batches, 1).view(n_batches, self.visible_size, self.full_size)
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # Initialize r and i nodes (X.shape[0] = n_batches, X, shape[1] = n_time_steps)
+        R = torch.zeros((X.shape[0], self.visible_size, self.full_size), dtype=torch.float32).to(device)
+        Y = torch.zeros((X.shape[0], self.visible_size, self.full_size), dtype=torch.float32).to(device)
+        Lambda_batch = self.Lambda.repeat(X.shape[0], 1).view(X.shape[0], self.visible_size, self.full_size).to(device)
         # Forward path
         for t in range(X.shape[1]):
             Y[:, :, :self.visible_size] = X[:, t, :].repeat(self.visible_size, 1)\
-                .view(self.visible_size, n_batches, self.visible_size).transpose(0, 1)
+                .view(self.visible_size, X.shape[0], self.visible_size).transpose(0, 1)
             U = torch.mul(Lambda_batch, self.W(R)) + torch.mul((1 - Lambda_batch), Y)
             R = self.phi(U)
         return torch.diagonal(U[:, :, :self.visible_size], dim1=-1, dim2=-2)

@@ -38,7 +38,7 @@ def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False
     data_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + str(params['time_begin'][0]) + 'h.mat')
     info_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + 'info.mat')
     fs = float(info_mat['fs'])
-    sample_begin = int(params['time_begin'][1] * 60 * fs + 29 * fs)  # sec offset test
+    sample_begin = int(params['time_begin'][1] * 60 * fs)
     sample_end = int(sample_begin + params['duration'] * fs)
     if params['visible_size'] != 'all':
         data = data_mat['EEG'][:params['visible_size'], sample_begin:sample_end].transpose()
@@ -146,8 +146,8 @@ def train(params):
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
         epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
         #epoch_time[epoch + 1] = time.time() - epoch_time[epoch]
-        if epoch % 20 == 0:
-            print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
+        #if epoch % 20 == 0:
+        print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     total_time = time.time() - start_time
     print(f'Time [min]: {total_time / 60:.3}')
@@ -242,6 +242,8 @@ def distance(id_: str):
                       'af': [params['af'] for _ in range(node_size)],
                       'bias': [params['bias'] for _ in range(node_size)],
                       'lambda': [params['lambda'] for _ in range(node_size)],
+                      'batch_size': [params['batch_size'] for _ in range(node_size)],
+                      'normalization': [params['normalization'] for _ in range(node_size)],
                       'correlation': corr,
                       'mse': mse,
                       'mae': mae}

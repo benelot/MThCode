@@ -23,9 +23,15 @@ if __name__ == '__main__':
                          # [pre + 'ID11a_60h05m' + post, 'ID11', [60, 5], 'beginning'],
                          # [pre + 'ID11a_62h12m' + post, 'ID11', [62, 12], 'middle'],
                          # [pre + 'ID11a_65h00m' + post, 'ID11', [65, 0], 'end'],
-        params_change = [[pre + 'ID11b_129h48m' + post, 'ID11', [129, 48], 'beginning'],
-                         [pre + 'ID11b_132h35m' + post, 'ID11', [132, 35], 'middle'],
-                         [pre + 'ID11b_136h35m' + post, 'ID11', [136, 35], 'end']]
+        params_change = [[pre + 'ID11b_129h48m_bs001_' + post, 'ID11', [129, 48], 'beginning', 1],
+                         [pre + 'ID11b_132h35m_bs001_' + post, 'ID11', [132, 35], 'middle', 1],
+                         [pre + 'ID11b_136h35m_bs001_' + post, 'ID11', [136, 35], 'end', 1]]
+                         # [pre + 'ID11b_129h48m_bs005_' + post, 'ID11', [129, 48], 'beginning', 5],
+                         # [pre + 'ID11b_132h35m_bs005_' + post, 'ID11', [132, 35], 'middle', 5],
+                         # [pre + 'ID11b_136h35m_bs005_' + post, 'ID11', [136, 35], 'end', 5],
+                         # [pre + 'ID11b_129h48m_bs050_' + post, 'ID11', [129, 48], 'beginning', 50],
+                         # [pre + 'ID11b_132h35m_bs050_' + post, 'ID11', [132, 35], 'middle', 50],
+                         # [pre + 'ID11b_136h35m_bs050_' + post, 'ID11', [136, 35], 'end', 50]]
 
         ids_attempt = []
         for i, val in enumerate(params_change):
@@ -33,30 +39,30 @@ if __name__ == '__main__':
             ids_attempt.append(val[0])
             ids_all.append(val[0])
 
-            params = {'id_': ids_attempt[-1],
-                      'model_type': None,  # To be removed
-                      'path2data': '../data/',
-                      'patient_id': val[1],
-                      'time_begin': val[2],  # [hour, minute]
-                      'duration': 1,  # seconds
-                      'brain_state': val[3],
-                      # model parameters ------------------------
-                      'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': 0,  # improve: portion
-                      'lambda': 0,
-                      'af': 'relu',  # 'relu', 'linear', 'sigmoid'
-                      'bias': True,
-                      'window_size': 30,
-                      # train parameters -------------------------
-                      'loss_function': 'mae',  # 'mse' or 'mae'
-                      'lr': 0.001,
-                      'batch_size': 50,
-                      'shuffle': False,
-                      'normalization': 'standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 500}
-
-            utrain.train_and_test(params)
-            ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)
+            # params = {'id_': ids_attempt[-1],
+            #           'model_type': None,  # To be removed
+            #           'path2data': '../data/',
+            #           'patient_id': val[1],
+            #           'time_begin': val[2],  # [hour, minute]
+            #           'duration': 1,  # seconds
+            #           'brain_state': val[3],
+            #           # model parameters ------------------------
+            #           'visible_size': 'all',  # 'all' or scalar
+            #           'hidden_size': 0,  # improve: portion
+            #           'lambda': 0,
+            #           'af': 'relu',  # 'relu', 'linear', 'sigmoid'
+            #           'bias': True,
+            #           'window_size': 30,
+            #           # train parameters -------------------------
+            #           'loss_function': 'mae',  # 'mse' or 'mae'
+            #           'lr': 0.00017,
+            #           'batch_size': val[4],
+            #           'shuffle': False,
+            #           'normalization': 'standard_positive',  # 'min_max', 'standard', None
+            #           'epochs': 10}
+            #
+            # utrain.train_and_test(params)
+            # ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)
 
         ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='correlation', hue='brain_state', save_name=pre + 'corr' + post)
         ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)

@@ -54,7 +54,6 @@ if __name__ == '__main__':
                       'shuffle': False,
                       'normalization': 'standard_positive',  # 'min_max', 'standard', None
                       'epochs': 20}
-
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)
 

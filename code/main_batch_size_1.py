@@ -10,7 +10,7 @@ if __name__ == '__main__':
 
     ids_all = []
     pre = 'batch_size_1_'
-    for attempt in range(3):
+    for attempt in range(1, 3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 

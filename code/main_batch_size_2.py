@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
         ids_attempt = []
         for i, val in enumerate(params_change):
-            print('Status: Train model: ' + val[0])
+            print('B ----- Status: Train model: ' + val[0])
             ids_attempt.append(val[0])
             ids_all.append(val[0])
 
@@ -40,6 +40,7 @@ if __name__ == '__main__':
                       'time_begin': val[2],  # [hour, minute]
                       'duration': 30,  # seconds
                       'brain_state': val[3],
+                      'add_id': '(B)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
                       'hidden_size': 8,  # improve: portion

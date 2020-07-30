@@ -11,6 +11,7 @@ from scipy import fftpack
 from scipy import signal
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 from scipy.stats.kde import gaussian_kde
 from matplotlib.ticker import MaxNLocator
 from matplotlib import animation, rc
@@ -279,7 +280,7 @@ def fft_plot(data: np.ndarray, n_clusters=5):
         plt.savefig('../doc/figures/preprocess_' + save_name[i])
 
 
-def emp_connectome(patient_ID: str, hour: str, sperseg: float, soverlap: float, save=False, anim=True, fps=10):
+def anim_connectome(patient_ID: str, hour: str, sperseg: float, soverlap: float, save=False, anim=True, fps=10):
     """
 
     """
@@ -347,7 +348,7 @@ def emp_connectome(patient_ID: str, hour: str, sperseg: float, soverlap: float, 
         ani.save('../doc/figures/corr_ID' + ID + '_' + h + '.gif', writer='imagemagick', fps=fps)
 
 
-def correlation_metrics(x: np.ndarray, y: np.ndarray, t_shift: int):
+def nonlin_corr_metric(x: np.ndarray, y: np.ndarray, t_shift: int):
     """
     :param x:
     :param y:
@@ -382,7 +383,7 @@ def correlation_metrics(x: np.ndarray, y: np.ndarray, t_shift: int):
     return r2, h2, r2_dt, h2_dt, r2_shift, h2_shift
 
 
-def plot_corr_connectivity(r2, r2_dt, h2=None, h2_dt=None, save_name='default'):
+def plot_nonlin_corr(r2, r2_dt, h2=None, h2_dt=None, save_name='default'):
     fs = 512
 
     if h2 is not None:
@@ -431,7 +432,7 @@ def plot_corr_connectivity(r2, r2_dt, h2=None, h2_dt=None, save_name='default'):
     plt.close()
 
 
-def make_corr_connectivity(patient_id: str, time_begin: list, duration: float,
+def nonlin_corr(patient_id: str, time_begin: list, duration: float,
                            t_shift=0.2, plot_name=None):
     """
 
@@ -464,7 +465,7 @@ def make_corr_connectivity(patient_id: str, time_begin: list, duration: float,
 
     for i in range(data_raw.shape[1]):
         for j in range(data_raw.shape[1]):
-            r2[i, j], h2[i, j], r2_dt[i, j], h2_dt[i, j], r2_shift, h2_shift = correlation_metrics(
+            r2[i, j], h2[i, j], r2_dt[i, j], h2_dt[i, j], r2_shift, h2_shift = nonlin_corr_metric(
                 data_raw[:, i], data_raw[:, j], t_shift=int(t_shift * fs))
             h2_shift_list.append(h2_shift)
             r2_shift_list.append(r2_shift)
@@ -479,10 +480,10 @@ def make_corr_connectivity(patient_id: str, time_begin: list, duration: float,
     np.save(save_name + '_h2_dt.npy', h2_dt)
 
     if plot_name is not None:
-        plot_corr_connectivity(r2, h2, r2_dt, h2_dt, save_name=plot_name)
+        plot_nonlin_corr(r2, h2, r2_dt, h2_dt, save_name=plot_name)
 
 
-def fast_corr_numpy(patient_id: str, time_begin: list, duration: float, t_lag=0.1, critical_corr=0.7):
+def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.1, critical_corr=0.7):
     """
 
     :param patient_id:
@@ -499,7 +500,7 @@ def fast_corr_numpy(patient_id: str, time_begin: list, duration: float, t_lag=0.
     sample_begin = int(time_begin[1] * 60 * fs)
     sample_end = sample_begin + int(duration * fs)
     data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
-    data_norm = data_raw
+    data_norm = data_raw  # No normalization added
 
     n_lag = int(t_lag * fs)
 
@@ -514,7 +515,7 @@ def fast_corr_numpy(patient_id: str, time_begin: list, duration: float, t_lag=0.
     sign = np.sign(np.max(cctl, axis=2) - np.abs(np.min(cctl, axis=2)))
     cc = np.multiply(np.max(np.abs(cctl), axis=2), sign)
     mask = np.where(np.abs(cc) > critical_corr, 1, np.nan)
-    tl_n = np.nanargmax(np.abs(cctl), axis=2)
+    tl_n = np.argmax(np.abs(cctl), axis=2)
     tl = (tl_n - n_lag) * mask / fs * 1000  # in [ms]
 
     # Calculate mean tau
@@ -537,22 +538,27 @@ def fast_corr_numpy(patient_id: str, time_begin: list, duration: float, t_lag=0.
     tau_n = (higher_tau - lower_tau) / 2
     tau = np.where(tau_n == 0, np.nan, tau_n) / fs * 1000  # in [ms]
 
+    # Additional masks (diagonal, upper triangle, ...)
+    np.fill_diagonal(tl, np.nan)
+    np.fill_diagonal(cc, np.nan)
+    cc[np.triu_indices(cc.shape[0], k=1)] = np.nan
+
     return cc, tl, tau, cctl
 
 
-def fast_corr_numpy_plot(cc, tl, tau, patient_id: str, time_begin: list):
+def lin_corr_plot(cc, tl, tau, patient_id: str, time_begin: list):
     sns.set_style('white')
     fig = plt.figure(figsize=(10, 13))
     gs = fig.add_gridspec(3, 2)
     cmap_div = copy.copy(mpl.cm.get_cmap('seismic'))
-    cmap_div.set_bad('grey')
+    cmap_div.set_bad('dimgrey')
     cmap_uni = copy.copy(mpl.cm.get_cmap('viridis'))
-    cmap_uni.set_bad('grey')
+    cmap_uni.set_bad('dimgrey')
 
     ax0 = fig.add_subplot(gs[:1, :1])
     sns.heatmap(cc, cmap=cmap_div, vmin=-1, vmax=1)
     ax0.set_title('Peak cross correlation')
-    ax0.set_ylabel('Node idx'), ax0.set_ylabel('Node idx')
+    ax0.set_xlabel('Node idx'), ax0.set_ylabel('Node idx')
 
     ax1 = fig.add_subplot(gs[:1, 1:])
     sns.distplot(cc, kde=False)
@@ -571,7 +577,7 @@ def fast_corr_numpy_plot(cc, tl, tau, patient_id: str, time_begin: list):
     ax3.set_xlabel('Time [ms]'), ax3.set_ylabel('Frequency [-]')
 
     ax4 = fig.add_subplot(gs[2:, :1])
-    sns.heatmap(tau, cmap=cmap_uni, vmin=0)
+    sns.heatmap(tau, cmap=cmap_uni)
     ax4.set_title('Corresponding tau [ms]')
     ax4.set_xlabel('Node idx'), ax4.set_ylabel('Node idx')
 
@@ -584,3 +590,80 @@ def fast_corr_numpy_plot(cc, tl, tau, patient_id: str, time_begin: list):
     save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'
     plt.savefig('../doc/figures/cc_' + save_name + '.png')
     plt.close()
+
+
+def determine_sample_size(patient_id: str, time_begin: list, max_sample_size: float, dt: float):
+    """
+
+    :param patient_id:
+    :param time_begin: List with [hour, minute].
+    :param max_sample_size: In seconds.
+    :return:
+    """
+    # Load and prepare data
+    data_mat = loadmat('../data/' + patient_id + '_' + str(time_begin[0]) + 'h.mat')
+    info_mat = loadmat('../data/' + patient_id + '_info.mat')
+    fs = float(info_mat['fs'])
+    sample_begin = int(time_begin[1] * 60 * fs)
+    sample_end = sample_begin + int(max_sample_size * fs)
+    data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
+
+    # Determine correlation and its derivative for increasing sample_size
+    corr = [np.zeros((data_raw.shape[1], data_raw.shape[1]))]  # Zero entry for first derivative
+    corr_dt = []
+    sample_size = []
+    sc = StandardScaler()
+    i = 2
+    while i < data_raw.shape[0]:
+        data_norm = sc.fit_transform(data_raw[:int(i), :])
+        corr.append(np.corrcoef(data_norm.T))
+        sample_size.append(int(i))
+        corr_dt.append(corr[-1] - corr[-2])
+        i = i + dt * fs
+
+    data_norm = sc.fit_transform(data_raw[:int(data_raw.shape[0]), :])
+    corr.append(np.corrcoef(data_norm.T))
+    sample_size.append(int(i))
+    corr_dt.append(corr[-1] - corr[-2])
+
+    # Stack lists to numpy arrays
+    corr = np.stack(corr, axis=2)
+    corr_dt = np.stack(corr_dt, axis=2)
+    t_size = np.stack(sample_size) / fs
+
+    # Determine sum of changes of correlation
+    corr_dt = np.abs(np.sum(np.sum(corr_dt, axis=0), axis=0))
+
+    return corr_dt, t_size
+
+
+def plot_determine_sample_size(corr_dt, t_size, patient_id=None, save_name='default'):
+    df = pd.DataFrame()
+    for i, _ in enumerate(corr_dt):
+        sub_df = pd.DataFrame()
+        sub_df['data_set_id'] = (np.ones(len(corr_dt[i])) * i).astype(int)
+        if patient_id is not None:
+            sub_df['patient_id'] = [patient_id[i] for _ in range(len(corr_dt[i]))]
+        sub_df['corr_dt'] = corr_dt[i]
+        sub_df['t_size'] = t_size[i]
+        df = df.append(sub_df, ignore_index=True)
+
+    sns.set_style('whitegrid')
+    plt.figure(figsize=(8, 5))
+    sns.lineplot(x='t_size', y='corr_dt', data=df)
+    plt.ylim(0, df.quantile(0.95)[1]), plt.xlim(left=0)
+    plt.ylabel('Sum of abs. change'), plt.xlabel('Sample size [s]')
+    plt.title('Change of correlation')
+
+    plt.tight_layout()
+    plt.savefig('../doc/figures/change_sample_size_dt_' + save_name + '.png')
+    plt.close()
+
+
+# def plot_corr_sample_size(corr, t_size, slice=0):
+#     plt.figure(figsize=(8, 5))
+#     X, Y = np.meshgrid(t_size, np.arange(corr.shape[0]))
+#     plt.pcolor(X, Y, corr[:, slice, :-1], shading='auto')
+#     plt.title('Correlation with node ' + str(slice) + 'per sample size')
+#     plt.xlabel('Sample size [s]'), plt.ylabel('Correlation coefficient')
+

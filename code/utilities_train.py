@@ -38,7 +38,7 @@ def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False
     data_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + str(params['time_begin'][0]) + 'h.mat')
     info_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + 'info.mat')
     fs = float(info_mat['fs'])
-    sample_begin = int(params['time_begin'][1] * 60 * fs + 27 * fs)  # sec offset test
+    sample_begin = int(params['time_begin'][1] * 60 * fs + 29 * fs)  # sec offset test
     sample_end = int(sample_begin + params['duration'] * fs)
     if params['visible_size'] != 'all':
         data = data_mat['EEG'][:params['visible_size'], sample_begin:sample_end].transpose()

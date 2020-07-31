@@ -11,7 +11,7 @@ corr_change = []
 t = []
 k = [32, 35, 38]
 for _, val in enumerate(k):
-    for i in range(20):
+    for i in range(2):
         print(str(i))
         # cc, ts, tau, cctl = ieeg.lin_corr(patient_id[i], time_begin[i], duration, t_lag=.7)
         # ieeg.lin_corr_plot(cc, ts, tau, patient_id[i], time_begin[i])
@@ -19,7 +19,7 @@ for _, val in enumerate(k):
         corr_change.append(corr_dt)
         t.append(t_size)
 
-ieeg.plot_determine_sample_size(corr_change, t, save_name='default1')
+    ieeg.plot_determine_sample_size(corr_change, t, save_name='default1')
 
 
 

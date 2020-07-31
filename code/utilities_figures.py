@@ -236,7 +236,7 @@ def plot_corr_map(id_: str, size_of_samples=2000, save_name='default'):
     plt.close()
 
 
-def mean_weights(ids: list, hidden=True, save_name='default'):
+def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
     """
 
     """
@@ -244,6 +244,7 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
     mean_abs = []
     patient_id = []
     brain_state = []
+    batch_size = []
 
     for i, id_ in enumerate(ids):
         params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
@@ -253,7 +254,7 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
         device = torch.device('cpu')
         model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
         W = model.W.weight.data.numpy()
-        mean_abs.append(np.mean(np.abs(W)))
+
         if id_[5:7] == 'ID11a':  # [7:12]
             patient_id.append('ID11a')
         elif id_[5:7] == 'ID11b':
@@ -261,22 +262,28 @@ def mean_weights(ids: list, hidden=True, save_name='default'):
         else:
             patient_id.append(params['patient_id'])
         brain_state.append(params['brain_state'])
+        batch_size.append(params['batch_size'])
 
+        W_abs = np.abs(W)
         if hidden is False:
             ch = params['visible_size']
-            mean_abs[i] = np.mean(np.abs(W[:ch, :ch]))
+            W_abs = np.abs(W[:ch, :ch])
+        if diagonal is False:
+            np.fill_diagonal(W_abs, 0)
+        mean_abs.append(np.mean(W_abs))
 
     df = pd.DataFrame()
     df['Patient ID'] = patient_id
     df['Pos. in sleep cylce'] = brain_state
     df['Mean abs. weight'] = mean_abs
+    df['Batch size'] = batch_size
 
     with sns.color_palette('colorblind', 3):
         plt.figure(figsize=(10, 8))
         sns.set_style('whitegrid')
-        ax = sns.barplot(x='Mean abs. weight', y='Patient ID', hue='Pos. in sleep cylce', data=df)
-        ax.set(xlabel='Mean abs. weight', ylabel='Patient ID')
+        ax = sns.barplot(x='Mean abs. weight', y='Batch size', hue='Pos. in sleep cylce', data=df, orient='h')
+        ax.set(xlabel='Mean abs. weight', ylabel='Batch size')
         ax.set_title('Mean abs. weight')
-        #ax.set_xlim(0.08, 0.13)
+        ax.set_xlim(0.04, 0.09)
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
     plt.close()

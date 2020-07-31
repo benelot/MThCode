@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_50_'
+    pre = 'batch_size_50_shuffled_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -52,7 +52,7 @@ if __name__ == '__main__':
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.0005,
                       'batch_size': 50,
-                      'shuffle': False,
+                      'shuffle': True,
                       'normalization': 'standard_positive',  # 'min_max', 'standard', None
                       'epochs': 40}
 

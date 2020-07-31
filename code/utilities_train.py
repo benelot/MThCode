@@ -244,6 +244,7 @@ def distance(id_: str):
                       'bias': [params['bias'] for _ in range(node_size)],
                       'lambda': [params['lambda'] for _ in range(node_size)],
                       'batch_size': [params['batch_size'] for _ in range(node_size)],
+                      'shuffle': [params['shuffle'] for _ in range(node_size)],
                       'normalization': [params['normalization'] for _ in range(node_size)],
                       'correlation': corr,
                       'mse': mse,

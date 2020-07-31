@@ -24,7 +24,7 @@ def train_and_test(params: dict):
     distance(params['id_'])
 
 
-def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False):
+def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False, custom_test_set=None):
     """ Loads and prepares iEEG data.
 
         Returns:
@@ -35,11 +35,17 @@ def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False
     # Load and cut data
     if params is None:
         params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
+    if custom_test_set is not None:
+        params['time_begin'] = custom_test_set['time_begin']
+        params['duration'] = custom_test_set['duration']
     data_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + str(params['time_begin'][0]) + 'h.mat')
     info_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + 'info.mat')
     fs = float(info_mat['fs'])
-    sample_begin = int(params['time_begin'][1] * 60 * fs)
-    sample_end = int(sample_begin + params['duration'] * fs)
+    if len(params['time_begin']) == 3:
+        sample_begin = int(np.round(params['time_begin'][1] * 60 * fs + params['time_begin'][2] * fs))
+    else:
+        sample_begin = int(np.round(params['time_begin'][1] * 60 * fs))
+    sample_end = int(np.round(sample_begin + params['duration'] * fs))
     if params['visible_size'] != 'all':
         data = data_mat['EEG'][:params['visible_size'], sample_begin:sample_end].transpose()
     else:
@@ -168,8 +174,11 @@ def train(params):
     pickle.dump(eval_optimization, open(directory + '/eval_optimization.pkl', 'wb'))
 
 
-def predict(id_: str):
+def predict(id_: str, custom_test_set: dict=None):
     """ Tests model an returns and saves predicted values.
+
+        If the prediction set is not the training set, pass a custom_test_set dictionary containing:
+            'time_begin', 'duration', 'batch_size'
 
         Returns and saves:
             ../model/eval_prediction.pkl
@@ -180,13 +189,19 @@ def predict(id_: str):
     # Load data and parameters
     print('Status: Load and process data for prediction.')
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
-    data_pre = pre_process(params=params)
+    if custom_test_set is None:
+        data_pre = pre_process(params=params)
+        batch_size = params['batch_size']
+    else:
+        data_pre = pre_process(params=params, custom_test_set=custom_test_set)
+        batch_size = custom_test_set['batch_size']
     data_set = iEEG_DataSet(data_pre, params['window_size'])
-    data_generator = torch.utils.data.DataLoader(data_set, batch_size=params['batch_size'], shuffle=False)
+    data_generator = torch.utils.data.DataLoader(data_set, batch_size=batch_size, shuffle=False)
 
     # Make model
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = models.GeneralRNN(params)
-    model.load_state_dict(torch.load('../models/' + id_ + '/model.pth'))
+    model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
     model = model.to(device)
 
     # Evaluate model

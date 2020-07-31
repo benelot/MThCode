@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_512_'
+    pre = 'batch_size_480_short_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -38,7 +38,7 @@ if __name__ == '__main__':
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
-                      'duration': 30,  # seconds
+                      'duration': 1,  # seconds
                       'brain_state': val[3],
                       'add_id': '(E)',
                       # model parameters ------------------------
@@ -51,8 +51,8 @@ if __name__ == '__main__':
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
-                      'batch_size': 2560,
-                      'shuffle': False,
+                      'batch_size': 480,
+                      'shuffle': True,
                       'normalization': 'standard_positive',  # 'min_max', 'standard', None
                       'epochs': 250}
 

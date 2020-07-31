@@ -75,7 +75,8 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
     # Get trained model
     model = models.GeneralRNN(params)
 
-    model.load_state_dict(torch.load('../models/' + id_ + '/model.pth'))
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
     W = model.W.weight.data.numpy()
 
     vmin = -vmax
@@ -251,7 +252,7 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
         # Get trained model
         model = models.GeneralRNN(params)
 
-        device = torch.device('cpu')
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
         W = model.W.weight.data.numpy()
 

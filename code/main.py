@@ -17,7 +17,7 @@ if __name__ == '__main__':
         # params_change = [[pre + 'ID07_32h07m' + post, 'ID07', [32, 7], 'beginning'],
         #                  [pre + 'ID07_35h15m' + post, 'ID07', [35, 15], 'middle'],
         #                  [pre + 'ID07_38h22m' + post, 'ID07', [38, 22], 'end'],
-        params_change = [[pre + 'ID08_57h00m' + post, 'ID08', [57, 00], 'before']
+        params_change = [[pre + 'ID08_57h00m' + post, 'ID08', [57, 00], 'before'],
                          [pre + 'ID08_57h58m' + post, 'ID08', [57, 58], 'beginning'],
                          [pre + 'ID08_60h10m' + post, 'ID08', [60, 10], 'middle'],
                          [pre + 'ID08_60h58m' + post, 'ID08', [60, 58], 'light sleep'],

@@ -144,7 +144,7 @@ def train(params):
     print('Status: Start training with cuda = ' + str(torch.cuda.is_available()) + '.')
 
     for epoch in range(params['epochs']):
-        W.append(np.copy(model.W.weight.data.numpy()))
+        W.append(np.copy(model.W.weight.data.cpu().numpy()))
         for X, y in data_generator:
             X, y = X.to(device), y.float().to(device)
             optimizer.zero_grad()

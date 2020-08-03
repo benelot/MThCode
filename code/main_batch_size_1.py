@@ -38,7 +38,7 @@ if __name__ == '__main__':
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
-                      'duration': 1,  # seconds
+                      'duration': 30,  # seconds
                       'brain_state': val[3],
                       'add_id': '(A)',
                       # model parameters ------------------------

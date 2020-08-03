@@ -59,8 +59,11 @@ if __name__ == '__main__':
                       'normalization': 'standard_positive',  # 'min_max', 'standard', None
                       'epochs': 23}
 
-            utrain.train_and_test(params)
-            ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)
+            if attempt == 0 and params['time_begin'][0] < 65:
+                pass
+            else:
+                utrain.train_and_test(params)
+                ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)
 
         ufig.plot_multi_boxplots(ids=ids_attempt, x='batch_size', y='correlation', hue='brain_state',
                                  save_name=pre + 'corr' + post, ylim=(0, 1))

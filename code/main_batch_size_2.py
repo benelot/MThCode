@@ -38,14 +38,14 @@ if __name__ == '__main__':
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
-                      'duration': 1,  # seconds
+                      'duration': 30,  # seconds
                       'brain_state': val[3],
                       'add_id': '(B)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': 8,  # improve: portion
+                      'hidden_size': 0,  # improve: portion
                       'lambda': 0,
-                      'af': 'relu',  # 'relu', 'linear', 'sigmoid'
+                      'af': 'linear',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,
                       # train parameters -------------------------
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                       'lr': 0.0002,
                       'batch_size': 2,
                       'shuffle': False,
-                      'normalization': 'standard_positive',  # 'min_max', 'standard', None
+                      'normalization': 'all_standard',  # 'min_max', 'standard', None
                       'epochs': 20}
 
             utrain.train_and_test(params)

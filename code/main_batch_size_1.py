@@ -43,9 +43,9 @@ if __name__ == '__main__':
                       'add_id': '(A)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': 8,  # improve: portion
+                      'hidden_size': 0,  # improve: portion
                       'lambda': 0,
-                      'af': 'relu',  # 'relu', 'linear', 'sigmoid'
+                      'af': 'linear',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,
                       # train parameters -------------------------
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                       'lr': 0.0002,
                       'batch_size': 1,
                       'shuffle': False,
-                      'normalization': 'standard_positive',  # 'min_max', 'standard', None
+                      'normalization': 'all_standard',  # 'min_max', 'standard', None
                       'epochs': 20}
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)

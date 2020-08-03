@@ -71,6 +71,8 @@ def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False
     elif params['normalization'] == 'all_standard_positive':
         data = (data - np.mean(data)) / (8 * np.std(data))
         data = data / 2 + 0.5
+    elif params['normalization'] == 'all_standard':
+        data = (data - np.mean(data)) / np.std(data)
     elif params['normalization'] is not None:
         print('Error: No valid normalization method.')
 
@@ -135,12 +137,14 @@ def train(params):
     epoch_loss = np.zeros([params['epochs'], model.visible_size])
     epoch_grad_norm = np.zeros(params['epochs'])
     #epoch_time = np.zeros(params['epochs'] + 1)
+    W = []
 
     start_time = time.time()
     #epoch_time[0] = time.time()
     print('Status: Start training with cuda = ' + str(torch.cuda.is_available()) + '.')
 
     for epoch in range(params['epochs']):
+        W.append(np.copy(model.W.weight.data.numpy()))
         for X, y in data_generator:
             X, y = X.to(device), y.float().to(device)
             optimizer.zero_grad()
@@ -153,8 +157,9 @@ def train(params):
         epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
         #epoch_time[epoch + 1] = time.time() - epoch_time[epoch]
         #if epoch % 5 == 0:
-        a = params['add_id']
-        print(f'{a} Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
+
+        add_id = params['add_id']
+        print(f'{add_id} Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     total_time = time.time() - start_time
     print(f'Time [min]: {total_time / 60:.3}')
@@ -172,6 +177,9 @@ def train(params):
     torch.save(model.state_dict(), directory + '/model.pth')
     pickle.dump(params, open(directory + '/params.pkl', 'wb'))
     pickle.dump(eval_optimization, open(directory + '/eval_optimization.pkl', 'wb'))
+
+    W_epoch = {'W_epoch': W}
+    pickle.dump(W_epoch, open(directory + '/W_epoch.pkl', 'wb'))
 
 
 def predict(id_: str, custom_test_set: dict=None):

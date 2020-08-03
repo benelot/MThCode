@@ -285,6 +285,6 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
         ax = sns.barplot(x='Mean abs. weight', y='Batch size', hue='Pos. in sleep cylce', data=df, orient='h')
         ax.set(xlabel='Mean abs. weight', ylabel='Batch size')
         ax.set_title('Mean abs. weight')
-        ax.set_xlim(0.04, 0.09)
+        ax.set_xlim(left=0.04)
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
     plt.close()

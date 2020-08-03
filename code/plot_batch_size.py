@@ -5,36 +5,37 @@ import os
 
 if __name__ == '__main__':
 
-    batch_sizes = [2, 5, 50, 512]
+    batch_sizes = [1, 50]
     ids = []
-    custom_set = False
+    custom_set = True
     for _, val in enumerate(batch_sizes):
         for i in range(3):
-            ids.append('batch_size_' + str(val) + '_allnorm_ID07_32h07m_' + str(i))
+            ids.append('batch_size_' + str(val) + '_ID07_32h07m_' + str(i))
             if custom_set:
-                custom_test_set = {'time_begin': [32, 7, 29.8],
-                                   'duration': 0.2,
-                                   'batch_size': 5}
+                custom_test_set = {'time_begin': [32, 7, 20],
+                                   'duration': 10,
+                                   'batch_size': 50}
                 utrain.predict(ids[-1], custom_test_set=custom_test_set)
                 utrain.distance(ids[-1])
-
-            ids.append('batch_size_' + str(val) + '_allnorm_ID07_35h15m_' + str(i))
+            print('0')
+            ids.append('batch_size_' + str(val) + '_ID07_35h15m_' + str(i))
             if custom_set:
-                custom_test_set = {'time_begin': [35, 15, 29.8],
-                                   'duration': 0.2,
-                                   'batch_size': 5}
+                custom_test_set = {'time_begin': [35, 15, 20],
+                                   'duration': 10,
+                                   'batch_size': 50}
                 utrain.predict(ids[-1], custom_test_set=custom_test_set)
                 utrain.distance(ids[-1])
-
-            ids.append('batch_size_' + str(val) + '_allnorm_ID07_38h22m_' + str(i))
+            print('1')
+            ids.append('batch_size_' + str(val) + '_ID07_38h22m_' + str(i))
             if custom_set:
-                custom_test_set = {'time_begin': [38, 22, 29.8],
-                                   'duration': 0.2,
-                                   'batch_size': 5}
+                custom_test_set = {'time_begin': [38, 22, 20],
+                                   'duration': 10,
+                                   'batch_size': 50}
                 utrain.predict(ids[-1], custom_test_set=custom_test_set)
                 utrain.distance(ids[-1])
+            print('2')
         print('---------------------------------------------')
 
     ufig.plot_multi_boxplots(ids=ids, x='batch_size', y='correlation', hue='brain_state',
-                             save_name='batch_size_allnorm', ylim=(0, 1))
-    ufig.mean_weights(ids=ids, save_name='batch_size_allnorm', hidden=False, diagonal=True)
+                             save_name='batch_size_highBS', ylim=(0, 1))
+    #ufig.mean_weights(ids=ids, save_name='batch_size_highBS', hidden=False, diagonal=True)

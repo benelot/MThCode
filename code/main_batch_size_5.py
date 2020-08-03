@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_5_short_'
+    pre = 'batch_size_5_allnorm_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -43,14 +43,14 @@ if __name__ == '__main__':
                       'add_id': '(C)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': 8,  # improve: portion
+                      'hidden_size': 0,  # improve: portion
                       'lambda': 0,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
-                      'lr': 0.0002,
+                      'lr': 0.0001,
                       'batch_size': 5,
                       'shuffle': False,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None

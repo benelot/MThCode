@@ -341,3 +341,64 @@ def plot_weighted_prediction(id_, node_idx, max_duration=.5):
     plt.savefig('../doc/figures/contribution_' + id_ + '_node_' + str(node_idx) + '.png')
     plt.close()
 
+
+def plot_sudden_lack_of_input(id_: str, custom_test_set: dict=None, window_size_t=1, interrupt_t=.5):
+    """ Tests model an returns and saves predicted values.
+
+        If the prediction set is not the training set, pass a custom_test_set dictionary containing:
+            'time_begin', 'duration', 'batch_size'
+
+        Returns and saves:
+            ../model/eval_prediction.pkl
+    """
+    fs = 512
+    window_size = int(window_size_t * fs)
+    interrupt = int(interrupt_t * fs)
+    # Define device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # Load data and parameters
+    print('Status: Load and process data for prediction.')
+    params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
+    if custom_test_set is None:
+        data_pre = utrain.pre_process(params=params)
+    else:
+        data_pre = utrain.pre_process(params=params, custom_test_set=custom_test_set)
+    data_set = utrain.iEEG_DataSet(data_pre, window_size)
+    data_generator = torch.utils.data.DataLoader(data_set, batch_size=1, shuffle=False)
+
+    # Make model
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = models.TestGeneralRNN(params)
+    model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
+    model = model.to(device)
+
+    # Evaluate model
+    model.eval()
+
+    print('Status: Start prediction with cuda = ' + str(torch.cuda.is_available()) + '.')
+    with torch.no_grad():
+        for X, y in data_generator:
+            X, y = X.to(device), y.to(device)
+            u_hist, r_hist = model(X, interrupt)
+            u_hist = np.array(u_hist)
+            r_hist = np.array(r_hist)
+            X_hist = X[0, :, :].numpy().copy()
+            break
+
+    # Plot
+    plt.figure(figsize=(9, 6))
+    t = np.linspace(0, u_hist.shape[0] / fs, u_hist.shape[0])
+    plt.plot(t, u_hist[:, 2], color='tab:blue', label='Node 2, predicted')
+    plt.plot(t, X_hist[:, 2], color='tab:blue', linestyle=':', label='Node 2, true')
+    plt.plot(t, u_hist[:, 50], color='tab:red', label='Node 50, predicted')
+    plt.plot(t, X_hist[:, 50], color='tab:red', linestyle=':', label='Node 50, true')
+    plt.plot(t, u_hist[:, 65], color='tab:green', label='Node 2, predicted')
+    plt.plot(t, X_hist[:, 65], color='tab:green', linestyle=':', label='Node 2, true')
+    plt.plot([interrupt_t, interrupt_t], [0.2, 0.78], color='black', linestyle='--')
+    plt.legend(), plt.xlim(t[0], t[-1]), plt.ylim(0.2, 0.78)
+    plt.xlabel('Time [s]'), plt.ylabel('Membrane potential [a. U.]')
+    plt.title('Prediction with sudden lack of input')
+    plt.savefig('../doc/figures/lack_of_input.png')
+    plt.close()
+

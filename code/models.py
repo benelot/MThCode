@@ -288,16 +288,37 @@ class TestGeneralRNN(nn.Module):
         for idx in range(self.visible_size):
             self.Lambda[idx, idx] = 1
 
-    def forward(self, X):
+    def forward(self, X, t_recurrent):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # Initialize r and i nodes (X.shape[0] = n_batches, X, shape[1] = n_time_steps)
         R = torch.zeros((X.shape[0], self.visible_size, self.full_size), dtype=torch.float32).to(device)
         Y = torch.zeros((X.shape[0], self.visible_size, self.full_size), dtype=torch.float32).to(device)
         Lambda_batch = self.Lambda.repeat(X.shape[0], 1).view(X.shape[0], self.visible_size, self.full_size).to(device)
+        u_hist = []
+        r_hist = []
         # Forward path
         for t in range(X.shape[1]):
-            Y[:, :, :self.visible_size] = X[:, t, :].repeat(self.visible_size, 1)\
-                .view(self.visible_size, X.shape[0], self.visible_size).transpose(0, 1)
-            U = torch.mul(Lambda_batch, self.W(R)) + torch.mul((1 - Lambda_batch), Y)
-            R = self.phi(U)
-        return torch.diagonal(U[:, :, :self.visible_size], dim1=-1, dim2=-2)
+            if t < t_recurrent:
+                Y[:, :, :self.visible_size] = X[:, t, :].repeat(self.visible_size, 1)\
+                    .view(self.visible_size, X.shape[0], self.visible_size).transpose(0, 1)
+                U = torch.mul(Lambda_batch, self.W(R)) + torch.mul((1 - Lambda_batch), Y)
+                R = self.phi(U)
+
+                # Get output for history
+                u = torch.diagonal(U[0, :self.visible_size, :self.visible_size])
+                r = torch.diagonal(R[0, :self.visible_size, :self.visible_size])
+                if self.hidden_size > 0:
+                    u = torch.cat([u, U[0, 0, self.visible_size:]])
+                    r = torch.cat([r, R[0, 0, self.visible_size:]])
+                u_hist.append(u[:self.visible_size].numpy().copy())
+                r_hist.append(r[:self.visible_size].numpy().copy())
+            else:
+                if t == t_recurrent:
+                    r = torch.diagonal(R[0, :self.visible_size, :self.visible_size])
+                    if self.hidden_size > 0:
+                        r = torch.cat([r, R[0, 0, self.visible_size:]])
+                u = self.W(r)
+                r = self.phi(u)
+                u_hist.append(u[:self.visible_size].numpy().copy())
+                r_hist.append(r[:self.visible_size].numpy().copy())
+        return u_hist, r_hist

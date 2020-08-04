@@ -635,6 +635,8 @@ def determine_sample_size(patient_id: list=None, time_begin: list=None, max_samp
             sub_df['unique_id'] = (np.ones(len(t_size)) * i).astype(int)
             sub_df['Patient ID'] = [id_ for _ in range(len(t_size))]
             sub_df['dt'] = [dt for _ in range(len(t_size))]
+            time_begin_str = id_ + ': ' + str(time_begin[i][0]) + 'h' + str(time_begin[i][1]) + 'm'
+            sub_df['time_begin'] = [time_begin_str for _ in range(len(t_size))]
             sub_df['corr_dt'] = corr_dts[i]
             sub_df['t_size'] = t_size
             df = df.append(sub_df, ignore_index=True)

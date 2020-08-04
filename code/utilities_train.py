@@ -24,7 +24,7 @@ def train_and_test(params: dict):
     distance(params['id_'])
 
 
-def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False, custom_test_set=None):
+def pre_process(id_: str=None, params: dict=None, resample=True, custom_test_set=None):
     """ Loads and prepares iEEG data.
 
         Returns:
@@ -79,22 +79,7 @@ def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False
     # To tensor
     data = torch.from_numpy(data)
 
-    if windowing is False:
-        return data
-
-    # Split data into training and test set
-    train_portion = 0.8
-    train_set = data[:int(train_portion * data.shape[0]), :]
-    test_set = data[int(train_portion * data.shape[0]):, :]
-
-    # Windowing
-    X_train, X_test = [], []
-    for i in range(train_set.shape[0] - params['window_size']):
-        X_train.append(train_set[i:i + params['window_size'], :])
-    for i in range(test_set.shape[0] - params['window_size']):
-        X_test.append(test_set[i:i + params['window_size'], :])
-
-    return X_train, X_test
+    return data
 
 
 def train(params):

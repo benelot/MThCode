@@ -4,6 +4,7 @@ Part of master thesis Segessenmann J. (2020)
 """
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import seaborn as sns
 import pandas as pd
@@ -288,3 +289,55 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
         ax.set_xlim(left=0.04)
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
     plt.close()
+
+
+def plot_weighted_prediction(id_, node_idx, max_duration=.5):
+    # Parameter
+    fs = 512
+
+    # Get model
+    params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
+    model = models.GeneralRNN(params)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
+    W = model.W.weight.data.numpy()
+    w = W[node_idx, :]
+    b = model.W.bias.data.numpy()
+    b = b[node_idx]
+
+    # Get prediction
+    eval_prediction = pickle.load(open('../models/' + id_ + '/eval_prediction.pkl', 'rb'))
+    if max_duration * fs >= eval_prediction['prediction'].shape[0]:
+        max_duration = int((eval_prediction['prediction'].shape[0] - 1) / fs)
+    prediction = eval_prediction['prediction'][-int(max_duration * fs):, node_idx]
+    true = eval_prediction['true'][-int(max_duration * fs):, node_idx]
+
+    # Get data
+    data = utrain.pre_process(params=params).numpy()
+    data = data[-int(max_duration * fs):, :]
+    data[:, node_idx] = prediction
+
+    sns.set_style('white')
+    fig = plt.figure(figsize=(12, 4.3))
+    gs = fig.add_gridspec(1, 5)
+
+    ax0 = fig.add_subplot(gs[:, :2])
+    sns.heatmap(W, cmap='seismic', vmin=-1, vmax=1)
+    ax0.add_patch(mpl.patches.Rectangle((0, node_idx), data.shape[1], 1, fill=False, edgecolor='black', lw=3))
+    ax0.set_xlabel('From node'), ax0.set_ylabel('To node'), ax0.set_title('Weight matrix')
+
+    ax1 = fig.add_subplot(gs[:, 2:])
+    t = np.arange(0, data.shape[0] / fs, 1 / fs)
+    cmap = mpl.cm.get_cmap('seismic')
+    for i in range(data.shape[1] - 1):
+        color = cmap(w[i] / 2 + 0.5)
+        alpha = np.abs(w[i]) / np.max(np.abs(w))
+        plt.plot(t, data[:, i], color=color, alpha=alpha)
+    plt.plot(t, prediction, color='black', linestyle=':', label='predicted')
+    plt.plot(t, true, color='black', label='true')
+    ax1.set_xlabel('Time [s]'), ax1.set_ylabel('Membrane potential u(t) [a.U.]')
+    ax1.set_xlim(0, t[-1]), ax1.set_title('Contribution to prediction of node ' + str(node_idx)), plt.legend()
+    plt.tight_layout()
+    plt.savefig('../doc/figures/contribution_' + id_ + '_node_' + str(node_idx) + '.png')
+    plt.close()
+

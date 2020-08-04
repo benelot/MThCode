@@ -592,78 +592,63 @@ def lin_corr_plot(cc, tl, tau, patient_id: str, time_begin: list):
     plt.close()
 
 
-def determine_sample_size(patient_id: str, time_begin: list, max_sample_size: float, dt: float):
+def determine_sample_size(patient_id: list=None, time_begin: list=None, max_sample_size: float=None, dt: float=None,
+                          save_name='default', load_name=None):
     """
 
-    :param patient_id:
-    :param time_begin: List with [hour, minute].
+    :param patient_id: List with string or multiple strings.
+    :param time_begin: List with list with [hour, minute] or multiple lists.
     :param max_sample_size: In seconds.
+    :param dt: In seconds.
+    :param save_name: String.
+    :param load_name: If not None, only plot is applied.
     :return:
     """
-    # Load and prepare data
-    data_mat = loadmat('../data/' + patient_id + '_' + str(time_begin[0]) + 'h.mat')
-    info_mat = loadmat('../data/' + patient_id + '_info.mat')
-    fs = float(info_mat['fs'])
-    sample_begin = int(time_begin[1] * 60 * fs)
-    sample_end = sample_begin + int(max_sample_size * fs)
-    data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
+    if load_name is None:
+        corr_dts = []
+        t_size = np.arange(dt, max_sample_size, dt).tolist()
+        for i, id_ in enumerate(patient_id):
+            # Load and prepare data
+            data_mat = loadmat('../data/' + id_ + '_' + str(time_begin[i][0]) + 'h.mat')
+            info_mat = loadmat('../data/' + id_ + '_info.mat')
+            fs = float(info_mat['fs'])
+            sample_begin = int(time_begin[i][1] * 60 * fs)
+            sample_end = sample_begin + int(max_sample_size * fs)
+            data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
 
-    # Determine correlation and its derivative for increasing sample_size
-    corr = [np.zeros((data_raw.shape[1], data_raw.shape[1]))]  # Zero entry for first derivative
-    corr_dt = []
-    sample_size = []
-    sc = StandardScaler()
-    i = 2
-    while i < data_raw.shape[0]:
-        data_norm = sc.fit_transform(data_raw[:int(i), :])
-        corr.append(np.corrcoef(data_norm.T))
-        sample_size.append(int(i))
-        corr_dt.append(corr[-1] - corr[-2])
-        i = i + dt * fs
+            # Get correlation matrices
+            corr = np.zeros((len(t_size) + 1, data_raw.shape[1], data_raw.shape[1]))
+            corr_dt = np.zeros((len(t_size), data_raw.shape[1], data_raw.shape[1]))
+            sc = StandardScaler()
+            for j, t in enumerate(t_size):
+                data_norm = sc.fit_transform(data_raw[:int(t * fs), :])
+                corr[j + 1, :, :] = np.corrcoef(data_norm.T)
+                corr_dt[j, :, :] = corr[j + 1, :, :] - corr[j, :, :]
 
-    data_norm = sc.fit_transform(data_raw[:int(data_raw.shape[0]), :])
-    corr.append(np.corrcoef(data_norm.T))
-    sample_size.append(int(i))
-    corr_dt.append(corr[-1] - corr[-2])
+            corr_dts.append(np.sum(np.sum(np.abs(corr_dt), axis=1), axis=1))
 
-    # Stack lists to numpy arrays
-    corr = np.stack(corr, axis=2)
-    corr_dt = np.stack(corr_dt, axis=2)
-    t_size = np.stack(sample_size) / fs
+        # Make DataFrame
+        df = pd.DataFrame()
+        for i, id_ in enumerate(patient_id):
+            sub_df = pd.DataFrame()
+            sub_df['unique_id'] = (np.ones(len(t_size)) * i).astype(int)
+            sub_df['Patient ID'] = [id_ for _ in range(len(t_size))]
+            sub_df['dt'] = [dt for _ in range(len(t_size))]
+            sub_df['corr_dt'] = corr_dts[i]
+            sub_df['t_size'] = t_size
+            df = df.append(sub_df, ignore_index=True)
+        df.to_pickle('../data/sample_size_det_' + save_name + '.pkl')
 
-    # Determine sum of changes of correlation
-    corr_dt = np.abs(np.sum(np.sum(corr_dt, axis=0), axis=0))
+    else:
+        df = pd.read_pickle('../data/sample_size_det_' + load_name + '.pkl')
 
-    return corr_dt, t_size
-
-
-def plot_determine_sample_size(corr_dt, t_size, patient_id=None, save_name='default'):
-    df = pd.DataFrame()
-    for i, _ in enumerate(corr_dt):
-        sub_df = pd.DataFrame()
-        sub_df['data_set_id'] = (np.ones(len(corr_dt[i])) * i).astype(int)
-        if patient_id is not None:
-            sub_df['patient_id'] = [patient_id[i] for _ in range(len(corr_dt[i]))]
-        sub_df['corr_dt'] = corr_dt[i]
-        sub_df['t_size'] = t_size[i]
-        df = df.append(sub_df, ignore_index=True)
-
-    sns.set_style('whitegrid')
+    # Plot results
+    sns.set_style('white')
     plt.figure(figsize=(8, 5))
-    sns.lineplot(x='t_size', y='corr_dt', data=df)
-    plt.ylim(0, df.quantile(0.95)[1]), plt.xlim(left=0)
-    plt.ylabel('Sum of abs. change'), plt.xlabel('Sample size [s]')
-    plt.title('Change of correlation')
-
-    plt.tight_layout()
-    plt.savefig('../doc/figures/change_sample_size_dt_' + save_name + '.png')
+    sns.lineplot(x='t_size', y='corr_dt', data=df, hue='Patient ID')
+    plt.xlabel('Sample size [s]'), plt.ylabel('Sum of abs. weight changes [-]')
+    plt.title('Weight change per ' + str(df['dt'][0]) + ' sec.')
+    plt.ylim(0, df.quantile(0.97)['corr_dt']), plt.xlim(df['t_size'].min(), df['t_size'].max())
+    plt.savefig('../doc/figures/sample_size_det_' + save_name + '.png')
     plt.close()
-
-
-# def plot_corr_sample_size(corr, t_size, slice=0):
-#     plt.figure(figsize=(8, 5))
-#     X, Y = np.meshgrid(t_size, np.arange(corr.shape[0]))
-#     plt.pcolor(X, Y, corr[:, slice, :-1], shading='auto')
-#     plt.title('Correlation with node ' + str(slice) + 'per sample size')
-#     plt.xlabel('Sample size [s]'), plt.ylabel('Correlation coefficient')
 

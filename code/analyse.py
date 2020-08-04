@@ -8,7 +8,7 @@ import seaborn as sns
 
 if __name__ == '__main__':
 
-    # params = {'id_': 'small_bs50',
+    # params = {'id_': '4nodes_bs01',
     #           'model_type': None,  # To be removed
     #           'path2data': '../data/',
     #           'patient_id': 'ID07',
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     #           'brain_state': 'beginning',
     #           'add_id': '(M)',
     #           # model parameters ------------------------
-    #           'visible_size': 10,  # 'all' or scalar
+    #           'visible_size': 4,  # 'all' or scalar
     #           'hidden_size': 0,  # improve: portion
     #           'lambda': 0,
     #           'af': 'relu',  # 'relu', 'linear', 'sigmoid'
@@ -25,16 +25,16 @@ if __name__ == '__main__':
     #           'window_size': 30,
     #           # train parameters -------------------------
     #           'loss_function': 'mae',  # 'mse' or 'mae'
-    #           'lr': 0.001,
-    #           'batch_size': 50,
+    #           'lr': 0.00012,
+    #           'batch_size': 1,
     #           'shuffle': False,
     #           'normalization': 'standard_positive',  # 'min_max', 'standard', None
-    #           'epochs': 30}
+    #           'epochs': 10}
     #
     # utrain.train_and_test(params)
-    # ufig.plot_train_test('small_bs50', [2, 4, 6, 8], lim_nr_samples=2000)
+    # ufig.plot_train_test('4nodes_bs01', [1, 2], lim_nr_samples=2000)
 
-    id0, id1 = 'small', 'small_bs50'
+    id0, id1 = '4nodes_bs01', 'small_bs50'
     W_01 = pickle.load(open('../models/' + id0 + '/W_epoch.pkl', 'rb'))
     W_01 = np.asarray(W_01['W_epoch'])
     W_50 = pickle.load(open('../models/' + id1 + '/W_epoch.pkl', 'rb'))
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     ax2 = fig.add_subplot(gs[1:, 2:])
     for i in range(W_01.shape[1]):
         plt.plot(W_01[:, i, i], color='blue')
-        if i != 9:
+        if i != W_01.shape[1] - 1:
             plt.plot(W_01[:, i, i + 1], color='red')
         if i != 0:
             plt.plot(W_01[:, i, i - 1], color='red')

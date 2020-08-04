@@ -608,6 +608,7 @@ def determine_sample_size(patient_id: list=None, time_begin: list=None, max_samp
         corr_dts = []
         t_size = np.arange(dt, max_sample_size, dt).tolist()
         for i, id_ in enumerate(patient_id):
+            print('Computes job ' + str(i) + '/' + str(len(patient_id) - 1))
             # Load and prepare data
             data_mat = loadmat('../data/' + id_ + '_' + str(time_begin[i][0]) + 'h.mat')
             info_mat = loadmat('../data/' + id_ + '_info.mat')

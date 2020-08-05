@@ -537,8 +537,9 @@ def train_single_layer(params):
         for p in model.parameters():
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
         epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
-        add_id = params['add_id']
-        print(f'{add_id} Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
+        if epoch % 10 == 0:
+            add_id = params['add_id']
+            print(f'{add_id} Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     with torch.no_grad():
         model.W.weight.data = model.W.weight.data * \

@@ -292,11 +292,9 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
 
 
 def plot_weighted_prediction(id_, node_idx, max_duration=.5):
-    # Parameter
-    fs = 512
-
     # Get model
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
+    fs = params['resample']
     model = models.GeneralRNN(params)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
@@ -351,15 +349,15 @@ def plot_sudden_lack_of_input(id_: str, custom_test_set: dict=None, window_size_
         Returns and saves:
             ../model/eval_prediction.pkl
     """
-    fs = 512
-    window_size = int(window_size_t * fs)
-    interrupt = int(interrupt_t * fs)
     # Define device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Load data and parameters
     print('Status: Load and process data for prediction.')
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
+    fs = params['resample']
+    window_size = int(window_size_t * fs)
+    interrupt = int(interrupt_t * fs)
     if custom_test_set is None:
         data_pre = utrain.pre_process(params=params)
     else:

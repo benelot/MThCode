@@ -322,3 +322,31 @@ class TestGeneralRNN(nn.Module):
                 u_hist.append(u[:self.visible_size].numpy().copy())
                 r_hist.append(r[:self.visible_size].numpy().copy())
         return u_hist, r_hist
+
+
+class SingleLayer(nn.Module):
+    def __init__(self, params: dict):
+        super().__init__()
+
+        # Parameters
+        self.visible_size = params['visible_size']
+
+        # Create FC layer
+        self.W = nn.Linear(self.visible_size, self.visible_size, bias=params['bias'])
+
+        # Define non-linearity
+        if params['af'] == 'relu':
+            self.phi = torch.relu
+        elif params['af'] == 'tanh':
+            self.phi = torch.tanh
+        elif params['af'] == 'linear':
+            def linear(in_):
+                return in_
+            self.phi = linear
+        else:
+            print('Error; No valid activation function.')
+
+    def forward(self, x):
+        r = self.phi(x)
+        u = self.W(r)
+        return u

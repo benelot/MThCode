@@ -483,7 +483,7 @@ def nonlin_corr(patient_id: str, time_begin: list, duration: float,
         plot_nonlin_corr(r2, h2, r2_dt, h2_dt, save_name=plot_name)
 
 
-def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.1, critical_corr=0.7):
+def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.5, critical_corr=0.7):
     """
 
     :param patient_id:
@@ -546,7 +546,7 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.1, crit
     return cc, tl, tau, cctl
 
 
-def lin_corr_plot(cc, tl, tau, patient_id: str, time_begin: list):
+def lin_corr_plot(cc, tl, tau, patient_id: str, time_begin: list, critical_corr=0.7):
     sns.set_style('white')
     fig = plt.figure(figsize=(10, 13))
     gs = fig.add_gridspec(3, 2)
@@ -562,8 +562,14 @@ def lin_corr_plot(cc, tl, tau, patient_id: str, time_begin: list):
 
     ax1 = fig.add_subplot(gs[:1, 1:])
     sns.distplot(cc, kde=False)
+    ymin, ymax = ax1.get_ylim()
+    xmin, xmax = ax1.get_xlim()
+    plt.plot([critical_corr, critical_corr], [ymin, ymax], linestyle='--', color='black', label='Critical corr.')
+    plt.plot([-critical_corr, -critical_corr], [ymin, ymax], linestyle='--', color='black', label='Critical corr.')
+    ax1.set_xlim(xmin, xmax)
+    plt.legend()
     ax1.set_title('Peak cross correlation histogram')
-    ax1.set_xlabel('Peak cross correlation [-]'), ax1.set_ylabel('Frequency [-]')
+    ax1.set_xlabel('Peak cross correlation [-]'), ax1.set_ylabel('Nr. of occurrence [-]')
 
     ax2 = fig.add_subplot(gs[1:2, :1])
     vlim = np.nanmax(np.abs(tl))
@@ -574,7 +580,7 @@ def lin_corr_plot(cc, tl, tau, patient_id: str, time_begin: list):
     ax3 = fig.add_subplot(gs[1:2, 1:])
     sns.distplot(tl, kde=False)
     ax3.set_title('Time lag histogram')
-    ax3.set_xlabel('Time [ms]'), ax3.set_ylabel('Frequency [-]')
+    ax3.set_xlabel('Time [ms]'), ax3.set_ylabel('Nr. of occurrence [-]')
 
     ax4 = fig.add_subplot(gs[2:, :1])
     sns.heatmap(tau, cmap=cmap_uni)
@@ -584,7 +590,7 @@ def lin_corr_plot(cc, tl, tau, patient_id: str, time_begin: list):
     ax5 = fig.add_subplot(gs[2:, 1:])
     sns.distplot(tau, kde=False)
     ax5.set_title('Tau histogram')
-    ax5.set_xlabel('Time [ms]'), ax5.set_ylabel('Frequency [-]')
+    ax5.set_xlabel('Time [ms]'), ax5.set_ylabel('Nr. of occurrence [-]')
 
     plt.tight_layout()
     save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'

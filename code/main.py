@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'multiple_pos_'
+    pre = 'single_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -18,11 +18,8 @@ if __name__ == '__main__':
         #                  [pre + 'ID07_35h15m' + post, 'ID07', [35, 15], 'middle'],
         #                  [pre + 'ID07_38h22m' + post, 'ID07', [38, 22], 'end'],
         params_change = [[pre + 'ID08_57h00m' + post, 'ID08', [57, 00], 'before'],
-                         [pre + 'ID08_57h58m' + post, 'ID08', [57, 58], 'beginning'],
                          [pre + 'ID08_60h10m' + post, 'ID08', [60, 10], 'middle'],
-                         [pre + 'ID08_60h58m' + post, 'ID08', [60, 58], 'light sleep'],
-                         [pre + 'ID08_64h40m' + post, 'ID08', [64, 40], 'end'],
-                         [pre + 'ID08_65h50m' + post, 'ID08', [65, 50], 'after']]
+                         [pre + 'ID08_64h40m' + post, 'ID08', [64, 40], 'end']]
                          # [pre + 'ID11a_60h05m' + post, 'ID11', [60, 5], 'beginning'],
                          # [pre + 'ID11a_62h12m' + post, 'ID11', [62, 12], 'middle'],
                          # [pre + 'ID11a_65h00m' + post, 'ID11', [65, 0], 'end'],
@@ -36,12 +33,12 @@ if __name__ == '__main__':
             ids_attempt.append(val[0])
             ids_all.append(val[0])
 
-            params = {'id_': ids_attempt[-1],
-                      'model_type': None,  # To be removed
+            params = {'id_': ids_all[-1],
+                      'model_type': 'single_layer',  # To be removed
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
-                      'duration': 30,  # seconds
+                      'duration': 10,  # seconds
                       'brain_state': val[3],
                       'add_id': '(M)',
                       # model parameters ------------------------
@@ -50,7 +47,8 @@ if __name__ == '__main__':
                       'lambda': 0,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
-                      'window_size': 30,
+                      'window_size': 0,
+                      'resample': 512,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.0002,
@@ -59,11 +57,8 @@ if __name__ == '__main__':
                       'normalization': 'standard_positive',  # 'min_max', 'standard', None
                       'epochs': 23}
 
-            if attempt == 0 and params['time_begin'][0] < 65:
-                pass
-            else:
-                utrain.train_and_test(params)
-                ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)
+            utrain.train_and_test(params)
+            ufig.plot_train_test(ids_all[-1], [1, 3, 5, 7])
 
         ufig.plot_multi_boxplots(ids=ids_attempt, x='batch_size', y='correlation', hue='brain_state',
                                  save_name=pre + 'corr' + post, ylim=(0, 1))

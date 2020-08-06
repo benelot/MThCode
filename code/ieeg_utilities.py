@@ -483,7 +483,7 @@ def nonlin_corr(patient_id: str, time_begin: list, duration: float,
         plot_nonlin_corr(r2, h2, r2_dt, h2_dt, save_name=plot_name)
 
 
-def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.5, critical_corr=0.7):
+def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, critical_corr=0.7):
     """
 
     :param patient_id:
@@ -518,6 +518,9 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.5, crit
     tl_n = np.argmax(np.abs(cctl), axis=2)
     tl = (tl_n - n_lag) * mask / fs * 1000  # in [ms]
 
+
+    #plt.scatter(tau[0, 0], arg_tau_stacked[0, 0, 0])
+
     # Calculate mean tau
     # Tile and stack values for future operations
     tl_n_stacked = np.dstack([tl_n] * cctl.shape[2])
@@ -542,6 +545,17 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.5, crit
     np.fill_diagonal(tl, np.nan)
     np.fill_diagonal(cc, np.nan)
     cc[np.triu_indices(cc.shape[0], k=1)] = np.nan
+
+    # t vector for plots
+    t = np.arange(0, cctl.shape[2])
+    t = (t - n_lag) / fs * 1000
+    plt.plot(t, cctl[0, 0, :], label='nodes 0 - 0', color='tab:blue')
+    plt.plot(t, cctl[0, 2, :], label='nodes 0 - 2', color='tab:red')
+    plt.plot([tau[0, 2], tau[0, 2]], [-0.45, 1.05], color='tab:red', linestyle='--')
+    plt.plot([tau[0, 0], tau[0, 0]], [-0.45, 1.05], color='tab:blue', linestyle='--')
+    plt.xlabel('Time lag [ms]'), plt.ylabel('NCC [-]'), plt.title('Normalized cross correlation')
+    plt.legend()
+    plt.show()
 
     return cc, tl, tau, cctl
 

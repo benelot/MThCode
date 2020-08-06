@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_1_single_'
+    pre = 'batch_size_1_complex_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -34,7 +34,7 @@ if __name__ == '__main__':
             ids_all.append(val[0])
 
             params = {'id_': ids_attempt[-1],
-                      'model_type': 'single_layer',  # To be removed
+                      'model_type': None,  # To be removed
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
@@ -43,8 +43,8 @@ if __name__ == '__main__':
                       'add_id': '(A)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': 0,  # improve: portion
-                      'lambda': 0,
+                      'hidden_size': 150,  # improve: portion
+                      'lambda': .2,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,

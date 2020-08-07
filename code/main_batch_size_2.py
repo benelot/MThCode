@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_2_'
+    pre = 'batch_size_2_complex_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
         ids_attempt = []
         for i, val in enumerate(params_change):
-            print('Status: Train model: ' + val[0])
+            print('B ----- Status: Train model: ' + val[0])
             ids_attempt.append(val[0])
             ids_all.append(val[0])
 
@@ -40,13 +40,15 @@ if __name__ == '__main__':
                       'time_begin': val[2],  # [hour, minute]
                       'duration': 30,  # seconds
                       'brain_state': val[3],
+                      'add_id': '(B)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': 8,  # improve: portion
-                      'lambda': 0,
+                      'hidden_size': 150,  # improve: portion
+                      'lambda': 0.2,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,
+                      'resample': 512,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.0002,
@@ -59,7 +61,7 @@ if __name__ == '__main__':
             ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)
 
         ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='correlation', hue='brain_state', save_name=pre + 'corr' + post)
-        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
-        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mse', hue='brain_state', save_name=pre + 'mse' + post)
+        #ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
+        #ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mse', hue='brain_state', save_name=pre + 'mse' + post)
 
     ufig.mean_weights(ids=ids_all, save_name=pre)

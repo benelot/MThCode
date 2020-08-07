@@ -20,3 +20,10 @@ def change_params_key(id_: str, old_key: str, new_key: str):
     del params[old_key]
     params[new_key] = val
     pickle.dump(params, open('../models/' + id_ + '/params.pkl', 'wb'))
+
+
+def new_params(id_: str, key: str, val):
+    params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
+    params[key] = val
+    pickle.dump(params, open('../models/' + id_ + '/params.pkl', 'wb'))
+

@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_512_'
+    pre = 'batch_size_512_complex_linear_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
         ids_attempt = []
         for i, val in enumerate(params_change):
-            print('Status: Train model: ' + val[0])
+            print('E ----- Status: Train model: ' + val[0])
             ids_attempt.append(val[0])
             ids_all.append(val[0])
 
@@ -40,26 +40,28 @@ if __name__ == '__main__':
                       'time_begin': val[2],  # [hour, minute]
                       'duration': 30,  # seconds
                       'brain_state': val[3],
+                      'add_id': '(E)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': 8,  # improve: portion
+                      'hidden_size': 150,  # improve: portion
                       'lambda': 0,
-                      'af': 'relu',  # 'relu', 'linear', 'sigmoid'
+                      'af': 'linear',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,
+                      'resample': 512,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
-                      'batch_size': 2560,
+                      'batch_size': 512,
                       'shuffle': False,
-                      'normalization': 'standard_positive',  # 'min_max', 'standard', None
+                      'normalization': 'standard',  # 'min_max', 'standard', None
                       'epochs': 250}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], [3, 8, 13, 17], lim_nr_samples=2000)
 
         ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='correlation', hue='brain_state', save_name=pre + 'corr' + post)
-        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
-        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mse', hue='brain_state', save_name=pre + 'mse' + post)
+        #ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
+        #ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mse', hue='brain_state', save_name=pre + 'mse' + post)
 
     ufig.mean_weights(ids=ids_all, save_name=pre)

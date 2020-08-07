@@ -14,17 +14,26 @@ import torch
 import torch.nn as nn
 import pickle
 import os
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import models
 
 
 def train_and_test(params: dict):
-    train(params)
-    predict(params['id_'])
-    distance(params['id_'])
+    if params['model_type'] == 'general' or params['model_type'] == None:
+        train(params)
+        predict(params['id_'])
+        distance(params['id_'])
+    elif params['model_type'] == 'single_layer':
+        train_single_layer(params)
+        predict_single_layer(params['id_'])
+        distance(params['id_'])
+    else:
+        print('Error: No valid model type.')
 
 
-def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False):
+def pre_process(id_: str=None, params: dict=None, custom_test_set=None):
     """ Loads and prepares iEEG data.
 
         Returns:
@@ -35,19 +44,25 @@ def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False
     # Load and cut data
     if params is None:
         params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
+    if custom_test_set is not None:
+        params['time_begin'] = custom_test_set['time_begin']
+        params['duration'] = custom_test_set['duration']
     data_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + str(params['time_begin'][0]) + 'h.mat')
     info_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + 'info.mat')
     fs = float(info_mat['fs'])
-    sample_begin = int(params['time_begin'][1] * 60 * fs + 27 * fs)  # sec offset test
-    sample_end = int(sample_begin + params['duration'] * fs)
+    if len(params['time_begin']) == 3:
+        sample_begin = int(np.round(params['time_begin'][1] * 60 * fs + params['time_begin'][2] * fs))
+    else:
+        sample_begin = int(np.round(params['time_begin'][1] * 60 * fs))
+    sample_end = int(np.round(sample_begin + params['duration'] * fs))
     if params['visible_size'] != 'all':
         data = data_mat['EEG'][:params['visible_size'], sample_begin:sample_end].transpose()
     else:
         data = data_mat['EEG'][:, sample_begin:sample_end].transpose()
 
-    # Resample to fs of 512 Hz
-    if fs != 512 and resample:
-        data = signal.resample(data, num=int(data.shape[0] / fs * 512), axis=0)
+    # Resample
+    if params['resample'] != fs and params['resample'] is not None:
+        data = signal.resample(data, num=int(data.shape[0] / fs * params['resample']), axis=0)
 
     # Normalize
     if params['normalization'] == 'standard_positive':
@@ -65,28 +80,15 @@ def pre_process(id_: str=None, params: dict=None, resample=True, windowing=False
     elif params['normalization'] == 'all_standard_positive':
         data = (data - np.mean(data)) / (8 * np.std(data))
         data = data / 2 + 0.5
+    elif params['normalization'] == 'all_standard':
+        data = (data - np.mean(data)) / np.std(data)
     elif params['normalization'] is not None:
         print('Error: No valid normalization method.')
 
     # To tensor
     data = torch.from_numpy(data)
 
-    if windowing is False:
-        return data
-
-    # Split data into training and test set
-    train_portion = 0.8
-    train_set = data[:int(train_portion * data.shape[0]), :]
-    test_set = data[int(train_portion * data.shape[0]):, :]
-
-    # Windowing
-    X_train, X_test = [], []
-    for i in range(train_set.shape[0] - params['window_size']):
-        X_train.append(train_set[i:i + params['window_size'], :])
-    for i in range(test_set.shape[0] - params['window_size']):
-        X_test.append(test_set[i:i + params['window_size'], :])
-
-    return X_train, X_test
+    return data
 
 
 def train(params):
@@ -129,12 +131,14 @@ def train(params):
     epoch_loss = np.zeros([params['epochs'], model.visible_size])
     epoch_grad_norm = np.zeros(params['epochs'])
     #epoch_time = np.zeros(params['epochs'] + 1)
+    W = []
 
     start_time = time.time()
     #epoch_time[0] = time.time()
     print('Status: Start training with cuda = ' + str(torch.cuda.is_available()) + '.')
 
     for epoch in range(params['epochs']):
+        W.append(np.copy(model.W.weight.data.cpu().numpy()))
         for X, y in data_generator:
             X, y = X.to(device), y.float().to(device)
             optimizer.zero_grad()
@@ -146,8 +150,10 @@ def train(params):
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
         epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
         #epoch_time[epoch + 1] = time.time() - epoch_time[epoch]
-        if epoch % 20 == 0:
-            print(f'Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
+        #if epoch % 5 == 0:
+
+        add_id = params['add_id']
+        print(f'{add_id} Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
 
     total_time = time.time() - start_time
     print(f'Time [min]: {total_time / 60:.3}')
@@ -166,9 +172,15 @@ def train(params):
     pickle.dump(params, open(directory + '/params.pkl', 'wb'))
     pickle.dump(eval_optimization, open(directory + '/eval_optimization.pkl', 'wb'))
 
+    W_epoch = {'W_epoch': W}
+    pickle.dump(W_epoch, open(directory + '/W_epoch.pkl', 'wb'))
 
-def predict(id_: str):
+
+def predict(id_: str, custom_test_set: dict=None):
     """ Tests model an returns and saves predicted values.
+
+        If the prediction set is not the training set, pass a custom_test_set dictionary containing:
+            'time_begin', 'duration', 'batch_size'
 
         Returns and saves:
             ../model/eval_prediction.pkl
@@ -179,13 +191,19 @@ def predict(id_: str):
     # Load data and parameters
     print('Status: Load and process data for prediction.')
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
-    data_pre = pre_process(params=params)
+    if custom_test_set is None:
+        data_pre = pre_process(params=params)
+        batch_size = params['batch_size']
+    else:
+        data_pre = pre_process(params=params, custom_test_set=custom_test_set)
+        batch_size = custom_test_set['batch_size']
     data_set = iEEG_DataSet(data_pre, params['window_size'])
-    data_generator = torch.utils.data.DataLoader(data_set, batch_size=params['batch_size'], shuffle=False)
+    data_generator = torch.utils.data.DataLoader(data_set, batch_size=batch_size, shuffle=False)
 
     # Make model
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = models.GeneralRNN(params)
-    model.load_state_dict(torch.load('../models/' + id_ + '/model.pth'))
+    model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
     model = model.to(device)
 
     # Evaluate model
@@ -242,6 +260,9 @@ def distance(id_: str):
                       'af': [params['af'] for _ in range(node_size)],
                       'bias': [params['bias'] for _ in range(node_size)],
                       'lambda': [params['lambda'] for _ in range(node_size)],
+                      'batch_size': [params['batch_size'] for _ in range(node_size)],
+                      'shuffle': [params['shuffle'] for _ in range(node_size)],
+                      'normalization': [params['normalization'] for _ in range(node_size)],
                       'correlation': corr,
                       'mse': mse,
                       'mae': mae}
@@ -297,6 +318,19 @@ class iEEG_DataSet(torch.utils.data.Dataset):
 
     def __len__(self):
         return self.data.shape[0] - self.window_size
+
+
+class iEEG_SingleLayerSet(torch.utils.data.Dataset):
+    def __init__(self, data):
+        self.data = data
+
+    def __getitem__(self, index):
+        x = self.data[index, :]
+        y = self.data[index + 1, :]
+        return x, y
+
+    def __len__(self):
+        return self.data.shape[0] - 1
 
 
 def train_old(params: dict):
@@ -442,3 +476,146 @@ def predict_old(id_: str, train_set=False):
     pickle.dump(eval_prediction, open('../models/' + id_ + '/eval_prediction.pkl', 'wb'))
 
     return eval_prediction
+
+
+def train_single_layer(params):
+    """ Trains model with parameters params.
+
+        Saves:
+            ../model/model.pth
+            ../model/params.pkl
+            ../model/eval_optim.pkl
+    """
+    # Define device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # Load data
+    print('Status: Start data preparation.')
+    data_pre = pre_process(params=params)
+    if params['visible_size'] == 'all':
+        params['visible_size'] = data_pre.shape[1]
+    data_set = iEEG_SingleLayerSet(data_pre)
+    data_generator = torch.utils.data.DataLoader(data_set, batch_size=params['batch_size'], shuffle=params['shuffle'])
+
+    # Make model
+    model = models.SingleLayer(params)
+    model = model.to(device)
+
+    # Define training parameters
+    criterion = None
+    if params['loss_function'] == 'mae':
+        criterion = nn.L1Loss(reduction='none')
+    elif params['loss_function'] == 'mse':
+        criterion = nn.MSELoss(reduction='none')
+    else:
+        print('Error: No valid loss function.')
+
+    lr = params['lr']
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+    # Training
+    loss = None
+    epoch_loss = np.zeros([params['epochs'], model.visible_size])
+    epoch_grad_norm = np.zeros(params['epochs'])
+    W = []
+
+    start_time = time.time()
+    print('Status: Start training with cuda = ' + str(torch.cuda.is_available()) + '.')
+
+    for epoch in range(params['epochs']):
+        W.append(np.copy(model.W.weight.data.cpu().numpy()))
+        for x, y in data_generator:
+            x, y = x.float().to(device), y.float().to(device)
+            optimizer.zero_grad()
+            with torch.no_grad():
+                model.W.weight.data = model.W.weight.data * \
+                                      (torch.ones(1).to(device) - torch.eye(x.shape[1]).to(device))
+            prediction = model(x)
+            loss = criterion(prediction, y)
+            torch.autograd.backward(loss.mean()) #  loss.mean().backward()
+            optimizer.step()
+        for p in model.parameters():
+            epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
+        epoch_loss[epoch, :] = np.mean(loss.detach().cpu().numpy(), axis=0)
+        if epoch % 10 == 0:
+            add_id = params['add_id']
+            print(f'{add_id} Epoch: {epoch} | Loss: {np.mean(epoch_loss[epoch, :]):.4}')
+
+    with torch.no_grad():
+        model.W.weight.data = model.W.weight.data * \
+                              (torch.ones(1).to(device) - torch.eye(model.visible_size).to(device))
+    total_time = time.time() - start_time
+    print(f'Time [min]: {total_time / 60:.3}')
+
+    # Make optimizer evaluation dictionary
+    eval_optimization = {'id_': params['id_'],
+                         'loss': epoch_loss,
+                         'grad_norm': epoch_grad_norm}
+
+    # Save model
+    print('Status: Save trained model to file.')
+    directory = '../models/' + params['id_']
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    torch.save(model.state_dict(), directory + '/model.pth')
+    pickle.dump(params, open(directory + '/params.pkl', 'wb'))
+    pickle.dump(eval_optimization, open(directory + '/eval_optimization.pkl', 'wb'))
+
+    W_epoch = {'W_epoch': W}
+    pickle.dump(W_epoch, open(directory + '/W_epoch.pkl', 'wb'))
+
+
+def predict_single_layer(id_: str, custom_test_set: dict=None):
+    """ Tests model an returns and saves predicted values.
+
+        If the prediction set is not the training set, pass a custom_test_set dictionary containing:
+            'time_begin', 'duration', 'batch_size'
+
+        Returns and saves:
+            ../model/eval_prediction.pkl
+    """
+    # Define device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # Load data and parameters
+    print('Status: Load and process data for prediction.')
+    params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
+    if custom_test_set is None:
+        data_pre = pre_process(params=params)
+        batch_size = params['batch_size']
+    else:
+        data_pre = pre_process(params=params, custom_test_set=custom_test_set)
+        batch_size = custom_test_set['batch_size']
+    data_set = iEEG_SingleLayerSet(data_pre)
+    data_generator = torch.utils.data.DataLoader(data_set, batch_size=batch_size, shuffle=False)
+
+    # Make model
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = models.SingleLayer(params)
+    model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
+    model = model.to(device)
+
+    # Evaluate model
+    model.eval()
+    pred_all = []
+    true_all = []
+
+    print('Status: Start prediction with cuda = ' + str(torch.cuda.is_available()) + '.')
+    with torch.no_grad():
+        for x, y in data_generator:
+            x, y = x.to(device), y.to(device)
+            predictions = model(x)
+            pred_all.append(predictions.cpu().numpy())
+            true_all.append(y.cpu().numpy())
+        pred_all, true_all = np.concatenate(pred_all), np.concatenate(true_all)
+
+    # Save predictions to file
+    print('Status: Save predictions to file.')
+    eval_prediction = {'prediction': pred_all,
+                       'true': true_all}
+    pickle.dump(eval_prediction, open('../models/' + id_ + '/eval_prediction.pkl', 'wb'))
+
+    return eval_prediction
+
+
+

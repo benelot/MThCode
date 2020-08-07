@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_512_single_linear_'
+    pre = 'batch_size_512_allnorm_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -34,7 +34,7 @@ if __name__ == '__main__':
             ids_all.append(val[0])
 
             params = {'id_': ids_attempt[-1],
-                      'model_type': 'single_layer',  # To be removed
+                      'model_type': None,  # To be removed
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
@@ -45,7 +45,7 @@ if __name__ == '__main__':
                       'visible_size': 'all',  # 'all' or scalar
                       'hidden_size': 0,  # improve: portion
                       'lambda': 0,
-                      'af': 'linear',  # 'relu', 'linear', 'sigmoid'
+                      'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,
                       'resample': 512,
@@ -54,11 +54,11 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 512,
                       'shuffle': False,
-                      'normalization': 'standard',  # 'min_max', 'standard', None
+                      'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 250}
 
             utrain.train_and_test(params)
-            ufig.plot_train_test(ids_attempt[-1], 12)
+            ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
 
         ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='correlation', hue='brain_state', save_name=pre + 'corr' + post)
         #ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)

@@ -184,8 +184,10 @@ def distribution(data: np.ndarray, xlim: tuple=None):
 
 
 def plot_distribution(data: np.ndarray, xlim: tuple=None, n_clusters: int=6, qq_plot: bool=True, title: str=''):
+    print('Status: Get distributions.')
     kde_x, kde = distribution(data, xlim=xlim)
 
+    print('Status: Reduction of nodes.')
     df_kde = node_reduction(kde, n_clusters=n_clusters, sample_labels=kde_x, plot=False)
 
     sns.set_style('whitegrid')
@@ -226,6 +228,7 @@ def plot_distribution(data: np.ndarray, xlim: tuple=None, n_clusters: int=6, qq_
         plt.ylabel('Density')
         plt.title(title)
 
+    print('Status: Save plot.')
     plt.savefig('../doc/figures/preprocess_distribution_' + title + '.png')
 
 
@@ -717,7 +720,8 @@ def determine_sample_size(patient_id: list=None, time_begin: list=None, max_samp
     sns.lineplot(x='t_size', y='corr_dt', data=df, hue='Patient ID')
     plt.xlabel('Sample size [s]'), plt.ylabel('Sum of abs. weight changes [-]')
     plt.title('Weight change per ' + str(df['dt'][0]) + ' sec.')
-    plt.ylim(0, df.quantile(0.97)['corr_dt']), plt.xlim(df['t_size'].min(), df['t_size'].max())
+    plt.ylim(0, 500), plt.xlim(df['t_size'].min(), df['t_size'].max())
+    # plt.ylim(0, df.quantile(0.97)['corr_dt']), plt.xlim(df['t_size'].min(), df['t_size'].max())
     plt.savefig('../doc/figures/sample_size_det_' + save_name + '.png')
     plt.close()
 

@@ -78,7 +78,7 @@ def pre_process(id_: str=None, params: dict=None, custom_test_set=None):
         sc = MinMaxScaler(feature_range=(0, 1))
         data = sc.fit_transform(data)
     elif params['normalization'] == 'all_standard_positive':
-        data = (data - np.mean(data)) / (8 * np.std(data))
+        data = (data - np.mean(data)) / (5 * np.std(data))
         data = data / 2 + 0.5
     elif params['normalization'] == 'all_standard':
         data = (data - np.mean(data)) / np.std(data)

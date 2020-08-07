@@ -6,3 +6,6 @@ torch
 scipy
 sklearn
 
+notebook==6.0.2
+nbconvert==5.6.1
+jupyterlab==1.2.4

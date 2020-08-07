@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_512_complex_'
+    pre = 'batch_size_512_complex_linear_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -44,8 +44,8 @@ if __name__ == '__main__':
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
                       'hidden_size': 150,  # improve: portion
-                      'lambda': 0.2,
-                      'af': 'relu',  # 'relu', 'linear', 'sigmoid'
+                      'lambda': 0,
+                      'af': 'linear',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,
                       'resample': 512,
@@ -54,7 +54,7 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 512,
                       'shuffle': False,
-                      'normalization': 'standard_positive',  # 'min_max', 'standard', None
+                      'normalization': 'standard',  # 'min_max', 'standard', None
                       'epochs': 250}
 
             utrain.train_and_test(params)

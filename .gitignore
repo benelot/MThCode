@@ -1,4 +1,4 @@
-code/trash
+src/trash
 data/*.mat
 data/*.npy
 models/

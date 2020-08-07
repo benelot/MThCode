@@ -22,6 +22,7 @@ from IPython.display import display, clear_output
 from sklearn.preprocessing import StandardScaler
 from obspy.signal import cross_correlation
 import copy
+import math
 
 
 def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_components=12, sample_labels=None, plot=True):
@@ -632,19 +633,29 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     t = np.arange(0, cctl.shape[2])
     t = (t - n_lag) / fs * 1000
     n0 = 44  # Base node
-    N = 7  # Number of line plots
+    begin_N = 7
+    end_N = 14  # Number of line plots
+    indices = [i for i in range(begin_N, end_N)]
+
+    n_choices = 75
+    valid_choices = np.argwhere(~np.isnan(mask))
+    valid_indices = [i[0] * cctl.shape[0] + i[1] for i in valid_choices]
+    # indices = np.random.choice(cctl.shape[0] * cctl.shape[1], n_choices, replace=False).tolist()
+    indices = valid_indices #np.random.choice(valid_indices, n_choices, replace=False).tolist()
     peaks_x, peaks_y, taus_x_0, taus_x_1, taus_y = [], [], [], [], []
-    for i in range(N):
-        n1 = n0 + i  # Reference node
-        plt.plot(t, cctl[n0, n1, :], label='Nodes 0 - ' + str(i))
+    for i in indices:
+        n0 = i % cctl.shape[0]
+        n1 = int(math.floor(i / cctl.shape[1]))
+        #n1 = n0 + i  # Reference node
+        plt.plot(t, cctl[n0, n1, :], label='Nodes ' + str(n0) + ' - ' + str(n1))
         peaks_x.append(tl_no_mask[n0, n1])
         peaks_y.append(cc[n0, n1])
         taus_x_0.append(higher_tau_all[n0, n1])
         taus_x_1.append(lower_tau_all[n0, n1])
         taus_y.append(cc[n0, n1] * factor)
-    plt.scatter(peaks_x, peaks_y, color='black', marker='d', label='Peak', zorder=N + 1)
-    plt.scatter(taus_x_0, taus_y, color='black', marker='<', label='Right tau', zorder=N + 1)
-    plt.scatter(taus_x_1, taus_y, color='black', marker='>', label='Left tau', zorder=N + 1)
+    plt.scatter(peaks_x, peaks_y, color='black', marker='d', label='Peak', zorder=len(indices) + 1)
+    plt.scatter(taus_x_0, taus_y, color='black', marker='<', label='Right tau', zorder=len(indices) + 1)
+    plt.scatter(taus_x_1, taus_y, color='black', marker='>', label='Left tau', zorder=len(indices) + 1)
     ymin, ymax = plt.gca().get_ylim()
     plt.plot([-t_lag*1000, t_lag*1000], [critical_corr, critical_corr],
              color='black', linestyle=':', label='Critical corr.')

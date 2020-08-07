@@ -11,14 +11,15 @@ import pandas as pd
 import torch
 import pickle
 from os import path
+import random
 
 import models
 import utilities_train as utrain
 
 
-def plot_train_test(id_: str, pred_nodes: list, lim_nr_samples=None):
+def plot_train_test(id_: str, n_nodes):
     plot_optimization(id_)
-    plot_prediction(id_, pred_nodes, lim_nr_samples=lim_nr_samples)
+    plot_prediction(id_, n_nodes=n_nodes)
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
     if params['model_type'] != 'single':
         plot_weights(id_)
@@ -130,40 +131,50 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
     plt.close()
 
 
-def plot_prediction(id_: str, nodes_idx: list, lim_nr_samples=None, nodes2path=False):
+def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=.4):
     """ Makes and saves line plots of predictions to ../figures/.
 
         Saves:
             Figure "prediction_[...]"
     """
     # Get data
+    params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
+    fs = params['resample']
+    eval_distance = pickle.load(open('../models/' + id_ + '/eval_distances.pkl', 'rb'))
+    corr = eval_distance['correlation']
     eval_prediction = pickle.load(open('../models/' + id_ + '/eval_prediction.pkl', 'rb'))
-    if lim_nr_samples is None:
-        lim_nr_samples = eval_prediction['true'].shape[0]
-    pred = eval_prediction['prediction'][-lim_nr_samples:, nodes_idx]
-    true = eval_prediction['true'][-lim_nr_samples:, nodes_idx]
+    pred = eval_prediction['prediction']
+    true = eval_prediction['true']
 
-    # Make plot
-    sns.set_style('whitegrid')
-    ax = [[] for i in range(len(nodes_idx))]
-    fig = plt.figure(figsize=(10, int(len(ax)) * 3))
-    for i in range(len(ax)):
-        ax[i] = fig.add_subplot(int(len(nodes_idx)), 1, i + 1)
-        ax[i] = plt.plot(pred[:, i], color='tab:red', ls='--', label='Predicted values')
-        ax[i] = plt.plot(true[:, i], color='tab:blue', label='True values')
-        plt.ylabel('Magn. [-]')
-        plt.xlabel('Time steps [Samples]')
-        plt.title('Node ' + str(nodes_idx[i]))
-        plt.xlim(left=0)
-        plt.legend(loc='upper right')
-    plt.suptitle('Predictions of model ' + id_)
-    fig.subplots_adjust(hspace=.7)
+    if node_idx is not None:
+        n_nodes = len(node_idx)
+    else:
+        node_idx = sorted(random.sample([i for i in range(true.shape[1])], n_nodes))
+    t = np.arange(true.shape[0] / fs - t_lim, true.shape[0] / fs, 1 / fs)  # in sec.
+    offset_array = np.linspace(0, (n_nodes - 1) * offset, n_nodes)
 
-    nodes_str = ''
-    if nodes2path:
-        for _, node in enumerate(nodes_idx):
-            nodes_str = nodes_str + '_' + str(node)
-    plt.savefig('../doc/figures/prediction_' + id_ + nodes_str + '.png')
+    sns.set_style('white')
+    fig = plt.figure(figsize=(8, 5))
+    gs = fig.add_gridspec(1, 6)
+
+    ax0 = fig.add_subplot(gs[:, :5])
+    plt.plot(t, pred[-int(t_lim * fs):, node_idx] + offset_array, color='red', label='Predicted')
+    plt.plot(t, true[-int(t_lim * fs):, node_idx] + offset_array, color='black', label='LFP', lw=.7)
+    plt.plot([4.9, 4.9], [0.4, 0.8], color='black', lw='3')
+    ax0.text(4.92, 0.5, '1 mV', rotation=90)
+    ax0.spines['right'].set_visible(False), ax0.spines['top'].set_visible(False)
+    ax0.set_yticks((offset_array + np.mean(true[-int(t_lim * fs):, node_idx[0]])).tolist())
+    ax0.set_yticklabels(['Nd. ' + str(i) for i in node_idx])
+    ax0.set_xlim(t[0], t[-1]), ax0.set_ylim(bottom=np.mean(true[-int(t_lim * fs):, node_idx[0]]) - offset)
+    ax0.set_xlabel('Time [s]'), ax0.set_title('LFP predictions')
+
+    ax1 = fig.add_subplot(gs[:, 5:])
+    plt.barh(offset_array, width=np.asarray(corr)[node_idx], height=.2, color='gray', edgecolor='black', linewidth=.7)
+    ax1.spines['right'].set_visible(False), ax1.spines['top'].set_visible(False)
+    ax1.set_yticklabels([]), ax1.set_xlabel('Corr. coef. [-]')
+    ax1.set_xlim(0, 1)
+
+    plt.savefig('../doc/figures/pred_' + id_ + '.png')
     plt.close()
 
 
@@ -286,7 +297,7 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
         ax = sns.barplot(x='Mean abs. weight', y='Batch size', hue='Pos. in sleep cylce', data=df, orient='h')
         ax.set(xlabel='Mean abs. weight', ylabel='Batch size')
         ax.set_title('Mean abs. weight')
-        #ax.set_xlim(right=0.05)
+        ax.set_xlim(left=0.04)
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
     plt.close()
 

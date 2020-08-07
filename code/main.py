@@ -57,7 +57,7 @@ if __name__ == '__main__':
                       'normalization': 'standard_positive',  # 'min_max', 'standard', None
                       'epochs': 23}
 
-            utrain.train_and_test(params)
+            #utrain.train_and_test(params)
             ufig.plot_train_test(ids_all[-1], [1, 3, 5, 7])
 
         ufig.plot_multi_boxplots(ids=ids_attempt, x='batch_size', y='correlation', hue='brain_state',

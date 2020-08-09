@@ -154,7 +154,7 @@ def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=.4):
     offset_array = np.linspace(0, (n_nodes - 1) * offset, n_nodes)
 
     sns.set_style('white')
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(8, 8))
     gs = fig.add_gridspec(1, 6)
 
     ax0 = fig.add_subplot(gs[:, :5])
@@ -189,7 +189,7 @@ def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_nam
         eval_distance = pickle.load(open('../models/' + id_ + '/eval_distances.pkl', 'rb'))
         df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
 
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(6, 4))
     sns.set_style('whitegrid')
     ax = sns.boxplot(x=x, y=y, data=df, hue=hue)
     ax.set(xlabel=x, ylabel=y)
@@ -292,7 +292,7 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
     df['Batch size'] = batch_size
 
     with sns.color_palette('colorblind', 3):
-        plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(6, 4))
         sns.set_style('whitegrid')
         ax = sns.barplot(x='Mean abs. weight', y='Batch size', hue='Pos. in sleep cylce', data=df, orient='h')
         ax.set(xlabel='Mean abs. weight', ylabel='Batch size')

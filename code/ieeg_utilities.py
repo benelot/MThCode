@@ -222,11 +222,11 @@ def plot_distribution(data: np.ndarray, xlim: tuple=None, n_clusters: int=6, qq_
         plt.tight_layout()
 
     else:
-        plt.figure(figsize=(8, 6))
+        plt.figure(figsize=(6, 4))
         sns.lineplot(x='sample_label', y='value', data=df_kde, hue='cluster', palette=palette)
         plt.xlabel('Magnitude')
         plt.ylabel('Density')
-        plt.title(title)
+        plt.title('PCA on density distributions')
 
     print('Status: Save plot.')
     plt.savefig('../doc/figures/preprocess_distribution_' + title + '.png')

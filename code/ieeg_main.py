@@ -16,7 +16,7 @@ sample_begin = int(time_begin[i][1] * 60 * fs)
 sample_end = sample_begin + int(duration * fs)
 data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
 
-data_all = (data_raw - np.mean(data_raw)) / (6 * np.std(data_raw))
+data_all = (data_raw - np.mean(data_raw)) / (5 * np.std(data_raw))
 data_all = data_all / 2 + 0.5
 
 data_each = (data_raw - np.mean(data_raw, axis=0)) / (5 * np.std(data_raw, axis=0))

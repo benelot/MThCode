@@ -499,7 +499,7 @@ def train_single_layer(params):
 
     # Load data
     print('Status: Start data preparation.')
-    data_pre = pre_process(params=params, artificial=True)
+    data_pre = pre_process(params=params, artificial=params['artificial_signal'][0])
     if params['visible_size'] == 'all':
         params['visible_size'] = data_pre.shape[1]
     data_set = iEEG_SingleLayerSet(data_pre)
@@ -589,7 +589,7 @@ def predict_single_layer(id_: str, custom_test_set: dict=None):
     print('Status: Load and process data for prediction.')
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
     if custom_test_set is None:
-        data_pre = pre_process(params=params, artificial=True)
+        data_pre = pre_process(params=params, artificial=params['artificial_signal'][0])
         batch_size = params['batch_size']
     else:
         data_pre = pre_process(params=params, custom_test_set=custom_test_set)

@@ -52,7 +52,7 @@ if __name__ == '__main__':
                       'resample': 256,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
-                      'lr': 0.001,
+                      'lr': 0.0007,
                       'batch_size': 512,
                       'shuffle': True,
                       'weight_decay': 0.01,

@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_512_wd_'
+    pre = 'batch_size_512_wd001_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -55,15 +55,15 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 512,
                       'shuffle': True,
-                      'weight_decay': 0.001,
+                      'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 250}
 
-            utrain.train_and_test(params)
-            ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
+            #utrain.train_and_test(params)
+            #ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
 
-        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='correlation', hue='brain_state', save_name=pre + 'corr' + post)
-        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
-        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mse', hue='brain_state', save_name=pre + 'mse' + post)
+        #ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='correlation', hue='brain_state', save_name=pre + 'corr' + post)
+        #ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
+        #ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mse', hue='brain_state', save_name=pre + 'mse' + post)
 
     ufig.mean_weights(ids=ids_all, save_name=pre)

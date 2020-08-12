@@ -7,7 +7,7 @@ if __name__ == '__main__':
 
     batch_sizes = [1, 2, 5, 50, 512]
     ids = []
-    pre = '_complex'
+    pre = '_wd'
     custom_set = False
     for _, val in enumerate(batch_sizes):
         for i in range(3):

@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_512_fs120_'
+    pre = 'batch_size_512_wd_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -34,11 +34,12 @@ if __name__ == '__main__':
             ids_all.append(val[0])
 
             params = {'id_': ids_attempt[-1],
-                      'model_type': None,  # To be removed
+                      'model_type': 'single_layer',  # To be removed
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
-                      'duration': 30,  # seconds
+                      'artificial_signal': [False, False],  # [bool AS, bool small_weights]
+                      'duration': 100,  # seconds
                       'brain_state': val[3],
                       'add_id': '(E)',
                       # model parameters ------------------------
@@ -48,20 +49,21 @@ if __name__ == '__main__':
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 30,
-                      'resample': 120,
+                      'resample': 256,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
                       'batch_size': 512,
-                      'shuffle': False,
-                      'normalization': 'standard_positive',  # 'min_max', 'standard', None
+                      'shuffle': True,
+                      'weight_decay': 0.01,
+                      'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 250}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
 
         ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='correlation', hue='brain_state', save_name=pre + 'corr' + post)
-        #ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
-        #ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mse', hue='brain_state', save_name=pre + 'mse' + post)
+        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
+        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mse', hue='brain_state', save_name=pre + 'mse' + post)
 
     ufig.mean_weights(ids=ids_all, save_name=pre)

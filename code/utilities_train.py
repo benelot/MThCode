@@ -15,13 +15,15 @@ import torch.nn as nn
 import pickle
 import os
 import matplotlib.pyplot as plt
+import random
 import seaborn as sns
+import cmath
 
 import models
 
 
 def train_and_test(params: dict):
-    if params['model_type'] == 'general' or params['model_type'] == None:
+    if params['model_type'] == 'general' or params['model_type'] is None:
         train(params)
         predict(params['id_'])
         distance(params['id_'])
@@ -33,7 +35,7 @@ def train_and_test(params: dict):
         print('Error: No valid model type.')
 
 
-def pre_process(id_: str=None, params: dict=None, custom_test_set=None):
+def pre_process(id_: str=None, params: dict=None, custom_test_set=None, artificial=False):
     """ Loads and prepares iEEG data.
 
         Returns:
@@ -47,22 +49,28 @@ def pre_process(id_: str=None, params: dict=None, custom_test_set=None):
     if custom_test_set is not None:
         params['time_begin'] = custom_test_set['time_begin']
         params['duration'] = custom_test_set['duration']
-    data_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + str(params['time_begin'][0]) + 'h.mat')
-    info_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + 'info.mat')
-    fs = float(info_mat['fs'])
-    if len(params['time_begin']) == 3:
-        sample_begin = int(np.round(params['time_begin'][1] * 60 * fs + params['time_begin'][2] * fs))
-    else:
-        sample_begin = int(np.round(params['time_begin'][1] * 60 * fs))
-    sample_end = int(np.round(sample_begin + params['duration'] * fs))
-    if params['visible_size'] != 'all':
-        data = data_mat['EEG'][:params['visible_size'], sample_begin:sample_end].transpose()
-    else:
-        data = data_mat['EEG'][:, sample_begin:sample_end].transpose()
 
-    # Resample
-    if params['resample'] != fs and params['resample'] is not None:
-        data = signal.resample(data, num=int(data.shape[0] / fs * params['resample']), axis=0)
+    if not artificial:
+        data_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + str(params['time_begin'][0]) + 'h.mat')
+        info_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + 'info.mat')
+        fs = float(info_mat['fs'])
+        if len(params['time_begin']) == 3:
+            sample_begin = int(np.round(params['time_begin'][1] * 60 * fs + params['time_begin'][2] * fs))
+        else:
+            sample_begin = int(np.round(params['time_begin'][1] * 60 * fs))
+        sample_end = int(np.round(sample_begin + params['duration'] * fs))
+        if params['visible_size'] != 'all':
+            data = data_mat['EEG'][:params['visible_size'], sample_begin:sample_end].transpose()
+        else:
+            data = data_mat['EEG'][:, sample_begin:sample_end].transpose()
+
+        # Resample
+        if params['resample'] != fs and params['resample'] is not None:
+            data = signal.resample(data, num=int(data.shape[0] / fs * params['resample']), axis=0)
+
+    else:
+        data = coupled_oscillator(t_length=params['duration'], fs=params['resample'],
+                                  small_weights=params['artificial_signal'][1])
 
     # Normalize
     if params['normalization'] == 'standard_positive':
@@ -78,7 +86,7 @@ def pre_process(id_: str=None, params: dict=None, custom_test_set=None):
         sc = MinMaxScaler(feature_range=(0, 1))
         data = sc.fit_transform(data)
     elif params['normalization'] == 'all_standard_positive':
-        data = (data - np.mean(data)) / (5 * np.std(data))
+        data = (data - np.mean(data)) / (3 * np.std(data))  # 5
         data = data / 2 + 0.5
     elif params['normalization'] == 'all_standard':
         data = (data - np.mean(data)) / np.std(data)
@@ -172,8 +180,8 @@ def train(params):
     pickle.dump(params, open(directory + '/params.pkl', 'wb'))
     pickle.dump(eval_optimization, open(directory + '/eval_optimization.pkl', 'wb'))
 
-    W_epoch = {'W_epoch': W}
-    pickle.dump(W_epoch, open(directory + '/W_epoch.pkl', 'wb'))
+    # W_epoch = {'W_epoch': W}
+    # pickle.dump(W_epoch, open(directory + '/W_epoch.pkl', 'wb'))
 
 
 def predict(id_: str, custom_test_set: dict=None):
@@ -491,7 +499,7 @@ def train_single_layer(params):
 
     # Load data
     print('Status: Start data preparation.')
-    data_pre = pre_process(params=params)
+    data_pre = pre_process(params=params, artificial=True)
     if params['visible_size'] == 'all':
         params['visible_size'] = data_pre.shape[1]
     data_set = iEEG_SingleLayerSet(data_pre)
@@ -511,7 +519,7 @@ def train_single_layer(params):
         print('Error: No valid loss function.')
 
     lr = params['lr']
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=params['weight_decay'])
 
     # Training
     loss = None
@@ -532,7 +540,7 @@ def train_single_layer(params):
                                       (torch.ones(1).to(device) - torch.eye(x.shape[1]).to(device))
             prediction = model(x)
             loss = criterion(prediction, y)
-            torch.autograd.backward(loss.mean()) #  loss.mean().backward()
+            torch.autograd.backward(loss.mean())
             optimizer.step()
         for p in model.parameters():
             epoch_grad_norm[epoch] = p.grad.data.norm(2).item()
@@ -561,8 +569,8 @@ def train_single_layer(params):
     pickle.dump(params, open(directory + '/params.pkl', 'wb'))
     pickle.dump(eval_optimization, open(directory + '/eval_optimization.pkl', 'wb'))
 
-    W_epoch = {'W_epoch': W}
-    pickle.dump(W_epoch, open(directory + '/W_epoch.pkl', 'wb'))
+    # W_epoch = {'W_epoch': W}
+    # pickle.dump(W_epoch, open(directory + '/W_epoch.pkl', 'wb'))
 
 
 def predict_single_layer(id_: str, custom_test_set: dict=None):
@@ -581,7 +589,7 @@ def predict_single_layer(id_: str, custom_test_set: dict=None):
     print('Status: Load and process data for prediction.')
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
     if custom_test_set is None:
-        data_pre = pre_process(params=params)
+        data_pre = pre_process(params=params, artificial=True)
         batch_size = params['batch_size']
     else:
         data_pre = pre_process(params=params, custom_test_set=custom_test_set)
@@ -603,7 +611,7 @@ def predict_single_layer(id_: str, custom_test_set: dict=None):
     print('Status: Start prediction with cuda = ' + str(torch.cuda.is_available()) + '.')
     with torch.no_grad():
         for x, y in data_generator:
-            x, y = x.to(device), y.to(device)
+            x, y = x.float().to(device), y.float().to(device)
             predictions = model(x)
             pred_all.append(predictions.cpu().numpy())
             true_all.append(y.cpu().numpy())
@@ -616,6 +624,71 @@ def predict_single_layer(id_: str, custom_test_set: dict=None):
     pickle.dump(eval_prediction, open('../models/' + id_ + '/eval_prediction.pkl', 'wb'))
 
     return eval_prediction
+
+
+def generate_signal(fs=None, length=None, weights=None):
+    if fs is None:
+        fs = 512
+    if weights is None:
+        weights = np.array([[0.3, 0.7, 0], [0.9, 0.1, 0], [0.1, 0.1, 0.8]])
+    if length is None:
+        length = 5
+
+    n_nodes = weights.shape[0]
+    samples = np.arange(int(length * fs))
+    signals = np.zeros((n_nodes, len(samples)))
+    rand_freqs = np.random.uniform(0.5, 20, size=(n_nodes,))
+    rand_amp = np.random.normal(.5, 1/5, size=(n_nodes,))
+    rand_phase = np.random.uniform(0, 2 * np.pi, size=(n_nodes,))
+
+    for i in range(n_nodes):
+        signals[i, :] = np.sin(2 * np.pi * rand_freqs[i] * samples / fs + rand_phase[i]) * rand_amp[i]
+
+    return np.matmul(weights, signals)
+
+
+def coupled_oscillator(t_length, fs, small_weights=False):
+    # Define Parameters
+    k = np.array([[0.0, 0.1, 0.1, 1.0, 0.0, 0.0],
+                  [0.1, 0.0, 1.0, 0.1, 0.0, 0.0],
+                  [0.1, 1.0, 0.0, 0.1, 0.0, 0.0],
+                  [1.0, 0.1, 0.1, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                  [0.0, 0.0, 0.0, 0.0, 1.0, 0.0]])
+    if small_weights:
+        k = k / 10
+    dt = 1/fs
+    m = np.array([0.1, 0.05, 0.01, 0.05, 0.05, 0.01])
+    k_0 = 0.3
+    init = np.array([0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+
+    # Compute matrix A
+    diag = np.diag(-(2 * k_0 + np.sum(k, axis=1)))
+    A = k + diag
+
+    # Eigenvalue decomposition to get principal modes
+    evals, evecs = np.linalg.eig(A)  # evals are principal modes
+    r = np.lib.scimath.sqrt(evals/m)
+    w = r.imag  # Frequencies of principal modes
+
+    # Compute signal
+    samples = np.arange(t_length * fs)
+    t_vec = samples / fs
+    signals = np.zeros((k.shape[0], len(samples)))
+    signals[:, :2] = np.stack([init] * 2).T
+    for t in range(2, len(samples)):
+        signals[:, t] = np.matmul(A, signals[:, t-1]) * dt**2 / m - signals[:, t-2] + 2 * signals[:, t-1]
+
+    plt.figure()
+    for i in range(k.shape[0]):
+        plt.plot(t_vec, signals[i, :], label=str(i))
+    plt.legend()
+
+    plt.figure()
+    sns.heatmap(np.corrcoef(signals), vmin=-1, vmax=1, cmap='seismic', annot=True)
+
+    return signals.T
+
 
 
 

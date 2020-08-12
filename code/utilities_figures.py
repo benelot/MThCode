@@ -131,7 +131,7 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
     plt.close()
 
 
-def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=.4):
+def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=.6):
     """ Makes and saves line plots of predictions to ../figures/.
 
         Saves:

@@ -7,7 +7,7 @@ if __name__ == '__main__':
 
     batch_sizes = [1, 2, 5, 50, 512]
     ids = []
-    pre = ''
+    pre = '_complex'
     custom_set = False
     for _, val in enumerate(batch_sizes):
         for i in range(3):
@@ -38,5 +38,7 @@ if __name__ == '__main__':
         print('---------------------------------------------')
 
     ufig.plot_multi_boxplots(ids=ids, x='batch_size', y='correlation', hue='brain_state',
-                             save_name='batch_size' + pre, ylim=(0, 1))
+                             save_name='batch_size' + pre)
+    ufig.plot_multi_boxplots(ids=ids, x='batch_size', y='mae', hue='brain_state',
+                             save_name='batch_size_mae_' + pre)
     ufig.mean_weights(ids=ids, save_name='batch_size' + pre, hidden=False, diagonal=True)

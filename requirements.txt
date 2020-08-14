@@ -9,6 +9,7 @@ sklearn
 pwlf==2.0.3
 obspy==1.2.2
 hdf5torage==0.1.15
+tqdm==4.48.2
 
 notebook==6.0.2
 nbconvert==5.6.1

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-wget -i data_download.txt -P ./data
+wget -nc -i data_download.txt -P ./data

@@ -23,6 +23,7 @@ from sklearn.preprocessing import StandardScaler
 from obspy.signal import cross_correlation
 import copy
 import math
+from tqdm import tqdm
 
 
 def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_components=12, sample_labels=None, plot=True):
@@ -485,7 +486,7 @@ def nonlin_corr(patient_id: str, time_begin: list, duration: float,
         plot_nonlin_corr(r2, h2, r2_dt, h2_dt, save_name=plot_name)
 
 
-def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, critical_corr=0.7):
+def lin_corr(patient_id: str, data_mat, info_mat, time_begin: list, duration: float, t_lag=0.7, critical_corr=0.7):
     """
 
     :param patient_id:
@@ -495,21 +496,18 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     :param critical_corr:
     :return:
     """
-    # Load and prepare data
-    data_mat = loadmat('../data/' + patient_id + '_' + str(time_begin[0]) + 'h.mat')
-    info_mat = loadmat('../data/' + patient_id + '_info.mat')
     fs = float(info_mat['fs'])
     sample_begin = int(time_begin[1] * 60 * fs)
     sample_end = sample_begin + int(duration * fs)
     data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
 
     n_lag = int(t_lag * fs)
-    factor = np.exp(-1)
+    factor = np.exp(-1)  # amount of decay for tau ~ 0.367
 
     # Compute normalized cross correlation (NCC)
     cctl = np.zeros((data_raw.shape[1], data_raw.shape[1], (n_lag * 2) + 1))
-    for from_ in range(data_raw.shape[1]):
-        for to_ in range(data_raw.shape[1]):
+    for from_ in tqdm(range(data_raw.shape[1]), position=0):
+        for to_ in tqdm(range(data_raw.shape[1]), position=1):
             x = data_raw[:, to_]
             y = data_raw[n_lag:-n_lag, from_]
             cctl[from_, to_, :] = cross_correlation.correlate_template(x, y)
@@ -518,6 +516,10 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     sign = np.sign(np.max(cctl, axis=2) - np.abs(np.min(cctl, axis=2)))
     cc = np.multiply(np.max(np.abs(cctl), axis=2), sign)
     mask = np.where(np.abs(cc) > critical_corr, 1, np.nan)
+
+    target_neurons = 8
+    mask[-target_neurons:-target_neurons] = np.nan
+
     tl_n = np.argmax(np.abs(cctl), axis=2)
     tl = (tl_n - n_lag) * mask / fs * 1000  # in [ms]
     tl_no_mask = (tl_n - n_lag) / fs * 1000  # in [ms], used for plots
@@ -637,36 +639,56 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     end_N = 14  # Number of line plots
     indices = [i for i in range(begin_N, end_N)]
 
-    n_choices = 75
     valid_choices = np.argwhere(~np.isnan(mask))
     valid_indices = [i[0] * cctl.shape[0] + i[1] for i in valid_choices]
+    n_choices = 5
     # indices = np.random.choice(cctl.shape[0] * cctl.shape[1], n_choices, replace=False).tolist()
     indices = valid_indices #np.random.choice(valid_indices, n_choices, replace=False).tolist()
     peaks_x, peaks_y, taus_x_0, taus_x_1, taus_y = [], [], [], [], []
-    for i in indices:
+    plot_separately = False
+    for i in tqdm(indices):
         n0 = i % cctl.shape[0]
         n1 = int(math.floor(i / cctl.shape[1]))
         #n1 = n0 + i  # Reference node
+
         plt.plot(t, cctl[n0, n1, :], label='Nodes ' + str(n0) + ' - ' + str(n1))
         peaks_x.append(tl_no_mask[n0, n1])
         peaks_y.append(cc[n0, n1])
         taus_x_0.append(higher_tau_all[n0, n1])
         taus_x_1.append(lower_tau_all[n0, n1])
         taus_y.append(cc[n0, n1] * factor)
-    plt.scatter(peaks_x, peaks_y, color='black', marker='d', label='Peak', zorder=len(indices) + 1)
-    plt.scatter(taus_x_0, taus_y, color='black', marker='<', label='Right tau', zorder=len(indices) + 1)
-    plt.scatter(taus_x_1, taus_y, color='black', marker='>', label='Left tau', zorder=len(indices) + 1)
-    ymin, ymax = plt.gca().get_ylim()
-    plt.plot([-t_lag*1000, t_lag*1000], [critical_corr, critical_corr],
-             color='black', linestyle=':', label='Critical corr.')
-    plt.plot([-t_lag*1000, t_lag*1000], [-critical_corr, -critical_corr], color='black', linestyle=':')
-    plt.ylim(ymin, ymax)
-    plt.xlabel('Time lag [ms]'), plt.ylabel('NCC [-]')
-    plt.title('Normalized cross correlation: examples'), plt.legend(loc='upper right')
-    plt.xlim(-t_lag * 1000, t_lag * 1000), plt.grid()
-    save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'
-    plt.savefig('../doc/figures/cctl_' + save_name + '.png')
-    plt.close()
+
+        if plot_separately:
+            plt.scatter(tl_no_mask[n0, n1], cc[n0, n1], color='black', marker='d', label='Peak', zorder=len(indices) + 1)
+            plt.scatter(higher_tau_all[n0, n1], cc[n0, n1] * factor, color='black', marker='<', label='Right tau', zorder=len(indices) + 1)
+            plt.scatter(lower_tau_all[n0, n1], cc[n0, n1] * factor, color='black', marker='>', label='Left tau', zorder=len(indices) + 1)
+            ymin, ymax = plt.gca().get_ylim()
+            plt.plot([-t_lag*1000, t_lag*1000], [critical_corr, critical_corr],
+                     color='black', linestyle=':', label='Critical corr.')
+            plt.plot([-t_lag*1000, t_lag*1000], [-critical_corr, -critical_corr], color='black', linestyle=':')
+            plt.ylim(ymin, ymax)
+            plt.xlabel('Time lag [ms]'), plt.ylabel('NCC [-]')
+            plt.title(f"Normalized cross correlation: Nodes {str(n0)}-{str(n1)}"), plt.legend(loc='upper right')
+            plt.xlim(-t_lag * 1000, t_lag * 1000), plt.grid()
+            save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'
+            plt.savefig(f"../doc/figures/cctl_{save_name}_{n0}_{n1}.png")
+            plt.close()
+
+    if not plot_separately:
+        plt.scatter(peaks_x, peaks_y, color='black', marker='d', label='Peak', zorder=len(indices) + 1)
+        plt.scatter(taus_x_0, taus_y, color='black', marker='<', label='Right tau', zorder=len(indices) + 1)
+        plt.scatter(taus_x_1, taus_y, color='black', marker='>', label='Left tau', zorder=len(indices) + 1)
+        ymin, ymax = plt.gca().get_ylim()
+        plt.plot([-t_lag*1000, t_lag*1000], [critical_corr, critical_corr],
+                 color='black', linestyle=':', label='Critical corr.')
+        plt.plot([-t_lag*1000, t_lag*1000], [-critical_corr, -critical_corr], color='black', linestyle=':')
+        plt.ylim(ymin, ymax)
+        plt.xlabel('Time lag [ms]'), plt.ylabel('NCC [-]')
+        plt.title('Normalized cross correlation: examples'), plt.legend(loc='upper right')
+        plt.xlim(-t_lag * 1000, t_lag * 1000), plt.grid()
+        save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'
+        plt.savefig('../doc/figures/cctl_' + save_name + '.png')
+        plt.close()
 
 
 def determine_sample_size(patient_id: list=None, time_begin: list=None, max_sample_size: float=None, dt: float=None,

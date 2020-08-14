@@ -43,11 +43,11 @@ if __name__ == '__main__':
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
-                      'batch_size': 512,
+                      'batch_size': 1024,
                       'shuffle': True,
                       'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 150}
+                      'epochs': 250}
 
             print('Status: Training ' + params['id_'])
             utrain.train_and_test(params)

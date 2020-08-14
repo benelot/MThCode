@@ -9,37 +9,37 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'single_'
+    pre = 'wd_multipos_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
-        # params_change = [[pre + 'ID07_32h07m' + post, 'ID07', [32, 7], 'beginning'],
-        #                  [pre + 'ID07_35h15m' + post, 'ID07', [35, 15], 'middle'],
-        #                  [pre + 'ID07_38h22m' + post, 'ID07', [38, 22], 'end'],
-        params_change = [[pre + 'ID08_57h00m' + post, 'ID08', [57, 00], 'before'],
-                         [pre + 'ID08_60h10m' + post, 'ID08', [60, 10], 'middle'],
-                         [pre + 'ID08_64h40m' + post, 'ID08', [64, 40], 'end']]
-                         # [pre + 'ID11a_60h05m' + post, 'ID11', [60, 5], 'beginning'],
-                         # [pre + 'ID11a_62h12m' + post, 'ID11', [62, 12], 'middle'],
-                         # [pre + 'ID11a_65h00m' + post, 'ID11', [65, 0], 'end'],
-                         # [pre + 'ID11b_129h48m_bs001_' + post, 'ID11', [129, 48], 'beginning'],
-                         # [pre + 'ID11b_132h35m_bs001_' + post, 'ID11', [132, 35], 'middle'],
-                         # [pre + 'ID11b_136h35m_bs001_' + post, 'ID11', [136, 35], 'end']]
+        time_begin = [[57, 0], [57, 30], [58, 0], [58, 30], [60, 0], [60, 30], [60, 55], [64, 20], [64, 40],
+                      [65, 10], [65, 50]]
+
+        params_change = []
+        for k, time in enumerate(time_begin):
+            if time[1] < 10:
+                in_fill = '0'
+            else:
+                in_fill = ''
+            time_label = str(time[0]) + 'h' + in_fill + str(time[1]) + 'm'
+            params_change.append([pre + 'ID08_' + time_label + post, time, time_label])
 
         ids_attempt = []
         for i, val in enumerate(params_change):
             print('(M) Status: Train model: ' + val[0])
-            ids_attempt.append('test')  # val[0]
-            ids_all.append('test')
+            ids_attempt.append(val[0])
+            ids_all.append(val[0])
 
             params = {'id_': ids_all[-1],
                       'model_type': 'single_layer',  # To be removed
                       'path2data': '../data/',
-                      'patient_id': val[1],
-                      'time_begin': val[2],  # [hour, minute]
-                      'duration': 30,  # seconds
-                      'brain_state': val[3],
+                      'patient_id': 'ID08',
+                      'time_begin': val[1],  # [hour, minute]
+                      'artificial_signal': [False, False],  # [bool on/off, bool small_weights]
+                      'duration': 100,  # seconds
+                      'brain_state': val[2],
                       'add_id': '(M)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
@@ -48,17 +48,18 @@ if __name__ == '__main__':
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
                       'window_size': 0,
-                      'resample': 512,
+                      'resample': 256,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
-                      'lr': 0.0002,
-                      'batch_size': 10,
-                      'shuffle': False,
+                      'lr': 0.001,
+                      'batch_size': 512,
+                      'shuffle': True,
+                      'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 30}
+                      'epochs': 150}
 
             utrain.train_and_test(params)
-            ufig.plot_train_test(ids_all[-1], n_nodes=6)
+            ufig.plot_train_test(ids_all[-1], n_nodes=15)
 
         ufig.plot_multi_boxplots(ids=ids_attempt, x='batch_size', y='correlation', hue='brain_state',
                                  save_name=pre + 'corr' + post, ylim=(0, 1))

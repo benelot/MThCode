@@ -38,7 +38,7 @@ if __name__ == '__main__':
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
-                      'artificial_signal': [False, False],  # [bool AS, bool small_weights]
+                      'artificial_signal': [False, False],  # [bool on/off, bool small_weights]
                       'duration': 100,  # seconds
                       'brain_state': val[3],
                       'add_id': '(E)',

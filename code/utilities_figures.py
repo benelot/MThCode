@@ -17,9 +17,9 @@ import models
 import utilities_train as utrain
 
 
-def plot_train_test(id_: str, n_nodes):
+def plot_train_test(id_: str, n_nodes, node_idx):
     plot_optimization(id_)
-    plot_prediction(id_, n_nodes=n_nodes)
+    plot_prediction(id_, n_nodes=n_nodes, node_idx=node_idx)
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
     if params['model_type'] != 'single':
         plot_weights(id_)
@@ -131,7 +131,7 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
     plt.close()
 
 
-def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=.6):
+def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=1.2):
     """ Makes and saves line plots of predictions to ../figures/.
 
         Saves:

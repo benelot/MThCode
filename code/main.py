@@ -12,9 +12,9 @@ if __name__ == '__main__':
 
     ids = []
     h_offset = 59
-    for h in range(7):
+    for h_ in range(7):
         for m in range(30):
-            h = h + h_offset
+            h = h_ + h_offset
             m = 2 * m
 
             zero = ''
@@ -47,7 +47,7 @@ if __name__ == '__main__':
                       'shuffle': True,
                       'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 250}
+                      'epochs': 180}
 
             print('Status: Training ' + params['id_'])
             utrain.train_and_test(params)

@@ -80,18 +80,19 @@ if __name__ == '__main__':
 
 
     def lin_corr(i, n_jobs):
-        output_target_data = np.load(f"../data/fully_recurrent_outputs/all_target_volts_{patient_id[i]}.npy")
-        plot_output(patient_id[i], output_target_data[-2 * n_targets:-n_targets, :], output_target_data[-n_targets:, :], experiment_duration, n_targets, "../doc/figures/")
-
-        data_mat = {"EEG": output_target_data[-2 * n_targets: -n_targets, :]}
+        network_target_data = np.load(f"../data/fully_recurrent_outputs/all_target_volts_{patient_id[i]}.npy")
+        plot_output(patient_id[i], network_target_data[-2 * n_targets:-n_targets, :], network_target_data[-n_targets:, :], experiment_duration, n_targets, "../doc/figures/")
 
         info_mat = {"fs": 1000}
-        ieeg.lin_corr(patient_id[i] + "_output", data_mat, info_mat, time_begin=time_begin[0], duration=duration, t_lag=t_lag, critical_corr=0.3, pbar_pos=i % n_jobs)
 
-        data_mat = {"EEG": output_target_data[-n_targets:, :]}
+        data_mat = {"EEG": network_target_data[: -n_targets, :]}  # all
+        ieeg.lin_corr(patient_id[i] + "_output", data_mat, info_mat, time_begin=time_begin[0], duration=duration, t_lag=t_lag, critical_corr=0.4, pbar_pos=i % n_jobs)
 
-        info_mat = {"fs": 1000}
-        ieeg.lin_corr(patient_id[i] + "_target", data_mat, info_mat, time_begin=time_begin[0], duration=duration, t_lag=t_lag, critical_corr=0.3, pbar_pos=i % n_jobs)
+        data_mat = {"EEG": network_target_data[-2 * n_targets: -n_targets, :]}  # only outputs
+        ieeg.lin_corr(patient_id[i] + "_output", data_mat, info_mat, time_begin=time_begin[0], duration=duration, t_lag=t_lag, critical_corr=0.4, pbar_pos=i % n_jobs)
+
+        data_mat = {"EEG": network_target_data[-n_targets:, :]}
+        ieeg.lin_corr(patient_id[i] + "_target", data_mat, info_mat, time_begin=time_begin[0], duration=duration, t_lag=t_lag, critical_corr=0.4, pbar_pos=i % n_jobs)
 
     n_jobs = 1
     #Parallel(n_jobs=n_jobs)(delayed(lin_corr)(i, n_jobs) for i in range(len(patient_id)))

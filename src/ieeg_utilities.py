@@ -517,9 +517,9 @@ def lin_corr(patient_id: str, data_mat, info_mat, time_begin: list, duration: fl
     cc = np.multiply(np.max(np.abs(cctl), axis=2), sign)
     mask = np.where(np.abs(cc) > critical_corr, 1, np.nan)
 
-    target_neurons = 8
-    mask[:-target_neurons, :-target_neurons] = np.nan
-    mask[-target_neurons:, -target_neurons:] = np.nan
+    target_neurons = 10
+    # mask[:-target_neurons, :-target_neurons] = np.nan
+    # mask[-target_neurons:, -target_neurons:] = np.nan
 
     tl_n = np.argmax(np.abs(cctl), axis=2)
     tl = (tl_n - n_lag) * mask / fs * 1000  # in [ms]

@@ -486,7 +486,7 @@ def nonlin_corr(patient_id: str, time_begin: list, duration: float,
         plot_nonlin_corr(r2, h2, r2_dt, h2_dt, save_name=plot_name)
 
 
-def lin_corr(patient_id: str, data_mat, info_mat, time_begin: list, duration: float, t_lag=0.7, critical_corr=0.7):
+def lin_corr(patient_id: str, data_mat, info_mat, time_begin: list, duration: float, t_lag=0.7, critical_corr=0.7, pbar_pos=0):
     """
 
     :param patient_id:
@@ -506,8 +506,8 @@ def lin_corr(patient_id: str, data_mat, info_mat, time_begin: list, duration: fl
 
     # Compute normalized cross correlation (NCC)
     cctl = np.zeros((data_raw.shape[1], data_raw.shape[1], (n_lag * 2) + 1))
-    for from_ in tqdm(range(data_raw.shape[1]), position=0):
-        for to_ in tqdm(range(data_raw.shape[1]), position=1):
+    for from_ in tqdm(range(data_raw.shape[1]), position=pbar_pos):
+        for to_ in range(data_raw.shape[1]):
             x = data_raw[:, to_]
             y = data_raw[n_lag:-n_lag, from_]
             cctl[from_, to_, :] = cross_correlation.correlate_template(x, y)
@@ -518,7 +518,8 @@ def lin_corr(patient_id: str, data_mat, info_mat, time_begin: list, duration: fl
     mask = np.where(np.abs(cc) > critical_corr, 1, np.nan)
 
     target_neurons = 8
-    mask[-target_neurons:-target_neurons] = np.nan
+    mask[:-target_neurons, :-target_neurons] = np.nan
+    mask[-target_neurons:, -target_neurons:] = np.nan
 
     tl_n = np.argmax(np.abs(cctl), axis=2)
     tl = (tl_n - n_lag) * mask / fs * 1000  # in [ms]
@@ -645,13 +646,14 @@ def lin_corr(patient_id: str, data_mat, info_mat, time_begin: list, duration: fl
     # indices = np.random.choice(cctl.shape[0] * cctl.shape[1], n_choices, replace=False).tolist()
     indices = valid_indices #np.random.choice(valid_indices, n_choices, replace=False).tolist()
     peaks_x, peaks_y, taus_x_0, taus_x_1, taus_y = [], [], [], [], []
-    plot_separately = False
-    for i in tqdm(indices):
+    plot_separately = True
+    for i in tqdm(indices, position=pbar_pos):
         n0 = i % cctl.shape[0]
         n1 = int(math.floor(i / cctl.shape[1]))
         #n1 = n0 + i  # Reference node
+        fig, ax_full = plt.subplots(figsize=(16,12))
 
-        plt.plot(t, cctl[n0, n1, :], label='Nodes ' + str(n0) + ' - ' + str(n1))
+        ax_full.plot(t, cctl[n0, n1, :], label='Nodes ' + str(n0) + ' - ' + str(n1))
         peaks_x.append(tl_no_mask[n0, n1])
         peaks_y.append(cc[n0, n1])
         taus_x_0.append(higher_tau_all[n0, n1])
@@ -659,6 +661,8 @@ def lin_corr(patient_id: str, data_mat, info_mat, time_begin: list, duration: fl
         taus_y.append(cc[n0, n1] * factor)
 
         if plot_separately:
+
+            # add some raw signals
             plt.scatter(tl_no_mask[n0, n1], cc[n0, n1], color='black', marker='d', label='Peak', zorder=len(indices) + 1)
             plt.scatter(higher_tau_all[n0, n1], cc[n0, n1] * factor, color='black', marker='<', label='Right tau', zorder=len(indices) + 1)
             plt.scatter(lower_tau_all[n0, n1], cc[n0, n1] * factor, color='black', marker='>', label='Left tau', zorder=len(indices) + 1)
@@ -669,9 +673,17 @@ def lin_corr(patient_id: str, data_mat, info_mat, time_begin: list, duration: fl
             plt.ylim(ymin, ymax)
             plt.xlabel('Time lag [ms]'), plt.ylabel('NCC [-]')
             plt.title(f"Normalized cross correlation: Nodes {str(n0)}-{str(n1)}"), plt.legend(loc='upper right')
-            plt.xlim(-t_lag * 1000, t_lag * 1000), plt.grid()
+            plt.xlim(-t_lag * 1000, t_lag * 1000)
+            plt.ylim(-1, 1)
+            plt.grid()
+
+            left, bottom, width, height = [0.15, 0.15, 0.7, 0.1]
+            ax_in = fig.add_axes([left, bottom, width, height])
+            ax_in.plot(data_raw[n_lag:-n_lag, n1], color='k', alpha=0.5, linestyle='--')
+            ax_in.plot(data_raw[n_lag:-n_lag, n0], color='darkred')
+
             save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'
-            plt.savefig(f"../doc/figures/cctl_{save_name}_{n0}_{n1}.png")
+            fig.savefig(f"../doc/figures/cctl_{save_name}_{n0}_{n1}.png")
             plt.close()
 
     if not plot_separately:

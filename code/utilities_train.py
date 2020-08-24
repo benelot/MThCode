@@ -690,5 +690,32 @@ def coupled_oscillator(t_length, fs, small_weights=False):
     return signals.T
 
 
+def least_squares(patient_id, time_begin, duration, fs):
+    # Load data
+    data_mat = loadmat('../data/' + patient_id + '_' + str(time_begin[0]) + 'h.mat')
+    info_mat = loadmat('../data/' + patient_id + '_' + 'info.mat')
+    fs_orig = float(info_mat['fs'])
+    if len(time_begin) == 3:
+        sample_begin = int(np.round(time_begin[1] * 60 * fs + time_begin[2] * fs))
+    else:
+        sample_begin = int(np.round(time_begin[1] * 60 * fs))
+    sample_end = int(np.round(sample_begin + duration * fs))
+    data = data_mat['EEG'][:, sample_begin:sample_end].transpose()
+
+    # Resample
+    data = signal.resample(data, num=int(data.shape[0] / fs_orig * fs), axis=0)
+
+    W = np.zeros((data.shape[1], data.shape[1]))
+    for i in range(data.shape[1]):
+        X_idx = [k for k in range(data.shape[1])]
+        X_idx.remove(i)
+        y = data[:, i]
+        X = data[:, X_idx]
+        w = np.linalg.inv(X.transpose().dot(X)).dot(X.transpose()).dot(y)
+        W[i, X_idx] = w
+
+    return W
+
+
 
 

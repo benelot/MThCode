@@ -8,7 +8,7 @@ if __name__ == '__main__':
     os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
-    pre = 'allpos'
+    pre = 'allpos_rnn'
 
     ids = []
     h_offset = 57
@@ -25,7 +25,7 @@ if __name__ == '__main__':
             patient_id = 'ID08'
 
             params = {'id_': pre + '_' + patient_id + '_' + t_string,
-                      'model_type': 'single_layer',  # To be removed
+                      'model_type': None,  # To be removed
                       'path2data': '../data/',
                       'patient_id': patient_id,
                       'time_begin': [h, m],  # [hour, minute]
@@ -35,7 +35,7 @@ if __name__ == '__main__':
                       'add_id': '(' + patient_id + ')',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': 0,  # improve: portion
+                      'hidden_size': 120,  # improve: portion
                       'lambda': 0,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
@@ -53,12 +53,12 @@ if __name__ == '__main__':
             print('Status: Training ' + params['id_'])
             utrain.train_and_test(params)
             node_idx = [k for k in range(20)]
-            ufig.plot_train_test(params['id_'], n_nodes=15, node_idx=node_idx)
+            # ufig.plot_train_test(params['id_'], n_nodes=15, node_idx=node_idx)
             ids.append(params['id_'])
 
-ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='correlation', save_name=pre + 'corr',
-                         ylim=(0, 1))
-ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='mae', save_name=pre + 'mae')
-ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='mse', save_name=pre + 'mse')
-
-ufig.mean_weights(ids=ids, save_name=pre)
+# ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='correlation', save_name=pre + 'corr',
+#                          ylim=(0, 1))
+# ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='mae', save_name=pre + 'mae')
+# ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='mse', save_name=pre + 'mse')
+#
+# ufig.mean_weights(ids=ids, save_name=pre)

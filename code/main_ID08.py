@@ -39,7 +39,7 @@ if __name__ == '__main__':
                       'lambda': 0,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
-                      'window_size': 0,
+                      'window_size': 50,
                       'resample': 256,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'

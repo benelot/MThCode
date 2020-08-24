@@ -6,10 +6,10 @@ import os
 if __name__ == '__main__':
 
     pre = 'allpos'
-    patient_id = 'ID11b'
+    patient_id = 'ID07'
 
     ids = []
-    h_offset = 129
+    h_offset = 31
     for h_ in range(9):
         for m in range(30):
             h = h_ + h_offset

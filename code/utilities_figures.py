@@ -255,12 +255,17 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
     """
     id1, id2, id3 = [], [], []
     mean_abs = []
+    mse, mae, corr = [], [], []
     patient_id = []
     brain_state = []
     batch_size = []
 
     for i, id_ in enumerate(ids):
         params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
+        distances = pickle.load(open('../models/' + id_ + '/eval_distances.pkl', 'rb'))
+        mse.append(np.median(distances['mae']))
+        mae.append(np.median(distances['mse']))
+        corr.append(np.median(distances['correlation']))
         # Get trained model
         model = models.GeneralRNN(params)
 

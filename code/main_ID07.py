@@ -48,7 +48,7 @@ if __name__ == '__main__':
                       'shuffle': True,
                       'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 100}
+                      'epochs': 50}
 
             print('Status: Training ' + params['id_'])
             utrain.train_and_test(params)

@@ -704,6 +704,7 @@ def least_squares(patient_id, time_begin, duration, fs):
 
     # Resample
     data = signal.resample(data, num=int(data.shape[0] / fs_orig * fs), axis=0)
+    data = data[:,[3,4,50,51]]
 
     W = np.zeros((data.shape[1], data.shape[1]))
     for i in range(data.shape[1]):

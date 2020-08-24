@@ -13,9 +13,9 @@ if __name__ == '__main__':
     ids = []
     h_offset = 31
     for h_ in range(9):
-        for m in range(30):
+        for m in range(12):
             h = h_ + h_offset
-            m = 2 * m
+            m = 5 * m
 
             zero = ''
             if m < 10:
@@ -30,7 +30,7 @@ if __name__ == '__main__':
                       'patient_id': patient_id,
                       'time_begin': [h, m],  # [hour, minute]
                       'artificial_signal': [False, False],  # [bool on/off, bool small_weights]
-                      'duration': 120,  # seconds
+                      'duration': 5*60,  # seconds
                       'brain_state': t_string,
                       'add_id': '(' + patient_id + ')',
                       # model parameters ------------------------
@@ -48,7 +48,7 @@ if __name__ == '__main__':
                       'shuffle': True,
                       'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 180}
+                      'epochs': 100}
 
             print('Status: Training ' + params['id_'])
             utrain.train_and_test(params)

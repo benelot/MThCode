@@ -249,7 +249,7 @@ def plot_corr_map(id_: str, size_of_samples=2000, save_name='default'):
     plt.close()
 
 
-def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
+def mean_weights(ids: list, hidden=False, diagonal=True, save_name='default'):
     """
 
     """
@@ -290,21 +290,23 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
             np.fill_diagonal(W_abs, 0)
         mean_abs.append(np.mean(W_abs))
 
-    df = pd.DataFrame()
-    df['Patient ID'] = patient_id
-    df['Pos. in sleep cylce'] = brain_state
-    df['Mean abs. weight'] = mean_abs
-    df['Batch size'] = batch_size
+    return mean_abs, mse, mae, corr
 
-    with sns.color_palette('colorblind', 3):
-        plt.figure(figsize=(6, 4))
-        sns.set_style('whitegrid')
-        ax = sns.barplot(x='Mean abs. weight', y='Batch size', hue='Pos. in sleep cylce', data=df, orient='h')
-        ax.set(xlabel='Mean abs. weight', ylabel='Batch size')
-        ax.set_title('Mean abs. weight')
-        #ax.set_xlim(left=0.04)
-    plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
-    plt.close()
+    # df = pd.DataFrame()
+    # df['Patient ID'] = patient_id
+    # df['Pos. in sleep cylce'] = brain_state
+    # df['Mean abs. weight'] = mean_abs
+    # df['Batch size'] = batch_size
+    #
+    # with sns.color_palette('colorblind', 3):
+    #     plt.figure(figsize=(6, 4))
+    #     sns.set_style('whitegrid')
+    #     ax = sns.barplot(x='Mean abs. weight', y='Batch size', hue='Pos. in sleep cylce', data=df, orient='h')
+    #     ax.set(xlabel='Mean abs. weight', ylabel='Batch size')
+    #     ax.set_title('Mean abs. weight')
+    #     #ax.set_xlim(left=0.04)
+    # plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
+    # plt.close()
 
 
 def plot_weighted_prediction(id_, node_idx, max_duration=.5):

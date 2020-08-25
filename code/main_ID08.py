@@ -8,7 +8,7 @@ if __name__ == '__main__':
     os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
-    pre = 'allpos_rnn'
+    pre = 'allpos'
 
     ids = []
     h_offset = 57
@@ -51,10 +51,10 @@ if __name__ == '__main__':
                       'epochs': 180}
 
             print('Status: Training ' + params['id_'])
-            utrain.train_and_test(params)
+            # utrain.train_and_test(params)
             node_idx = [k for k in range(20)]
-            # ufig.plot_train_test(params['id_'], n_nodes=15, node_idx=node_idx)
-            ids.append(params['id_'])
+            ufig.plot_train_test(params['id_'], n_nodes=15, node_idx=node_idx)
+            # ids.append(params['id_'])
 
 # ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='correlation', save_name=pre + 'corr',
 #                          ylim=(0, 1))

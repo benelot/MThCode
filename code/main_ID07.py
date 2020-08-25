@@ -52,7 +52,7 @@ if __name__ == '__main__':
                       'epochs': 50}
 
             print('Status: Training ' + params['id_'])
-            #utrain.train_and_test(params)
+            utrain.train_and_test(params)
             #params_loaded = pickle.load(open('../models/' + params['id_'] + '/params.pkl', 'rb'))
             #node_idx = [k for k in range(params_loaded['visible_size'])]
             #ufig.plot_prediction(params['id_'], node_idx=node_idx)

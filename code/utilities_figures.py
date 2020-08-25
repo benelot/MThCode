@@ -17,7 +17,7 @@ import models
 import utilities_train as utrain
 
 
-def plot_train_test(id_: str, n_nodes, node_idx):
+def plot_train_test(id_: str, n_nodes=None, node_idx=None):
     plot_optimization(id_)
     plot_prediction(id_, n_nodes=n_nodes, node_idx=node_idx)
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
@@ -131,7 +131,7 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
     plt.close()
 
 
-def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=1.2):
+def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=1):
     """ Makes and saves line plots of predictions to ../figures/.
 
         Saves:
@@ -154,7 +154,7 @@ def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=1.2):
     offset_array = np.linspace(0, (n_nodes - 1) * offset, n_nodes)
 
     sns.set_style('white')
-    fig = plt.figure(figsize=(8, 8))
+    fig = plt.figure(figsize=(8, int(0.4 * params['visible_size'])))
     gs = fig.add_gridspec(1, 6)
 
     ax0 = fig.add_subplot(gs[:, :5])

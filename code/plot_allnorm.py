@@ -5,15 +5,15 @@ import os
 
 if __name__ == '__main__':
 
-    pre = 'allpos'
+    pre = 'allpos_rnn'
     patient_id = 'ID07'
 
     ids = []
-    h_offset = 31
-    for h_ in range(9):
-        for m in range(30):
+    h_offset = 36
+    for h_ in range(4): # 9
+        for m in range(12):
             h = h_ + h_offset
-            m = 2 * m
+            m = 5 * m
 
             zero = ''
             if m < 10:

@@ -9,14 +9,14 @@ if __name__ == '__main__':
     os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
-    pre = 'allpos'
+    pre = 'allpos_rnn'
 
     ids = []
-    h_offset = 31
-    for h_ in range(9):
-        for m in range(30):
+    h_offset = 37
+    for h_ in range(3):
+        for m in range(12):
             h = h_ + h_offset
-            m = 2 * m
+            m = 5 * m
 
             zero = ''
             if m < 10:
@@ -52,11 +52,11 @@ if __name__ == '__main__':
                       'epochs': 50}
 
             print('Status: Training ' + params['id_'])
-            # utrain.train_and_test(params)
-            params_loaded = pickle.load(open('../models/' + params['id_'] + '/params.pkl', 'rb'))
-            node_idx = [k for k in range(params_loaded['visible_size'])]
-            ufig.plot_prediction(params['id_'], node_idx=node_idx)
-            #ids.append(params['id_'])
+            #utrain.train_and_test(params)
+            #params_loaded = pickle.load(open('../models/' + params['id_'] + '/params.pkl', 'rb'))
+            #node_idx = [k for k in range(params_loaded['visible_size'])]
+            #ufig.plot_prediction(params['id_'], node_idx=node_idx)
+            ids.append(params['id_'])
 
 # ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='correlation', save_name=pre + 'corr',
 #                          ylim=(0, 1))

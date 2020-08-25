@@ -85,6 +85,11 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
     cmap = 'bwr'
     ch = params['visible_size']
 
+    # Temporary
+    sns.heatmap(W, vmin=vmin, vmax=vmax, annot=True, cmap='seismic')
+    plt.xlabel('From node [Nr.]'), plt.ylabel('To node [Nr.]'), plt.title('Strong coupling (weight decay)')
+    plt.savefig('W_strong_coupling_wd.png')
+
     if absolute:
         vmin = 0
         cmap = 'Blues'

@@ -683,9 +683,14 @@ def coupled_oscillator(t_length, fs, small_weights=False):
     for i in range(k.shape[0]):
         plt.plot(t_vec, signals[i, :], label=str(i))
     plt.legend()
+    plt.ylabel('LFP [uV]'), plt.xlabel('Time [s]')
+    plt.xlim(t_vec[0], t_vec[-1])
+    plt.savefig('time_series_weak.png')
 
     plt.figure()
     sns.heatmap(np.corrcoef(signals), vmin=-1, vmax=1, cmap='seismic', annot=True)
+    plt.ylabel('Node [Nr.]'), plt.xlabel('Node [Nr.]'), plt.title('Correlation between nodes')
+    plt.savefig('correlation_weak.png')
 
     return signals.T
 

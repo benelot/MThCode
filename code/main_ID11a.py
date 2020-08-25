@@ -2,6 +2,7 @@ import utilities_train as utrain
 import utilities_figures as ufig
 import utilities_various as uvar
 import os
+import pickle
 
 if __name__ == '__main__':
 
@@ -52,8 +53,11 @@ if __name__ == '__main__':
 
             print('Status: Training ' + params['id_'])
             # utrain.train_and_test(params)
-            node_idx = [k for k in range(20)]
-            ufig.plot_train_test(params['id_'], n_nodes=15, node_idx=node_idx)
+            params_loaded = pickle.load(open('../models/' + params['id_'] + '/params.pkl', 'rb'))
+            node_idx = [k for k in range(params_loaded['visible_size'])]
+            ufig.plot_prediction(params['id_'], node_idx=node_idx)
+            ufig.plot_weights(params['id_'])
+            # ufig.plot_train_test(params['id_'], n_nodes=15, node_idx=node_idx)
             # ids.append(params['id_'])
 
 # ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='correlation', save_name=pre + 'corr',

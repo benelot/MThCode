@@ -9,23 +9,23 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'batch_size_512_wd001_'
+    pre = 'SLP_5min_'
     for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
-        params_change = [[pre + 'ID07_32h07m' + post, 'ID07', [32, 7], 'beginning'],
-                         [pre + 'ID07_35h15m' + post, 'ID07', [35, 15], 'middle'],
-                         [pre + 'ID07_38h22m' + post, 'ID07', [38, 22], 'end']]#,
-                         # [pre + 'ID08_57h58m' + post, 'ID08', [57, 58], 'beginning'],
-                         # [pre + 'ID08_60h10m' + post, 'ID08', [60, 10], 'middle'],
-                         # [pre + 'ID08_64h40m' + post, 'ID08', [64, 40], 'end'],
-                         # [pre + 'ID11a_60h05m' + post, 'ID11', [60, 5], 'beginning'],
-                         # [pre + 'ID11a_62h12m' + post, 'ID11', [62, 12], 'middle'],
-                         # [pre + 'ID11a_65h00m' + post, 'ID11', [65, 0], 'end'],
-                         # [pre + 'ID11b_129h48m' + post, 'ID11', [129, 48], 'beginning'],
-                         # [pre + 'ID11b_132h35m' + post, 'ID11', [132, 35], 'middle'],
-                         # [pre + 'ID11b_136h35m' + post, 'ID11', [136, 35], 'end']]
+        params_change = [[pre + 'ID07_32h10m' + post, 'ID07', [32, 10], 'NREM beginning'],
+                         [pre + 'ID07_35h10m' + post, 'ID07', [35, 10], 'NREM middle'],
+                         [pre + 'ID07_38h15m' + post, 'ID07', [38, 15], 'NREM end'],
+                         [pre + 'ID08_58h25m' + post, 'ID08', [58, 25], 'NREM beginning'],
+                         [pre + 'ID08_60h08m' + post, 'ID08', [60, 8], 'NREM middle'],
+                         [pre + 'ID08_64h40m' + post, 'ID08', [64, 40], 'NREM end'],
+                         [pre + 'ID11a_60h05m' + post, 'ID11', [60, 5], 'NREM beginning'],
+                         [pre + 'ID11a_62h10m' + post, 'ID11', [62, 10], 'NREM middle'],
+                         [pre + 'ID11a_65h00m' + post, 'ID11', [65, 0], 'NREM end'],
+                         [pre + 'ID11b_129h45m' + post, 'ID11', [129, 45], 'NREM beginning'],
+                         [pre + 'ID11b_132h20m' + post, 'ID11', [132, 20], 'NREM middle'],
+                         [pre + 'ID11b_136h30m' + post, 'ID11', [136, 30], 'NREM end']]
 
         ids_attempt = []
         for i, val in enumerate(params_change):
@@ -39,7 +39,7 @@ if __name__ == '__main__':
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
                       'artificial_signal': [False, False],  # [bool on/off, bool small_weights]
-                      'duration': 100,  # seconds
+                      'duration': 5*60,  # seconds
                       'brain_state': val[3],
                       'add_id': '(E)',
                       # model parameters ------------------------
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
-                      'batch_size': 512,
+                      'batch_size': 1024,
                       'shuffle': True,
                       'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
@@ -66,4 +66,4 @@ if __name__ == '__main__':
         ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
         ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mse', hue='brain_state', save_name=pre + 'mse' + post)
 
-    ufig.mean_weights(ids=ids_all, save_name=pre)
+    #ufig.mean_weights(ids=ids_all, save_name=pre)

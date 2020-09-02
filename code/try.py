@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-#sig = utrain.coupled_oscillator(t_length=4, fs=512, small_weights=True)
+sig = utrain.coupled_oscillator(t_length=4, fs=512, small_weights=True)
 
 id_ = 'artificial_wd_strong_coupling'
 ufig.plot_weights(id_)

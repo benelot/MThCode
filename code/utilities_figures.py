@@ -254,11 +254,11 @@ def plot_corr_map(id_: str, size_of_samples=2000, save_name='default'):
     plt.close()
 
 
-def mean_weights(ids: list, hidden=False, diagonal=True, save_name='default'):
+def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
+    """
+    :math: ``\\dot{\\bar{u}}`
     """
 
-    """
-    id1, id2, id3 = [], [], []
     mean_abs = []
     mse, mae, corr = [], [], []
     patient_id = []

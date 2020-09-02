@@ -10,7 +10,7 @@ if __name__ == '__main__':
 
     ids_all = []
     pre = 'SRNN_5min_'
-    for attempt in range(3):
+    for attempt in range(1):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
@@ -55,17 +55,13 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.0001,
+                      'weight_decay': 0.001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 70}
 
-            if attempt == 1 and params['patient_id'] == 'ID11':
-                utrain.train_and_test(params)
-                ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
-            elif attempt == 2:
-                utrain.train_and_test(params)
-                ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
+            utrain.train_and_test(params)
+            ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
 
     ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
     ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')
-    ufig.mean_weights(ids=ids_all, save_name=pre)
+    ufig.mean_weights(ids=ids_all, hidden=False, save_name=pre)

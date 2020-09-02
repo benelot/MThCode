@@ -301,7 +301,7 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
             np.fill_diagonal(W_abs, 0)
         mean_abs.append(np.mean(W_abs))
 
-    return mean_abs, mse, mae, corr
+    #return mean_abs, mse, mae, corr
 
     # Normalizing over bars to first bar
     n_brain_states = 3

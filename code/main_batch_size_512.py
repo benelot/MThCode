@@ -14,18 +14,19 @@ if __name__ == '__main__':
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
-        params_change = [[pre + 'ID07_32h10m' + post, 'ID07', [32, 10], 'NREM beginning'],
-                         [pre + 'ID07_35h10m' + post, 'ID07', [35, 10], 'NREM middle'],
-                         [pre + 'ID07_38h15m' + post, 'ID07', [38, 15], 'NREM end'],
-                         [pre + 'ID08_58h25m' + post, 'ID08', [58, 25], 'NREM beginning'],
-                         [pre + 'ID08_60h08m' + post, 'ID08', [60, 8], 'NREM middle'],
-                         [pre + 'ID08_64h40m' + post, 'ID08', [64, 40], 'NREM end'],
-                         [pre + 'ID11a_60h05m' + post, 'ID11', [60, 5], 'NREM beginning'],
-                         [pre + 'ID11a_62h10m' + post, 'ID11', [62, 10], 'NREM middle'],
-                         [pre + 'ID11a_65h00m' + post, 'ID11', [65, 0], 'NREM end'],
-                         [pre + 'ID11b_129h45m' + post, 'ID11', [129, 45], 'NREM beginning'],
-                         [pre + 'ID11b_132h20m' + post, 'ID11', [132, 20], 'NREM middle'],
-                         [pre + 'ID11b_136h30m' + post, 'ID11', [136, 30], 'NREM end']]
+        params_change = [[pre + 'ID11b_133h30m' + post, 'ID11', [133, 30], 'NREM middle']]
+                         # [pre + 'ID07_32h10m' + post, 'ID07', [32, 10], 'NREM beginning'],
+                         # [pre + 'ID07_35h10m' + post, 'ID07', [35, 10], 'NREM middle'],
+                         # [pre + 'ID07_38h15m' + post, 'ID07', [38, 15], 'NREM end'],
+                         # [pre + 'ID08_58h25m' + post, 'ID08', [58, 25], 'NREM beginning'],
+                         # [pre + 'ID08_60h08m' + post, 'ID08', [60, 8], 'NREM middle'],
+                         # [pre + 'ID08_64h40m' + post, 'ID08', [64, 40], 'NREM end'],
+                         # [pre + 'ID11a_60h05m' + post, 'ID11', [60, 5], 'NREM beginning'],
+                         # [pre + 'ID11a_62h10m' + post, 'ID11', [62, 10], 'NREM middle'],
+                         # [pre + 'ID11a_65h00m' + post, 'ID11', [65, 0], 'NREM end'],
+                         # [pre + 'ID11b_129h45m' + post, 'ID11', [129, 45], 'NREM beginning'],
+                         #
+                         # [pre + 'ID11b_136h30m' + post, 'ID11', [136, 30], 'NREM end']]
 
         ids_attempt = []
         for i, val in enumerate(params_change):
@@ -62,8 +63,8 @@ if __name__ == '__main__':
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
 
-        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='correlation', hue='brain_state', save_name=pre + 'corr' + post)
-        ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
+        ufig.plot_multi_boxplots(ids=ids_all, x='patient_id', y='correlation', hue='brain_state', save_name=pre + 'corr' + post)
+        ufig.plot_multi_boxplots(ids=ids_all, x='patient_id', y='mae', hue='brain_state', save_name=pre + 'mae' + post)
         ufig.plot_multi_boxplots(ids=ids_attempt, x='patient_id', y='mse', hue='brain_state', save_name=pre + 'mse' + post)
 
     #ufig.mean_weights(ids=ids_all, save_name=pre)

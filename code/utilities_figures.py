@@ -192,6 +192,11 @@ def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_nam
     df = pd.DataFrame()
     for idx, id_ in enumerate(ids):
         eval_distance = pickle.load(open('../models/' + id_ + '/eval_distances.pkl', 'rb'))
+        for i in range(len(eval_distance['id_'])):
+            if eval_distance['id_'][i][9:14] == 'ID11a':
+                eval_distance['patient_id'][i] = 'ID11a'
+            elif eval_distance['id_'][i][9:14] == 'ID11b':
+                eval_distance['patient_id'][i] = 'ID11b'
         df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
 
     plt.figure(figsize=(6, 4))
@@ -278,9 +283,9 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
         model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
         W = model.W.weight.data.numpy()
 
-        if id_[5:7] == 'ID11a':  # [7:12]
+        if id_[9:14] == 'ID11a':  # [7:12]
             patient_id.append('ID11a')
-        elif id_[5:7] == 'ID11b':
+        elif id_[9:14] == 'ID11b':
             patient_id.append('ID11b')
         else:
             patient_id.append(params['patient_id'])
@@ -295,23 +300,23 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
             np.fill_diagonal(W_abs, 0)
         mean_abs.append(np.mean(W_abs))
 
-    return mean_abs, mse, mae, corr
+    # return mean_abs, mse, mae, corr
 
-    # df = pd.DataFrame()
-    # df['Patient ID'] = patient_id
-    # df['Pos. in sleep cylce'] = brain_state
-    # df['Mean abs. weight'] = mean_abs
-    # df['Batch size'] = batch_size
-    #
-    # with sns.color_palette('colorblind', 3):
-    #     plt.figure(figsize=(6, 4))
-    #     sns.set_style('whitegrid')
-    #     ax = sns.barplot(x='Mean abs. weight', y='Batch size', hue='Pos. in sleep cylce', data=df, orient='h')
-    #     ax.set(xlabel='Mean abs. weight', ylabel='Batch size')
-    #     ax.set_title('Mean abs. weight')
-    #     #ax.set_xlim(left=0.04)
-    # plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
-    # plt.close()
+    df = pd.DataFrame()
+    df['Patient ID'] = patient_id
+    df['NREM phases'] = brain_state
+    df['Mean abs. weight'] = mean_abs
+    df['Batch size'] = batch_size
+
+    with sns.color_palette('colorblind', 3):
+        plt.figure(figsize=(6, 4))
+        sns.set_style('whitegrid')
+        ax = sns.barplot(x='NREM phases', y='Patient ID', hue='NREM phases', data=df)
+        ax.set(xlabel='Mean abs. weight', ylabel='Batch size')
+        ax.set_title('Mean abs. weight')
+        ax.set_xlim(0.03, 0.04)
+    plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
+    plt.close()
 
 
 def plot_weighted_prediction(id_, node_idx, max_duration=.5):

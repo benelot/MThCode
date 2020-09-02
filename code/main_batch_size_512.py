@@ -59,8 +59,12 @@ if __name__ == '__main__':
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 70}
 
-            utrain.train_and_test(params)
-            ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
+            if attempt == 1 and params['patient_id'] == 'ID11':
+                utrain.train_and_test(params)
+                ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
+            elif attempt == 2:
+                utrain.train_and_test(params)
+                ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
 
     ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
     ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')

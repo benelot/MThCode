@@ -52,10 +52,10 @@ if __name__ == '__main__':
                       'resample': 256,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
-                      'lr': 0.01,
+                      'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.0001,
+                      'weight_decay': 0.001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 70}
 

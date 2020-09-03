@@ -55,7 +55,7 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.01,
+                      'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 70}
 
@@ -64,4 +64,4 @@ if __name__ == '__main__':
 
     ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
     ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')
-    ufig.mean_weights(ids=ids_all, hidden=False, save_name=pre)
+    ufig.mean_weights(ids=ids_all, hidden=True, save_name=pre)

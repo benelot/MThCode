@@ -321,7 +321,7 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
         ax = sns.barplot(x='NREM phases', y='Mean abs. weight', data=df)
         ax.set(ylabel='Mean abs. weight')
         ax.set_title('Mean abs. weight')
-        ax.set_ylim(80, 103)
+        ax.set_ylim(90, 110)
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
     plt.close()
 

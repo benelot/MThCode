@@ -132,7 +132,7 @@ def train(params):
         print('Error: No valid loss function.')
 
     lr = params['lr']
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=params['weight_decay'])
 
     # Training
     loss = None

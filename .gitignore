@@ -1,4 +1,5 @@
 code/trash
+code/figures
 data/*.mat
 data/*.npy
 models/

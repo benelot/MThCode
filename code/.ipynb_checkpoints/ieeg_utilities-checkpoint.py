@@ -42,19 +42,13 @@ def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_compo
     pca_result = pca.fit_transform(data.T)
 
     if plot:
-        fig = plt.figure(figsize=(7,3.4))
-        gs = fig.add_gridspec(nrows=2, ncols=21)
-        ax = [[] for i in range(3)]
-        cm = plt.cm.get_cmap('viridis')
-        
-        ax[0] = fig.add_subplot(gs[:1, :6])
-        plt.scatter(pca_result[:, 0], pca_result[:, 1], c=pca_result[:, 2], cmap=cm)
-        plt.clim(np.min(pca_result[:, 2]), np.max(pca_result[:, 2]))
-        ax[0].set_xlabel('1st PC [a.u.]')
-        ax[0].set_ylabel('2nd PC [a.u.]')
-        ax[0].spines['right'].set_visible(False), ax[0].spines['top'].set_visible(False)
-        cb = plt.colorbar(ax=ax[0])
-        cb.set_label(label='3rd PC [a.u.]')
+        fig, ax = plt.subplots(figsize=(5, 5))
+        ax.scatter(pca_result[:, 0], pca_result[:, 1], c=pca_result[:, 2])
+        ax.set_xlabel('1st principal component')
+        ax.set_ylabel('2nd principal component')
+        ax.set_title('First 3 principal components')
+        plt.tight_layout()
+        fig.savefig('figures/Ch2_PCA.png')
 
     # Check score of K-Means for max_n_clusters
     n_clusters_list = list(range(1, max_n_clusters + 1))
@@ -65,13 +59,15 @@ def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_compo
         score.append(clusters.inertia_ / n_nodes)
 
     if plot:
-        ax[1] = fig.add_subplot(gs[:1, 9:14])
-        plt.plot(n_clusters_list, score, c='black')
-        ax[1].set_xlabel('Nr. of clusters')
-        ax[1].set_ylabel('MSE [a.u.]')
-        #plt.title('Distance to nearest cluster center')
-        ax[1].xaxis.set_major_locator(MaxNLocator(integer=True))
-        ax[1].spines['right'].set_visible(False), ax[1].spines['top'].set_visible(False)
+        fig = plt.figure(figsize=(5, 5))
+        ax = fig.gca()
+        plt.plot(n_clusters_list, score)
+        plt.xlabel('Number of clusters')
+        plt.ylabel('Mean squared distance')
+        plt.title('Distance to nearest cluster center')
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.tight_layout()
+        fig.savefig('figures/Ch2_KMeans.png')
 
     # Perform K-Means on data
     print('Perform KMeans')
@@ -82,15 +78,14 @@ def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_compo
     df['Cluster'] = clusters.labels_
 
     if plot:
-        ax[2] = fig.add_subplot(gs[:1, 16:])
+        fig = plt.figure(figsize=(5, 5))
         palette = sns.color_palette('muted', n_clusters)
         sns.scatterplot(x=0, y=1, data=df, s=50, hue='Cluster', style='Cluster', palette=palette)
-        ax[2].set_xlabel('1st PC [a.u.]')
-        ax[2].set_ylabel('2nd PC [a.u.]')
-        ax[2].spines['right'].set_visible(False), ax[2].spines['top'].set_visible(False)
-        ax[2].get_legend().remove()
-        #plt.title('Clustering of the first two princ. components')
-        fig.savefig('figures/Ch2_NodeReduction.png', dpi=300)
+        plt.xlabel('1st principal component')
+        plt.ylabel('2nd principal component')
+        plt.title('Clustering of the first two princ. components')
+        plt.tight_layout()
+        fig.savefig('figures/Ch2_KMeans_result.png')
 
     # Make DataFrame
     df = pd.DataFrame()
@@ -151,7 +146,6 @@ def fft(data: np.ndarray, fs: float, downscale_factor=None):
 
     spect = np.zeros((n_samples, n_nodes))
     for i in range(n_nodes):
-        print('Compute FFT of channel: ' + str(i))
         spect[:, i] = np.abs(fftpack.fft(data[:, i]))
     freq = fftpack.fftfreq(n_samples) * fs
 
@@ -161,7 +155,6 @@ def fft(data: np.ndarray, fs: float, downscale_factor=None):
 
     if downscale_factor is not None:
         spect_resampled = []
-        print('Downscale FFTs')
         for i in range(n_nodes):
             spect_filtered = savgol_filter(np.abs(spect_pos[:, i]), int(n_samples/500)-1, 3)
             spect_resampled.append(signal.resample_poly(spect_filtered, up=3, down=3*downscale_factor))

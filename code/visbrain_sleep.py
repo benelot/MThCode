@@ -5,8 +5,8 @@ from scipy import signal
 import matplotlib.pyplot as plt
 
 # Load the matlab file :
-mat = loadmat('../data/ID08_57to65h.mat')
-info = loadmat('../data/ID08_info.mat')
+mat = loadmat('../data/ID11_59to65h.mat')
+info = loadmat('../data/ID11_info.mat')
 # Prepare the data :
 sf = float(info['fs'])
 data = mat['EEG']

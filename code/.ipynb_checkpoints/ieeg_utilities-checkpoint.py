@@ -42,13 +42,19 @@ def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_compo
     pca_result = pca.fit_transform(data.T)
 
     if plot:
-        fig, ax = plt.subplots(figsize=(5, 5))
-        ax.scatter(pca_result[:, 0], pca_result[:, 1], c=pca_result[:, 2])
-        ax.set_xlabel('1st principal component')
-        ax.set_ylabel('2nd principal component')
-        ax.set_title('First 3 principal components')
-        plt.tight_layout()
-        fig.savefig('figures/Ch2_PCA.png')
+        fig = plt.figure(figsize=(7,3.4))
+        gs = fig.add_gridspec(nrows=2, ncols=21)
+        ax = [[] for i in range(3)]
+        cm = plt.cm.get_cmap('viridis')
+        
+        ax[0] = fig.add_subplot(gs[:1, :6])
+        plt.scatter(pca_result[:, 0], pca_result[:, 1], c=pca_result[:, 2], cmap=cm)
+        plt.clim(np.min(pca_result[:, 2]), np.max(pca_result[:, 2]))
+        ax[0].set_xlabel('1st PC [a.u.]')
+        ax[0].set_ylabel('2nd PC [a.u.]')
+        ax[0].spines['right'].set_visible(False), ax[0].spines['top'].set_visible(False)
+        cb = plt.colorbar(ax=ax[0])
+        cb.set_label(label='3rd PC [a.u.]')
 
     # Check score of K-Means for max_n_clusters
     n_clusters_list = list(range(1, max_n_clusters + 1))
@@ -59,15 +65,13 @@ def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_compo
         score.append(clusters.inertia_ / n_nodes)
 
     if plot:
-        fig = plt.figure(figsize=(5, 5))
-        ax = fig.gca()
-        plt.plot(n_clusters_list, score)
-        plt.xlabel('Number of clusters')
-        plt.ylabel('Mean squared distance')
-        plt.title('Distance to nearest cluster center')
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-        plt.tight_layout()
-        fig.savefig('figures/Ch2_KMeans.png')
+        ax[1] = fig.add_subplot(gs[:1, 9:14])
+        plt.plot(n_clusters_list, score, c='black')
+        ax[1].set_xlabel('Nr. of clusters')
+        ax[1].set_ylabel('MSE [a.u.]')
+        #plt.title('Distance to nearest cluster center')
+        ax[1].xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax[1].spines['right'].set_visible(False), ax[1].spines['top'].set_visible(False)
 
     # Perform K-Means on data
     print('Perform KMeans')
@@ -78,14 +82,15 @@ def node_reduction(data: np.ndarray, n_clusters: int, max_n_clusters=20, n_compo
     df['Cluster'] = clusters.labels_
 
     if plot:
-        fig = plt.figure(figsize=(5, 5))
+        ax[2] = fig.add_subplot(gs[:1, 16:])
         palette = sns.color_palette('muted', n_clusters)
         sns.scatterplot(x=0, y=1, data=df, s=50, hue='Cluster', style='Cluster', palette=palette)
-        plt.xlabel('1st principal component')
-        plt.ylabel('2nd principal component')
-        plt.title('Clustering of the first two princ. components')
-        plt.tight_layout()
-        fig.savefig('figures/Ch2_KMeans_result.png')
+        ax[2].set_xlabel('1st PC [a.u.]')
+        ax[2].set_ylabel('2nd PC [a.u.]')
+        ax[2].spines['right'].set_visible(False), ax[2].spines['top'].set_visible(False)
+        ax[2].get_legend().remove()
+        #plt.title('Clustering of the first two princ. components')
+        fig.savefig('figures/Ch2_NodeReduction.png', dpi=300)
 
     # Make DataFrame
     df = pd.DataFrame()
@@ -146,6 +151,7 @@ def fft(data: np.ndarray, fs: float, downscale_factor=None):
 
     spect = np.zeros((n_samples, n_nodes))
     for i in range(n_nodes):
+        print('Compute FFT of channel: ' + str(i))
         spect[:, i] = np.abs(fftpack.fft(data[:, i]))
     freq = fftpack.fftfreq(n_samples) * fs
 
@@ -155,6 +161,7 @@ def fft(data: np.ndarray, fs: float, downscale_factor=None):
 
     if downscale_factor is not None:
         spect_resampled = []
+        print('Downscale FFTs')
         for i in range(n_nodes):
             spect_filtered = savgol_filter(np.abs(spect_pos[:, i]), int(n_samples/500)-1, 3)
             spect_resampled.append(signal.resample_poly(spect_filtered, up=3, down=3*downscale_factor))
@@ -574,7 +581,7 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     # Plot cc, tl and tau
     # General settings
     sns.set_style('white')
-    fig = plt.figure(figsize=(10, 13))
+    fig = plt.figure(figsize=(7, 10))
     gs = fig.add_gridspec(3, 2)
     cmap_div = copy.copy(mpl.cm.get_cmap('seismic'))
     cmap_div.set_bad('dimgrey')
@@ -585,7 +592,7 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     ax0 = fig.add_subplot(gs[:1, :1])
     sns.heatmap(cc_masked, cmap=cmap_div, vmin=-1, vmax=1)
     ax0.set_title('Peak cross correlation')
-    ax0.set_xlabel('Node idx'), ax0.set_ylabel('Node idx')
+    ax0.set_xlabel('Channel [Nr.]'), ax0.set_ylabel('Channel [Nr.]')
 
     # Subplot: Histogram of peak cross correlation
     ax1 = fig.add_subplot(gs[:1, 1:])
@@ -599,25 +606,27 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     plt.legend()
     ax1.set_title('Peak cross correlation histogram')
     ax1.set_xlabel('Peak cross correlation [-]'), ax1.set_ylabel('Nr. of occurrence [-]')
+    ax1.spines['right'].set_visible(False), ax1.spines['top'].set_visible(False)
 
     # Subplot: Time lag
     ax2 = fig.add_subplot(gs[1:2, :1])
     vlim = np.nanmax(np.abs(tl))
     sns.heatmap(tl_masked, cmap=cmap_div, vmin=-vlim, vmax=vlim)
     ax2.set_title('Corresponding time lag [ms]')
-    ax2.set_xlabel('Node idx'), ax2.set_ylabel('Node idx')
+    ax2.set_xlabel('Channel [Nr.]'), ax2.set_ylabel('Channel [Nr.]')
 
     # Subplot: Histogram of time lag
     ax3 = fig.add_subplot(gs[1:2, 1:])
     sns.distplot(tl_masked, kde=False)
     ax3.set_title('Time lag histogram')
     ax3.set_xlabel('Time [ms]'), ax3.set_ylabel('Nr. of occurrence [-]')
+    ax3.spines['right'].set_visible(False), ax3.spines['top'].set_visible(False)
 
     # Subplot: Tau
     ax4 = fig.add_subplot(gs[2:, :1])
     sns.heatmap(tau, cmap=cmap_uni)
     ax4.set_title('Corresponding tau [ms]')
-    ax4.set_xlabel('Node idx'), ax4.set_ylabel('Node idx')
+    ax4.set_xlabel('Channel [Nr.]'), ax4.set_ylabel('Channel [Nr.]')
 
     # Subplot: Histogram of tau
     ax5 = fig.add_subplot(gs[2:, 1:])
@@ -627,6 +636,7 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     sns.distplot(auto_corr, kde=False, label='Cross correlated')
     ax5.set_title('Tau histogram'), plt.legend()
     ax5.set_xlabel('Time [ms]'), ax5.set_ylabel('Nr. of occurrence [-]')
+    ax5.spines['right'].set_visible(False), ax5.spines['top'].set_visible(False)
 
     plt.tight_layout()
     save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'
@@ -634,33 +644,47 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     plt.close()
 
     # t vector for plots
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(5, 4))
     t = np.arange(0, cctl.shape[2])
     t = (t - n_lag) / fs * 1000
-    n0 = 44  # Base node
-    N = 7  # Number of line plots
+    n0 = 10  # Base node
+    N = 20  # Number of line plots
     peaks_x, peaks_y, taus_x_0, taus_x_1, taus_y = [], [], [], [], []
+    # Colors
+    cmap = plt.get_cmap('viridis')
+    colors = [cmap(i) for i in np.linspace(0, 1, N)]
+    ax6 = plt.gca()
+    ax6.add_patch(mpl.patches.Rectangle(xy=(-t_lag*1000, -critical_corr), width=t_lag*2000, height=2*critical_corr,
+                                        facecolor='red', edgecolor='red', alpha=.1))
+
     for i in range(N):
-        n1 = n0 + i  # Reference node
-        plt.plot(t, cctl[n0, n1, :], label='Nodes 0 - ' + str(i))
-        peaks_x.append(tl_no_mask[n0, n1])
-        peaks_y.append(cc[n0, n1])
-        taus_x_0.append(higher_tau_all[n0, n1])
-        taus_x_1.append(lower_tau_all[n0, n1])
-        taus_y.append(cc[n0, n1] * factor)
+        n1 = n0 + i - int(N/2) # Reference node
+        plt.plot(t, cctl[n0, n1, :], color=colors[i])
+        if cc[n0, n1] >= critical_corr or cc[n0, n1] <= -critical_corr:
+            peaks_x.append(tl_no_mask[n0, n1])
+            peaks_y.append(cc[n0, n1])
+            taus_x_0.append(higher_tau_all[n0, n1])
+            taus_x_1.append(lower_tau_all[n0, n1])
+            taus_y.append(cc[n0, n1] * factor)
+
+    #cb = plt.colorbar(ax=ax)
+    #cb.set_label(label='Nodes')
+    
     plt.scatter(peaks_x, peaks_y, color='black', marker='d', label='Peak', zorder=N + 1)
     plt.scatter(taus_x_0, taus_y, color='black', marker='<', label='Right tau', zorder=N + 1)
     plt.scatter(taus_x_1, taus_y, color='black', marker='>', label='Left tau', zorder=N + 1)
     ymin, ymax = plt.gca().get_ylim()
-    plt.plot([-t_lag*1000, t_lag*1000], [critical_corr, critical_corr],
-             color='black', linestyle=':', label='Critical corr.')
-    plt.plot([-t_lag*1000, t_lag*1000], [-critical_corr, -critical_corr], color='black', linestyle=':')
+    #plt.plot([-t_lag*1000, t_lag*1000], [critical_corr, critical_corr],
+    #         color='black', linestyle='--', label='Critical corr.', lw=.5)
+    #plt.plot([-t_lag*1000, t_lag*1000], [-critical_corr, -critical_corr], color='black', linestyle='--', lw=.5)
     plt.ylim(ymin, ymax)
     plt.xlabel('Time lag [ms]'), plt.ylabel('NCC [-]')
-    plt.title('Normalized cross correlation: examples'), plt.legend(loc='upper right')
-    plt.xlim(-t_lag * 1000, t_lag * 1000), plt.grid()
+    #plt.title('Normalized cross correlation: examples')
+    plt.legend(loc='upper right', frameon=False)
+    plt.xlim(-t_lag*1000, t_lag*1000)
+    ax6.spines['right'].set_visible(False), ax6.spines['top'].set_visible(False)
     save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'
-    plt.savefig('../doc/figures/cctl_' + save_name + '.png')
+    plt.savefig('../doc/figures/cctl_' + save_name + '.png', dpi=200)
     plt.close()
 
 

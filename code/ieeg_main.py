@@ -19,16 +19,18 @@ params_change = [[pre + 'ID07_32h10m' + post, 'ID07', [32, 10], 'NREM beginning'
                  [pre + 'ID11b_133h30m' + post, 'ID11', [133, 30], 'NREM middle'],
                  [pre + 'ID11b_136h30m' + post, 'ID11', [136, 30], 'NREM end']]
 """
-
-data_mat = loadmat('../data/ID07_32h.mat')
-info_mat = loadmat('../data/ID07_info.mat')
+# Load and prepare data
+data_mat = loadmat('../data/' + patient_id + '_' + str(time_begin[0]) + 'h.mat')
+info_mat = loadmat('../data/' + patient_id + '_info.mat')
 fs = float(info_mat['fs'])
-sample_begin = int(np.round(10 * 60 * fs))
-sample_end = int(np.round(sample_begin + 5 * 60 * fs))
-data = data_mat['EEG'][:, sample_begin:sample_end].transpose()
-data_mat = []
+sample_begin = int(time_begin[1] * 60 * fs)
+sample_end = sample_begin + int(duration * fs)
+data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
 
-ieeg.plot_distribution(data)
+plt.figure(figsize=(5, 5))
+sns.pairplot()
+
+#ieeg.lin_corr(patient_id='ID07', time_begin=[32, 10], duration=float(5*60), t_lag=2, critical_corr=0.4)
 
 
 # ieeg.plot_corr_connectivity(r2, r2_dt, h2, h2_dt, save_name=name)

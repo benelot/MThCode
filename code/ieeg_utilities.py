@@ -163,7 +163,7 @@ def fft(data: np.ndarray, fs: float, downscale_factor=None):
         spect_resampled = []
         print('Downscale FFTs')
         for i in range(n_nodes):
-            spect_filtered = savgol_filter(np.abs(spect_pos[:, i]), int(n_samples/500)-1, 3)
+            spect_filtered = savgol_filter(np.abs(spect_pos[:, i]), int(n_samples/500)-2, 3)
             spect_resampled.append(signal.resample_poly(spect_filtered, up=3, down=3*downscale_factor))
         freq_resampled = signal.resample_poly(freq_pos, up=3, down=3*downscale_factor)
 
@@ -397,34 +397,39 @@ def nonlin_corr_metric(x: np.ndarray, y: np.ndarray, t_shift: int):
     return r2, h2, r2_dt, h2_dt, r2_shift, h2_shift
 
 
-def plot_nonlin_corr(r2, r2_dt, h2=None, h2_dt=None, save_name='default'):
-    fs = 512
+def plot_nonlin_corr(r2, r2_dt=None, h2=None, h2_dt=None, save_name='default'):
+    fs = 256
 
     if h2 is not None:
-        fig = plt.figure(figsize=(12, 10))
-        gs = fig.add_gridspec(2, 2)
+        fig = plt.figure(figsize=(7.4, 3))
+        gs = fig.add_gridspec(nrows=1, ncols=2)
         cmap = 'viridis'
 
-        ax0 = fig.add_subplot(gs[:1, :1])
-        sns.heatmap(r2, cmap=cmap)
-        ax0.set_title('r2 linear correlation')
-        ax0.get_xaxis().set_visible(False)
+        ax0 = fig.add_subplot(gs[:, :1])
+        sns.heatmap(r2, cmap=cmap, cbar_kws={'label': 'r$^2$ [-]'})
+        #ax0.set_title('r2 linear correlation')
+        #ax0.get_xaxis().set_visible(False)
 
-        ax1 = fig.add_subplot(gs[:1, 1:])
-        sns.heatmap(h2, cmap=cmap)
-        ax1.set_title('h2 non-linear correlation')
-        ax1.get_xaxis().set_visible(False), ax1.get_yaxis().set_visible(False)
+        ax1 = fig.add_subplot(gs[:, 1:])
+        sns.heatmap(h2, cmap=cmap, cbar_kws={'label': 'h$^2$ [-]'})
+        #ax1.set_title('h2 non-linear correlation')
+        #ax1.get_xaxis().set_visible(False), ax1.get_yaxis().set_visible(False)
 
-        ax2 = fig.add_subplot(gs[1:, :1])
-        vlim = np.max(np.abs(r2_dt))
-        sns.heatmap(r2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
-        ax2.set_title('r2 time shift [ms]')
+        #ax2 = fig.add_subplot(gs[1:, :1])
+        #vlim = np.max(np.abs(r2_dt))
+        #sns.heatmap(r2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
+        #ax2.set_title('r2 time shift [ms]')
 
-        ax3 = fig.add_subplot(gs[1:, 1:])
-        vlim = np.max(np.abs(h2_dt))
-        sns.heatmap(h2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
-        ax3.set_title('h2 time shift [ms]')
-        ax3.get_yaxis().set_visible(False)
+        #ax3 = fig.add_subplot(gs[1:, 1:])
+        #vlim = np.max(np.abs(h2_dt))
+        #sns.heatmap(h2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
+        #ax3.set_title('h2 time shift [ms]')
+        #ax3.get_yaxis().set_visible(False)
+
+        ax0.set_xlabel('Channel index [-]')
+        ax0.set_ylabel('Channel index [-]')
+        ax1.set_xlabel('Channel index [-]')
+        ax1.set_ylabel('Channel index [-]')
 
     else:
         fig = plt.figure(figsize=(8, 10))
@@ -436,13 +441,13 @@ def plot_nonlin_corr(r2, r2_dt, h2=None, h2_dt=None, save_name='default'):
         ax0.set_title('r2 linear correlation')
         ax0.get_xaxis().set_visible(False)
 
-        ax2 = fig.add_subplot(gs[1:, :1])
-        vlim = np.max(np.abs(r2_dt))
-        sns.heatmap(r2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
-        ax2.set_title('r2 time shift [ms]')
+        #ax2 = fig.add_subplot(gs[1:, :1])
+        #vlim = np.max(np.abs(r2_dt))
+        #sns.heatmap(r2_dt / fs * 1000, cmap='bwr', vmin=-vlim, vmax=vlim)
+        #ax2.set_title('r2 time shift [ms]')
 
     plt.tight_layout()
-    plt.savefig('../doc/figures/fc_' + save_name + '.png')
+    plt.savefig('../doc/figures/fc_' + save_name + '.png', dpi=300)
     plt.close()
 
 
@@ -463,31 +468,32 @@ def nonlin_corr(patient_id: str, time_begin: list, duration: float,
     fs = float(info_mat['fs'])
     sample_begin = int(time_begin[1] * 60 * fs)
     sample_end = sample_begin + int(duration * fs)
-    data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
-    if fs != 512:
-        data_raw = signal.resample(data_raw, num=int(data_raw.shape[0] / fs * 512), axis=0)
+    data_raw = data_mat['EEG'][:20, sample_begin:sample_end].transpose()
+    # Resample to 256 Hz
+    data_raw = signal.resample(data_raw, num=int(data_raw.shape[0] / fs * 256), axis=0)
+    fs = 256
 
     # Compute correlation
     h2 = np.zeros((data_raw.shape[1], data_raw.shape[1]))
     r2 = np.zeros((data_raw.shape[1], data_raw.shape[1]))
     h2_dt = np.zeros((data_raw.shape[1], data_raw.shape[1]))
     r2_dt = np.zeros((data_raw.shape[1], data_raw.shape[1]))
-    h2_shift_list = []
-    r2_shift_list = []
+    #h2_shift_list = []
+    #r2_shift_list = []
 
     start_time = time.time()
 
     for i in range(data_raw.shape[1]):
         for j in range(data_raw.shape[1]):
-            r2[i, j], h2[i, j], r2_dt[i, j], h2_dt[i, j], r2_shift, h2_shift = nonlin_corr_metric(
+            r2[i, j], h2[i, j], r2_dt[i, j], h2_dt[i, j], _, _ = nonlin_corr_metric(
                 data_raw[:, i], data_raw[:, j], t_shift=int(t_shift * fs))
-            h2_shift_list.append(h2_shift)
-            r2_shift_list.append(r2_shift)
+            # h2_shift_list.append(h2_shift)
+            # r2_shift_list.append(r2_shift)
         t_rem = (time.time() - start_time) / (i + 1) * (data_raw.shape[1] - i + 1)
         clear_output()
         print(f'Computed columns: {i}/{data_raw.shape[1]} | Time remaining [min]: {t_rem / 60:.3}')
 
-    save_name = '../data/fc_' + patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'min'
+    save_name = '../data/fc_' + patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'min_final'
     np.save(save_name + '_r2.npy', r2)
     np.save(save_name + '_r2_dt.npy', r2_dt)
     np.save(save_name + '_h2.npy', h2)
@@ -570,6 +576,7 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     # Calculate mean distance for tau to cc
     tau_n = (higher_tau - lower_tau) / 2
     tau = np.where(tau_n == 0, np.nan, tau_n) / fs * 1000  # in [ms]
+    tau = np.abs(tau)  # this line has to be removed in the future
 
     # Additional masks for plots (diagonal, upper triangle, ...)
     tl_masked = tl.copy()
@@ -580,94 +587,145 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
 
     # Plot cc, tl and tau
     # General settings
-    sns.set_style('white')
-    fig = plt.figure(figsize=(10, 13))
-    gs = fig.add_gridspec(3, 2)
+    sns.set_style('ticks')
+    fig = plt.figure(figsize=(7, 9))
+    gs = fig.add_gridspec(3, 10)
     cmap_div = copy.copy(mpl.cm.get_cmap('seismic'))
     cmap_div.set_bad('dimgrey')
     cmap_uni = copy.copy(mpl.cm.get_cmap('viridis'))
     cmap_uni.set_bad('dimgrey')
 
     # Subplot: Peak cross correlation
-    ax0 = fig.add_subplot(gs[:1, :1])
-    sns.heatmap(cc_masked, cmap=cmap_div, vmin=-1, vmax=1)
-    ax0.set_title('Peak cross correlation')
-    ax0.set_xlabel('Node idx'), ax0.set_ylabel('Node idx')
+    ax0 = fig.add_subplot(gs[:1, :5])
+    sns.heatmap(cc_masked, cmap=cmap_div, vmin=-1, vmax=1, cbar_kws={'label': 'Peak cross correlation [-]'})
+    ax0.set_xlabel('Channel index [-]'), ax0.set_ylabel('Channel index [-]')
 
     # Subplot: Histogram of peak cross correlation
-    ax1 = fig.add_subplot(gs[:1, 1:])
+    sns.set_style('white')
+    ax1 = fig.add_subplot(gs[:1, 6:])
+    ax1.add_patch(mpl.patches.Rectangle(xy=(-critical_corr, 0), width=2*critical_corr, height=330,
+                                        facecolor='red', edgecolor='red', alpha=.1))
     sns.distplot(cc_masked, kde=False)
     ymin, ymax = ax1.get_ylim()
     xmin, xmax = ax1.get_xlim()
-    label = 'Critical corr. = +/- ' + str(critical_corr)
-    plt.plot([critical_corr, critical_corr], [ymin, ymax], linestyle='--', color='black', label=label)
-    plt.plot([-critical_corr, -critical_corr], [ymin, ymax], linestyle='--', color='black')
-    ax1.set_xlim(xmin, xmax), ax1.set_ylim(ymin, ymax)
-    plt.legend()
-    ax1.set_title('Peak cross correlation histogram')
+    #label = 'Critical corr. = +/- ' + str(critical_corr)
+    #plt.plot([critical_corr, critical_corr], [ymin, ymax], linestyle='--', color='black', label=label)
+    #plt.plot([-critical_corr, -critical_corr], [ymin, ymax], linestyle='--', color='black')
+    ax1.set_xlim(xmin, xmax), ax1.set_ylim(ymin, 330)
+    #plt.legend()
     ax1.set_xlabel('Peak cross correlation [-]'), ax1.set_ylabel('Nr. of occurrence [-]')
+    ax1.spines['right'].set_visible(False), ax1.spines['top'].set_visible(False)
 
     # Subplot: Time lag
-    ax2 = fig.add_subplot(gs[1:2, :1])
+    sns.set_style('ticks')
+    ax2 = fig.add_subplot(gs[1:2, :5])
     vlim = np.nanmax(np.abs(tl))
-    sns.heatmap(tl_masked, cmap=cmap_div, vmin=-vlim, vmax=vlim)
-    ax2.set_title('Corresponding time lag [ms]')
-    ax2.set_xlabel('Node idx'), ax2.set_ylabel('Node idx')
-
+    sns.heatmap(tl_masked, cmap=cmap_div, vmin=-vlim, vmax=vlim, cbar_kws={'label': 'Corresponding time lag [ms]'})
+    ax2.set_xlabel('Channel index [-]'), ax2.set_ylabel('Channel index [-]')
+                                                                           
     # Subplot: Histogram of time lag
-    ax3 = fig.add_subplot(gs[1:2, 1:])
-    sns.distplot(tl_masked, kde=False)
-    ax3.set_title('Time lag histogram')
-    ax3.set_xlabel('Time [ms]'), ax3.set_ylabel('Nr. of occurrence [-]')
+    sns.set_style('white')
+    ax3 = fig.add_subplot(gs[1:2, 6:])
+    sns.distplot(tl_masked, kde=False, bins=[(i - 11) * 2 - 1 for i in range(24)])
+    ax3.set_xlim(-22, 22)
+    ax3.set_xlabel('Time lag [ms]'), ax3.set_ylabel('Nr. of occurrence [-]')
+    ax3.spines['right'].set_visible(False), ax3.spines['top'].set_visible(False)
 
     # Subplot: Tau
-    ax4 = fig.add_subplot(gs[2:, :1])
-    sns.heatmap(tau, cmap=cmap_uni)
-    ax4.set_title('Corresponding tau [ms]')
-    ax4.set_xlabel('Node idx'), ax4.set_ylabel('Node idx')
+    sns.set_style('ticks')
+    ax4 = fig.add_subplot(gs[2:, :5])
+    sns.heatmap(tau, cmap=cmap_uni, cbar_kws={'label': 'Corresponding $\\tau$ [ms]'})
+    ax4.set_xlabel('Channel index [-]'), ax4.set_ylabel('Channel index [-]')
 
     # Subplot: Histogram of tau
-    ax5 = fig.add_subplot(gs[2:, 1:])
-    sns.distplot(np.diagonal(tau), kde=False, label='Auto correlated')
+    sns.set_style('white')
+    ax5 = fig.add_subplot(gs[2:, 6:])
     auto_corr = tau.copy()
     auto_corr[np.diag_indices(auto_corr.shape[0])] = np.nan
     sns.distplot(auto_corr, kde=False, label='Cross correlated')
-    ax5.set_title('Tau histogram'), plt.legend()
-    ax5.set_xlabel('Time [ms]'), ax5.set_ylabel('Nr. of occurrence [-]')
+    sns.distplot(np.diagonal(tau), kde=False, label='Auto correlated', bins=10)
+    plt.legend(loc='upper left', frameon=False)
+    ax5.set_xlabel('$\\tau$ [ms]'), ax5.set_ylabel('Nr. of occurrence [-]')
+    ax5.spines['right'].set_visible(False), ax5.spines['top'].set_visible(False)
 
     plt.tight_layout()
     save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'
-    plt.savefig('../doc/figures/cc_' + save_name + '.png')
+    plt.savefig('../doc/figures/cc_' + save_name + '.png', dpi=300)
     plt.close()
 
     # t vector for plots
-    plt.figure(figsize=(8, 5))
+    sns.set_style('ticks')
+    plt.figure(figsize=(5, 4))
     t = np.arange(0, cctl.shape[2])
     t = (t - n_lag) / fs * 1000
-    n0 = 44  # Base node
-    N = 7  # Number of line plots
+    n0 = 50  # Base node
+    N = 40  # Number of line plots
     peaks_x, peaks_y, taus_x_0, taus_x_1, taus_y = [], [], [], [], []
+    # Colors
+    cmap = plt.get_cmap('viridis')
+    colors = [cmap(i) for i in np.linspace(0, 1, N)]
+    ax6 = plt.gca()
+    ax6.add_patch(mpl.patches.Rectangle(xy=(-t_lag*1000, -critical_corr), width=t_lag*2000, height=2*critical_corr,
+                                        facecolor='red', edgecolor='red', alpha=.1))
+
     for i in range(N):
-        n1 = n0 + i  # Reference node
-        plt.plot(t, cctl[n0, n1, :], label='Nodes 0 - ' + str(i))
-        peaks_x.append(tl_no_mask[n0, n1])
-        peaks_y.append(cc[n0, n1])
-        taus_x_0.append(higher_tau_all[n0, n1])
-        taus_x_1.append(lower_tau_all[n0, n1])
-        taus_y.append(cc[n0, n1] * factor)
+        n1 = n0 + i - int(N/2)  # Reference node
+        plt.plot(t, cctl[n0, n1, :], color='black', lw='1.2')
+        if n1 == n0:
+            plt.plot(t, cctl[n0, n1, :], color='red', lw='.9')
+        else:
+            plt.plot(t, cctl[n0, n1, :], color=colors[i], lw='.9')
+        if cc[n0, n1] >= critical_corr or cc[n0, n1] <= -critical_corr:
+            peaks_x.append(tl_no_mask[n0, n1])
+            peaks_y.append(cc[n0, n1])
+            taus_x_0.append(higher_tau_all[n0, n1])
+            taus_x_1.append(lower_tau_all[n0, n1])
+            taus_y.append(cc[n0, n1] * factor)
+
+    #cb = plt.colorbar(ax=ax)
+    #cb.set_label(label='Nodes')
+    
     plt.scatter(peaks_x, peaks_y, color='black', marker='d', label='Peak', zorder=N + 1)
     plt.scatter(taus_x_0, taus_y, color='black', marker='<', label='Right tau', zorder=N + 1)
     plt.scatter(taus_x_1, taus_y, color='black', marker='>', label='Left tau', zorder=N + 1)
     ymin, ymax = plt.gca().get_ylim()
-    plt.plot([-t_lag*1000, t_lag*1000], [critical_corr, critical_corr],
-             color='black', linestyle=':', label='Critical corr.')
-    plt.plot([-t_lag*1000, t_lag*1000], [-critical_corr, -critical_corr], color='black', linestyle=':')
+    plt.plot([0, 0], [ymin, ymax], color='black', lw='.3')
+    #         color='black', linestyle='--', label='Critical corr.', lw=.5)
+    #plt.plot([-t_lag*1000, t_lag*1000], [-critical_corr, -critical_corr], color='black', linestyle='--', lw=.5)
     plt.ylim(ymin, ymax)
     plt.xlabel('Time lag [ms]'), plt.ylabel('NCC [-]')
-    plt.title('Normalized cross correlation: examples'), plt.legend(loc='upper right')
-    plt.xlim(-t_lag * 1000, t_lag * 1000), plt.grid()
+    #plt.title('Normalized cross correlation: examples')
+    plt.legend(loc='upper right', frameon=False)
+    plt.xlim(-t_lag*1000, t_lag*1000)
+    ax6.spines['right'].set_visible(False), ax6.spines['top'].set_visible(False)
     save_name = patient_id + '_' + str(time_begin[0]) + 'h' + str(time_begin[1]) + 'm'
-    plt.savefig('../doc/figures/cctl_' + save_name + '.png')
+    plt.savefig('../doc/figures/cctl_' + save_name + '.png', dpi=300)
+    plt.close()
+
+    # Plot raw signal
+    plt.figure(figsize=(2.5, 6))
+    sns.set_style('white')
+    node_idx = [i + n0 - int(N / 2) for i in range(N)]
+    plot_duration = 4  # [s]
+    offset_array = np.linspace(0, (N - 1) * 200, N)
+    for i in range(N):
+        plt.plot(data_raw[:int(plot_duration * fs), node_idx[i]] + offset_array[i], color='black', lw='1.2')
+        if i == int(N/2):
+            plt.plot(data_raw[:int(plot_duration * fs), node_idx[i]] + offset_array[i], color='red', lw='.8')
+        else:
+            plt.plot(data_raw[:int(plot_duration * fs), node_idx[i]] + offset_array[i], color=colors[i], lw='.8')
+    plt.plot([(plot_duration - 1) * fs, plot_duration * fs], [-200, -200], color='black', lw='1.5')
+    plt.plot([plot_duration * fs - 8, plot_duration * fs - 8], [-200, 100], color='black', lw='1.5')
+    ax7 = plt.gca()
+    ax7.set_yticks(offset_array)
+    ax7.set_yticklabels(['Ch. ' + str(i) for i in node_idx])
+    ax7.get_yticklabels()[int(N/2)].set_weight('bold')
+    ax7.set_xticklabels([])
+    ax7.set_xlim((-10, int(plot_duration * fs)))
+    ax7.spines['right'].set_visible(False), ax7.spines['top'].set_visible(False)
+    ax7.spines['left'].set_visible(False), ax7.spines['bottom'].set_visible(False)
+    plt.tight_layout()
+    plt.savefig('../doc/figures/ccex_' + save_name + '.png', dpi=300)
     plt.close()
 
 

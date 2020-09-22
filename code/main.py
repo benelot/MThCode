@@ -7,57 +7,63 @@ if __name__ == '__main__':
 
     os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+    q = 0
+    ids_all = []
+    pre = 'SRNN_5min_'
+    for attempt in range(1):
+        print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
+        post = '_' + str(attempt)
 
-    pre = 'allpos'
+        params_change = [[pre + 'ID07_32h10m' + post, 'ID07', [32, 10], 'NREM beginning'],
+                         [pre + 'ID07_35h10m' + post, 'ID07', [35, 10], 'NREM middle'],
+                         [pre + 'ID07_38h15m' + post, 'ID07', [38, 15], 'NREM end'],
+                         [pre + 'ID08_58h25m' + post, 'ID08', [58, 25], 'NREM beginning'],
+                         [pre + 'ID08_60h08m' + post, 'ID08', [60, 8], 'NREM middle'],
+                         [pre + 'ID08_64h40m' + post, 'ID08', [64, 40], 'NREM end'],
+                         [pre + 'ID11a_60h05m' + post, 'ID11', [60, 5], 'NREM beginning'],
+                         [pre + 'ID11a_62h10m' + post, 'ID11', [62, 10], 'NREM middle'],
+                         [pre + 'ID11a_65h00m' + post, 'ID11', [65, 0], 'NREM end'],
+                         [pre + 'ID11b_129h45m' + post, 'ID11', [129, 45], 'NREM beginning'],
+                         [pre + 'ID11b_133h30m' + post, 'ID11', [133, 30], 'NREM middle'],
+                         [pre + 'ID11b_136h30m' + post, 'ID11', [136, 30], 'NREM end']]
 
-    ids = []
-    h_offset = 59
-    for h_ in range(7):
-        for m in range(30):
-            h = h_ + h_offset
-            m = 2 * m
+        ids_attempt = []
+        for i, val in enumerate(p32, 10arams_change):
+            print('E ----- Status: Train model: ' + val[0])
+            ids_attempt.append(val[0])
+            ids_all.append(val[0])
 
-            zero = ''
-            if m < 10:
-                zero = '0'
-
-            t_string = str(h) + 'h' + zero + str(m) + 'm'
-
-            params = {'id_': pre + '_' + t_string,
-                      'model_type': 'single_layer',  # To be removed
+            params = {'id_': ids_attempt[-1],
+                      'model_type': None,  # None=SRNN, single_layer=SLP
                       'path2data': '../data/',
-                      'patient_id': 'ID11',
-                      'time_begin': [h, m],  # [hour, minute]
+                      'patient_id': val[1],
+                      'time_begin': val[2],  # [hour, minute]
                       'artificial_signal': [False, False],  # [bool on/off, bool small_weights]
-                      'duration': 120,  # seconds
-                      'brain_state': t_string,
-                      'add_id': '(M)',
+                      'duration': 5*60,  # seconds
+                      'brain_state': val[3],
+                      'add_id': '(E)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': 0,  # improve: portion
+                      'hidden_size': 120,  # improve: portion
                       'lambda': 0,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
-                      'window_size': 0,
+                      'window_size': 20,
                       'resample': 256,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.0001,
+                      'weight_decay': 0.001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 180}
+                      'epochs': 70}
 
-            print('Status: Training ' + params['id_'])
+
             utrain.train_and_test(params)
-            node_idx = [k for k in range(20)]
-            ufig.plot_train_test(params['id_'], n_nodes=15, node_idx=node_idx)
-            ids.append(params['id_'])
+            ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
 
-ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='correlation', save_name=pre + 'corr',
-                         ylim=(0, 1))
-ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='mae', save_name=pre + 'mae')
-ufig.plot_multi_boxplots(ids=ids, x='brain_state', y='mse', save_name=pre + 'mse')
 
-ufig.mean_weights(ids=ids, save_name=pre)
+    ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
+    ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')
+    ufig.mean_weights(ids=ids_all, hidden=True, save_name=pre)

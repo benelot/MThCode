@@ -401,6 +401,7 @@ def plot_nonlin_corr(r2, r2_dt=None, h2=None, h2_dt=None, save_name='default'):
     fs = 256
 
     if h2 is not None:
+        sns.set_style('ticks')
         fig = plt.figure(figsize=(7.4, 3))
         gs = fig.add_gridspec(nrows=1, ncols=2)
         cmap = 'viridis'
@@ -500,7 +501,7 @@ def nonlin_corr(patient_id: str, time_begin: list, duration: float,
     np.save(save_name + '_h2_dt.npy', h2_dt)
 
     if plot_name is not None:
-        plot_nonlin_corr(r2, h2, r2_dt, h2_dt, save_name=plot_name)
+        plot_nonlin_corr(r2=r2, h2=h2, r2_dt=r2_dt, h2_dt=h2_dt, save_name=plot_name)
 
 
 def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, critical_corr=0.7):
@@ -520,6 +521,13 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     sample_begin = int(time_begin[1] * 60 * fs)
     sample_end = sample_begin + int(duration * fs)
     data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
+
+    fs = 1024
+    t = np.linspace(0, 5*60, 5*60*fs)
+    f = [.5, 4, 20, 50, 120]
+    data_raw = np.zeros((len(t), len(f)))
+    for i, val in enumerate(f):
+        data_raw[:, i] = 100 * np.sin(2 * np.pi * val * t)
 
     n_lag = int(t_lag * fs)
     factor = np.exp(-1)
@@ -658,8 +666,8 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     plt.figure(figsize=(5, 4))
     t = np.arange(0, cctl.shape[2])
     t = (t - n_lag) / fs * 1000
-    n0 = 50  # Base node
-    N = 40  # Number of line plots
+    n0 = 2  # Base node
+    N = 5  # Number of line plots
     peaks_x, peaks_y, taus_x_0, taus_x_1, taus_y = [], [], [], [], []
     # Colors
     cmap = plt.get_cmap('viridis')
@@ -763,7 +771,7 @@ def determine_sample_size(patient_id: list=None, time_begin: list=None, max_samp
                 corr[j + 1, :, :] = np.corrcoef(data_norm.T)
                 corr_dt[j, :, :] = corr[j + 1, :, :] - corr[j, :, :]
 
-            corr_dts.append(np.sum(np.sum(np.abs(corr_dt), axis=1), axis=1))
+            corr_dts.append(np.mean(np.mean(np.abs(corr_dt), axis=1), axis=1))
 
         # Make DataFrame
         df = pd.DataFrame()

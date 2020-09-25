@@ -7,29 +7,29 @@ if __name__ == '__main__':
 
     os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
-    q = 0
+
     ids_all = []
-    pre = 'SRNN_5min_'
-    for attempt in range(1):
+    pre = 'SRNN_L00_'
+    for attempt in range(5):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
-        params_change = [[pre + 'ID07_32h10m' + post, 'ID07', [32, 10], 'NREM beginning'],
-                         [pre + 'ID07_35h10m' + post, 'ID07', [35, 10], 'NREM middle'],
-                         [pre + 'ID07_38h15m' + post, 'ID07', [38, 15], 'NREM end'],
-                         [pre + 'ID08_58h25m' + post, 'ID08', [58, 25], 'NREM beginning'],
-                         [pre + 'ID08_60h08m' + post, 'ID08', [60, 8], 'NREM middle'],
-                         [pre + 'ID08_64h40m' + post, 'ID08', [64, 40], 'NREM end'],
-                         [pre + 'ID11a_60h05m' + post, 'ID11', [60, 5], 'NREM beginning'],
-                         [pre + 'ID11a_62h10m' + post, 'ID11', [62, 10], 'NREM middle'],
-                         [pre + 'ID11a_65h00m' + post, 'ID11', [65, 0], 'NREM end'],
-                         [pre + 'ID11b_129h45m' + post, 'ID11', [129, 45], 'NREM beginning'],
-                         [pre + 'ID11b_133h30m' + post, 'ID11', [133, 30], 'NREM middle'],
-                         [pre + 'ID11b_136h30m' + post, 'ID11', [136, 30], 'NREM end']]
+        params_change = [[pre + 'ID07_32h10m' + post, 'ID07', [32, 10], 'NREM beginning', 150],
+                         [pre + 'ID07_35h10m' + post, 'ID07', [35, 10], 'NREM middle', 150],
+                         [pre + 'ID07_38h15m' + post, 'ID07', [38, 15], 'NREM end', 150],
+                         [pre + 'ID08_58h25m' + post, 'ID08', [58, 0], 'NREM beginning', 122],
+                         [pre + 'ID08_60h08m' + post, 'ID08', [60, 2], 'NREM middle', 122],
+                         [pre + 'ID08_64h40m' + post, 'ID08', [64, 40], 'NREM end', 122],
+                         [pre + 'ID11a_60h05m' + post, 'ID11', [60, 5], 'NREM beginning', 64],
+                         [pre + 'ID11a_62h10m' + post, 'ID11', [62, 10], 'NREM middle', 64],
+                         [pre + 'ID11a_65h00m' + post, 'ID11', [64, 54], 'NREM end', 64],
+                         [pre + 'ID11b_129h45m' + post, 'ID11', [129, 45], 'NREM beginning', 64],
+                         [pre + 'ID11b_133h30m' + post, 'ID11', [133, 36], 'NREM middle', 64],
+                         [pre + 'ID11b_136h30m' + post, 'ID11', [136, 30], 'NREM end', 64]]
 
         ids_attempt = []
-        for i, val in enumerate(p32, 10arams_change):
-            print('E ----- Status: Train model: ' + val[0])
+        for i, val in enumerate(params_change):
+            print('L30 ----- Status: Train model: ' + val[0])
             ids_attempt.append(val[0])
             ids_all.append(val[0])
 
@@ -44,11 +44,11 @@ if __name__ == '__main__':
                       'add_id': '(E)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': 120,  # improve: portion
-                      'lambda': 0,
+                      'hidden_size': val[4],  # improve: portion
+                      'lambda': 0.0,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
-                      'window_size': 20,
+                      'window_size': 30,
                       'resample': 256,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
@@ -57,12 +57,10 @@ if __name__ == '__main__':
                       'shuffle': True,
                       'weight_decay': 0.001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 70}
-
+                      'epochs': 100}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
-
 
     ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
     ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')

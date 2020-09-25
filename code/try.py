@@ -5,12 +5,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-sig = utrain.coupled_oscillator(t_length=4, fs=512, small_weights=True)
+uvar.print_params('SRNN_5min_ID07_32h10m_0')
 
-id_ = 'artificial_wd_strong_coupling'
-ufig.plot_weights(id_)
-
-utrain.least_squares('ID07', [32, 7], 10, 256)
+# sig = utrain.coupled_oscillator(t_length=4, fs=512, small_weights=True)
+#
+# id_ = 'artificial_wd_strong_coupling'
+# ufig.plot_weights(id_)
+#
+# utrain.least_squares('ID07', [32, 7], 10, 256)
 
 
 # def pendulum_sim2(init_vals, t, omega=2*np.pi/3,

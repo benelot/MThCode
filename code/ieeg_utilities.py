@@ -407,12 +407,12 @@ def plot_nonlin_corr(r2, r2_dt=None, h2=None, h2_dt=None, save_name='default'):
         cmap = 'viridis'
 
         ax0 = fig.add_subplot(gs[:, :1])
-        sns.heatmap(r2, cmap=cmap, cbar_kws={'label': 'r$^2$ [-]'})
+        sns.heatmap(r2, cmap=cmap, cbar_kws={'label': '$r_2$ [-]'})
         #ax0.set_title('r2 linear correlation')
         #ax0.get_xaxis().set_visible(False)
 
         ax1 = fig.add_subplot(gs[:, 1:])
-        sns.heatmap(h2, cmap=cmap, cbar_kws={'label': 'h$^2$ [-]'})
+        sns.heatmap(h2, cmap=cmap, cbar_kws={'label': '$h_2$ [-]'})
         #ax1.set_title('h2 non-linear correlation')
         #ax1.get_xaxis().set_visible(False), ax1.get_yaxis().set_visible(False)
 
@@ -522,12 +522,12 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     sample_end = sample_begin + int(duration * fs)
     data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
 
-    fs = 1024
-    t = np.linspace(0, 5*60, 5*60*fs)
-    f = [.5, 4, 20, 50, 120]
-    data_raw = np.zeros((len(t), len(f)))
-    for i, val in enumerate(f):
-        data_raw[:, i] = 100 * np.sin(2 * np.pi * val * t)
+    # fs = 1024
+    # t = np.linspace(0, 5*60, 5*60*fs)
+    # f = [.5, 4, 20, 50, 120]
+    # data_raw = np.zeros((len(t), len(f)))
+    # for i, val in enumerate(f):
+    #     data_raw[:, i] = 100 * np.sin(2 * np.pi * val * t)
 
     n_lag = int(t_lag * fs)
     factor = np.exp(-1)

@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
         ids_attempt = []
         for i, val in enumerate(params_change):
-            print('L30 ----- Status: Train model: ' + val[0])
+            print('(L30) ----- Status: Train model: ' + val[0])
             ids_attempt.append(val[0])
             ids_all.append(val[0])
 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
                       'artificial_signal': [False, False],  # [bool on/off, bool small_weights]
                       'duration': 5*60,  # seconds
                       'brain_state': val[3],
-                      'add_id': '(E)',
+                      'add_id': '(L30)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
                       'hidden_size': val[4],  # improve: portion

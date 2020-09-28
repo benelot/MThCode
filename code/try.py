@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-uvar.print_params('SRNN_5min_ID07_32h10m_0')
+uvar.print_params('SLP_5min_ID07_32h10m_0')
 
 # sig = utrain.coupled_oscillator(t_length=4, fs=512, small_weights=True)
 #

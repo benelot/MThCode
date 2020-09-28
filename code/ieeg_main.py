@@ -1,5 +1,5 @@
 import ieeg_utilities as ieeg
-from scipy.io import loadmat 5
+from scipy.io import loadmat
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -15,7 +15,7 @@ time_begins = [[32, 10], [35, 10], [38, 15],
                [129, 45], [133, 36], [136, 30]]
 
 ieeg.determine_sample_size(patient_id=patient_ids, time_begin=time_begins,
-                           max_sample_size=600, dt=5, save_name='final')
+                           max_sample_size=600, dt=5, load_name='final', save_name='final1')
 
 
 # ieeg.plot_corr_connectivity(r2, r2_dt, h2, h2_dt, save_name=name)

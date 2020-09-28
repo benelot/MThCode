@@ -791,14 +791,15 @@ def determine_sample_size(patient_id: list=None, time_begin: list=None, max_samp
         df = pd.read_pickle('../data/sample_size_det_' + load_name + '.pkl')
 
     # Plot results
-    sns.set_style('whitegrid')
+    sns.set_style('ticks')
     plt.figure(figsize=(8, 5))
     sns.lineplot(x='t_size', y='corr_dt', data=df, hue='Patient ID')
-    plt.xlabel('Sample size [s]'), plt.ylabel('Sum of abs. weight changes [-]')
-    plt.title('Weight change per ' + str(df['dt'][0]) + ' sec.')
-    #plt.ylim(0, 500)
+    plt.legend(frameon=False)
+    plt.xlabel('Duration [s]')
+    plt.ylabel('Mean connectivity change')
     plt.xlim(df['t_size'].min(), df['t_size'].max())
+    plt.ylim(0, 0.04)
     # plt.ylim(0, df.quantile(0.97)['corr_dt']), plt.xlim(df['t_size'].min(), df['t_size'].max())
-    plt.savefig('../doc/figures/sample_size_det_' + save_name + '.png')
+    plt.savefig('../doc/figures/sample_size_det_' + save_name + '.png', dpi=300)
     plt.close()
 

@@ -44,7 +44,7 @@ if __name__ == '__main__':
                       'add_id': '(L00)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': val[4],  # improve: portion
+                      'hidden_size': 0,  # improve: portion
                       'lambda': 0.0,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,

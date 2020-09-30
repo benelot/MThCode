@@ -33,12 +33,12 @@ if __name__ == '__main__':
                   'resample': 256,
                   # train parameters -------------------------
                   'loss_function': 'mae',  # 'mse' or 'mae'
-                  'lr': 0.0001,
+                  'lr': 0.00005,
                   'batch_size': 1024,
                   'shuffle': True,
-                  'weight_decay': 0.00005,
+                  'weight_decay': 0.0001,
                   'normalization': None,  # 'min_max', 'standard', None
-                  'epochs': 250}
+                  'epochs': val[5]}
 
         utrain.train_and_test(params)
         ufig.plot_train_test(params['id_'], n_nodes=15)

@@ -33,11 +33,11 @@ if __name__ == '__main__':
                   'resample': 256,
                   # train parameters -------------------------
                   'loss_function': 'mae',  # 'mse' or 'mae'
-                  'lr': 0.001,
+                  'lr': 0.0001,
                   'batch_size': 1024,
                   'shuffle': True,
                   'weight_decay': 0.0001,
-                  'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
+                  'normalization': None,  # 'min_max', 'standard', None
                   'epochs': 250}
 
         utrain.train_and_test(params)

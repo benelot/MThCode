@@ -9,9 +9,9 @@ if __name__ == '__main__':
 
     pre = 'val_'
 
-    params_change = [[pre + 'SLP', 'single_layer', 50, 0, 0],
-                     [pre + 'SRNN_L00', None, 50, 0, 0],
-                     [pre + 'SRNN_L02', None, 30, 2, 0.2]]
+    params_change = [[pre + 'SLP', 'single_layer', 50, 0, 0, 250],
+                     [pre + 'SRNN_L00', None, 50, 0, 0, 100],
+                     [pre + 'SRNN_L02', None, 30, 2, 0.2, 100]]
 
     for i, val in enumerate(params_change):
         params = {'id_': val[0],
@@ -36,7 +36,7 @@ if __name__ == '__main__':
                   'lr': 0.0001,
                   'batch_size': 1024,
                   'shuffle': True,
-                  'weight_decay': 0.0001,
+                  'weight_decay': 0.00005,
                   'normalization': None,  # 'min_max', 'standard', None
                   'epochs': 250}
 

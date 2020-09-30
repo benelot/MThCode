@@ -791,15 +791,72 @@ def determine_sample_size(patient_id: list=None, time_begin: list=None, max_samp
         df = pd.read_pickle('../data/sample_size_det_' + load_name + '.pkl')
 
     # Plot results
+    palette = sns.color_palette('muted', 3)
+    df['t_size'] = df['t_size']/60
     sns.set_style('ticks')
-    plt.figure(figsize=(8, 5))
-    sns.lineplot(x='t_size', y='corr_dt', data=df, hue='Patient ID')
+    plt.figure(figsize=(4, 3))
+    sns.lineplot(x='t_size', y='corr_dt', data=df, hue='Patient ID', palette=palette)
     plt.legend(frameon=False)
-    plt.xlabel('Duration [s]')
-    plt.ylabel('Mean connectivity change')
+    plt.xlabel('Duration [min]')
+    plt.ylabel('$\Delta R(d)$ [-]')
     plt.xlim(df['t_size'].min(), df['t_size'].max())
     plt.ylim(0, 0.04)
-    # plt.ylim(0, df.quantile(0.97)['corr_dt']), plt.xlim(df['t_size'].min(), df['t_size'].max())
+    ax = plt.gca()
+    ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)
+    plt.tight_layout()
     plt.savefig('../doc/figures/sample_size_det_' + save_name + '.png', dpi=300)
     plt.close()
+
+
+def determine_fc_change(patient_id: list=None, time_begin: list=None, max_sample_size: float=None, t_length: float=None,
+                        save_name='default', load_name=None):
+    if load_name is None:
+        corr_dts = []
+        dt = 60
+        t_steps = np.arange(dt, max_sample_size, dt).tolist()
+        swa = np.load('swa.npy')
+        smooth = np.load('swa_smooth.npy')
+        for i, id_ in enumerate(patient_id):
+            print('Computes job ' + str(i) + '/' + str(len(patient_id) - 1))
+            # Load and prepare data
+            data_mat = loadmat('../data/' + id_ + '_' + str(time_begin[i][0]) + 'h.mat')
+            info_mat = loadmat('../data/' + id_ + '_info.mat')
+            fs = float(info_mat['fs'])
+            sample_begin = int(time_begin[i][1] * 60 * fs)
+            sample_end = sample_begin + int((max_sample_size + t_length) * fs)
+            data_raw = data_mat['EEG'][:, sample_begin:sample_end].transpose()
+
+            # Get correlation matrices
+            corr = np.zeros((len(t_steps) + 1, data_raw.shape[1], data_raw.shape[1]))
+            corr_dt = np.zeros((len(t_steps), data_raw.shape[1], data_raw.shape[1]))
+            sc = StandardScaler()
+            data_norm = sc.fit_transform(data_raw[int(0 * fs):int(t_length * fs), :])
+            corr[0, :, :] = np.corrcoef(data_norm.T)
+            for j, t in enumerate(t_steps):
+                data_norm = sc.fit_transform(data_raw[int(t * fs):int((t + t_length) * fs), :])
+                corr[j + 1, :, :] = np.corrcoef(data_norm.T)
+                corr_dt[j, :, :] = corr[j + 1, :, :] - corr[j, :, :]
+
+            corr_dts.append(np.mean(np.mean(np.abs(corr_dt), axis=1), axis=1))
+
+            t_steps = np.asarray(t_steps)/60 + 0 # + 10
+            #plt.figure(figsize=(3, 3))  # 2, 3
+            fig, ax0 = plt.subplots(figsize=(4, 3))
+            #ax0.scatter(t_steps, corr_dts[0], label='1. NREM Segment of P7', color='black', s=4)
+            ax0.plot(t_steps, corr_dts[0], label='1. NREM Segment of P7', color='black', lw=1)
+            ax0.set_xlabel('Starting time [min]')
+            ax0.set_ylabel('$\Delta R(t_0)$ [-]')
+
+            ax1 = ax0.twinx()
+            ax1.plot(np.linspace(0, 60, len(smooth)), smooth, lw=1.7, color='darkred', alpha=.4)
+            ax1.set_ylabel('SW band power\ndensity [$\mu$V$^2$/Hz]', color='darkred')
+            ax1.tick_params(axis='y', labelcolor='darkred')
+
+            ax0.spines['top'].set_visible(False), ax1.spines['top'].set_visible(False)
+            plt.xlim(0, 60)
+            plt.tight_layout()
+            plt.savefig('figures/fig_Ch2_changeFC.png', dpi=300)
+            plt.close()
+            break
+
 

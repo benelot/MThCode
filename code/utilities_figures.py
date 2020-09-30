@@ -5,6 +5,7 @@ Part of master thesis Segessenmann J. (2020)
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
 import seaborn as sns
 import pandas as pd
@@ -45,25 +46,33 @@ def plot_optimization(id_: str):
     df[['Epoch', 'Node']] = df[['Epoch', 'Node']].astype('int32')
     df['Node'] = df['Node'].astype('str')
 
-    sns.set_style('whitegrid')
-    fig = plt.figure(figsize=(10, 10))
-    gs = fig.add_gridspec(nrows=2, ncols=2)
+    sns.set_style('ticks')
+    fig = plt.figure(figsize=(6, 6))
+    gs = fig.add_gridspec(nrows=12, ncols=11)
     ax = [[], [], []]
-    ax[0] = fig.add_subplot(gs[:1, :1])
-    ax[0] = sns.lineplot(x='Epoch', y='Loss', data=df)
+
+    ax[0] = fig.add_subplot(gs[:5, :5])
+    ax[0] = sns.lineplot(x='Epoch', y='Loss', data=df, color='black')
+    ax[0].set_ylabel('Loss (MAE) [-]'), ax[0].set_xlabel('Epoch [Nr.]')
     plt.xlim(0, epochs - 1)
-    ax[1] = fig.add_subplot(gs[:1, 1:])
-    ax[1] = sns.lineplot(x='Epoch', y='Grad norm', data=df)
+
+    ax[1] = fig.add_subplot(gs[:5, 7:])
+    ax[1] = sns.lineplot(x='Epoch', y='Grad norm', data=df, color='black')
+    ax[1].set_ylabel('Gradient norm [-]'), ax[1].set_xlabel('Epoch [Nr.]')
     plt.xlim(0, epochs - 1)
-    ax[2] = fig.add_subplot(gs[1:, :])
-    ax[2] = sns.barplot(x='Node', y='Loss', data=df.where(df['Epoch'] == epochs - 1), color='tab:blue')
-    plt.ylabel('Mean loss of last epoch')
-    every_nth = 2
-    for n, label in enumerate(ax[2].xaxis.get_ticklabels()):
-        if n % every_nth != 0:
-            label.set_visible(False)
-    plt.suptitle('Optimization of model ' + id_)
-    fig.savefig('../doc/figures/optim_' + eval_optimization['id_'] + '.png')
+
+    ax[2] = fig.add_subplot(gs[6:, :])
+    ax[2] = sns.barplot(x='Node', y='Loss', data=df.where(df['Epoch'] == epochs - 1), color='gray', edgecolor='black')
+    ax[2].set_ylabel('Mean loss of\nEpoch 250'), ax[2].set_xlabel('Node index [-]')
+
+    every_nth = 5
+    ax[2].xaxis.set_ticks(np.arange(0, eval_optimization['loss'].shape[1], every_nth))
+    # for n, label in enumerate(ax[2].xaxis.get_ticklabels()):
+    #     if n % every_nth != 0:
+    #         label.set_visible(False)
+    for i in range(len(ax)):
+        ax[i].spines['right'].set_visible(False), ax[i].spines['top'].set_visible(False)
+    fig.savefig('../doc/figures/optim_' + eval_optimization['id_'] + '.png', dpi=300)
     plt.close()
 
 
@@ -82,29 +91,35 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
     W = model.W.weight.data.numpy()
 
     vmin = -vmax
-    cmap = 'bwr'
+    cmap = 'seismic'
     ch = params['visible_size']
+    #mpl.rcParams.update({'font.size': 15})
 
     # Temporary
-    sns.heatmap(W, vmin=vmin, vmax=vmax, annot=True, cmap='seismic')
-    plt.xlabel('From node [Nr.]'), plt.ylabel('To node [Nr.]'), plt.title('Strong coupling (weight decay)')
-    plt.savefig('W_strong_coupling_wd.png')
+    #sns.heatmap(W, vmin=vmin, vmax=vmax, annot=True, cmap='seismic')
+    #plt.xlabel('From node [Nr.]'), plt.ylabel('To node [Nr.]'), plt.title('Strong coupling (weight decay)')
+    #plt.savefig('W_strong_coupling_wd.png')
 
     if absolute:
         vmin = 0
         cmap = 'Blues'
         W = np.abs(W)
 
-    fig = plt.figure(figsize=(10, 10))
+    sns.set_style('white')
+    fig = plt.figure(figsize=(5, 5))
     gs = fig.add_gridspec(nrows=W.shape[0], ncols=W.shape[0])
     cbar_ax = fig.add_axes([.92, .11, .02, .77])  # x-pos,y-pos,width,height
 
     if W.shape[0] == ch:
         ax0 = fig.add_subplot(gs[:ch, :ch])
-        sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax0)
-        ax0.set_ylabel('to visible nodes')
-        ax0.set_xlabel('from visible nodes')
-        ax0.set_title('Weight matrix of ' + params['id_'])
+        sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax0,
+                    linecolor='grey')
+        ax0.set_ylabel('To node index [-]')
+        ax0.set_xlabel('From node index [-]')
+        for _, spine in ax0.spines.items():
+            spine.set_visible(True)
+        cbar = ax0.collections[0].colorbar
+        cbar.set_ticks([-1, 0, 1])
 
     else:
         ax0 = fig.add_subplot(gs[:ch, :ch])
@@ -125,18 +140,17 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
         pos_to_hid = 0.8 / W.shape[0] * (params['hidden_size'] / 2) + 0.1
         pos_from_vis = 0.8 / W.shape[0] * (ch / 2) + 0.1
         pos_from_hid = 0.8 / W.shape[0] * ch + 0.8 / W.shape[0] * (params['hidden_size'] / 2) + 0.1
-        fig.text(0.08, pos_to_vis, 'to visible node', va='center', ha='center', rotation='vertical')
-        fig.text(0.08, pos_to_hid, 'to hidden node', va='center', ha='center', rotation='vertical')
-        fig.text(pos_from_vis, 0.06, 'from visible node', va='center', ha='center')
-        fig.text(pos_from_hid, 0.06, 'from hidden node', va='center', ha='center')
+        fig.text(0.08, pos_to_vis, 'To visible node index [-]', va='center', ha='center', rotation='vertical')
+        fig.text(0.08, pos_to_hid, 'To hidden node index [-]', va='center', ha='center', rotation='vertical')
+        fig.text(pos_from_vis, 0.06, 'From visible node index [-]', va='center', ha='center')
+        fig.text(pos_from_hid, 0.06, 'From hidden node index [-]', va='center', ha='center')
         fig.subplots_adjust(hspace=0.8, wspace=0.8)
 
-    plt.suptitle('Weight matrix of model ' + params['id_'])
-    fig.savefig('../doc/figures/weights_' + id_ + '.png')
+    fig.savefig('../doc/figures/weights_' + id_ + '.png', dpi=300)
     plt.close()
 
 
-def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=1):
+def plot_prediction(id_: str, node_idx=None, t_lim=5, n_nodes=6, offset=1):
     """ Makes and saves line plots of predictions to ../figures/.
 
         Saves:
@@ -159,7 +173,7 @@ def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=1):
     offset_array = np.linspace(0, (n_nodes - 1) * offset, n_nodes)
 
     sns.set_style('white')
-    fig = plt.figure(figsize=(8, int(0.4 * params['visible_size'])))
+    fig = plt.figure(figsize=(4, int(0.2 * params['visible_size'])))
     gs = fig.add_gridspec(1, 6)
 
     ax0 = fig.add_subplot(gs[:, :5])
@@ -171,15 +185,15 @@ def plot_prediction(id_: str, node_idx=None, t_lim=4, n_nodes=6, offset=1):
     ax0.set_yticks((offset_array + np.mean(true[-int(t_lim * fs):, node_idx[0]])).tolist())
     ax0.set_yticklabels(['Nd. ' + str(i) for i in node_idx])
     ax0.set_xlim(t[0], t[-1]), ax0.set_ylim(bottom=np.mean(true[-int(t_lim * fs):, node_idx[0]]) - offset)
-    ax0.set_xlabel('Time [s]'), ax0.set_title('LFP predictions')
+    ax0.set_xlabel('Time [s]')
 
     ax1 = fig.add_subplot(gs[:, 5:])
-    plt.barh(offset_array, width=np.asarray(corr)[node_idx], height=.2, color='gray', edgecolor='black', linewidth=.7)
+    plt.barh(offset_array, width=np.asarray(corr)[node_idx], height=.3, color='gray', edgecolor='black', linewidth=.7)
     ax1.spines['right'].set_visible(False), ax1.spines['top'].set_visible(False)
-    ax1.set_yticklabels([]), ax1.set_xlabel('Corr. coef. [-]')
+    ax1.set_yticklabels([]), ax1.set_xlabel('$r$ [-]')
     ax1.set_xlim(0, 1)
 
-    plt.savefig('../doc/figures/pred_' + id_ + '.png')
+    plt.savefig('../doc/figures/pred_' + id_ + '.png', dpi=300)
     plt.close()
 
 
@@ -284,9 +298,9 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
         model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
         W = model.W.weight.data.numpy()
 
-        if id_[10:15] == 'ID11a':  # [7:12]
+        if id_[4:9] == 'ID11a':  # [7:12]
             patient_id.append('ID11a')
-        elif id_[10:15] == 'ID11b':
+        elif id_[4:9] == 'ID11b':
             patient_id.append('ID11b')
         else:
             patient_id.append(params['patient_id'])
@@ -313,6 +327,7 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
     df['Patient ID'] = patient_id
     df['NREM phases'] = brain_state
     df['Mean abs. weight'] = mean_abs
+    df['MAE'] = mae
     df['Batch size'] = batch_size
 
     with sns.color_palette('colorblind', 3):

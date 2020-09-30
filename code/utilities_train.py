@@ -15,6 +15,7 @@ import torch.nn as nn
 import pickle
 import os
 import matplotlib.pyplot as plt
+import csv
 import random
 import seaborn as sns
 import cmath
@@ -69,8 +70,8 @@ def pre_process(id_: str=None, params: dict=None, custom_test_set=None, artifici
             data = signal.resample(data, num=int(data.shape[0] / fs * params['resample']), axis=0)
 
     else:
-        data = coupled_oscillator(t_length=params['duration'], fs=params['resample'],
-                                  small_weights=params['artificial_signal'][1])
+        synth_data = np.load('../data/50_synth_ieeg_array_ratio_0.0_scaling_1.0.npy')
+        data = synth_data[:, :params['visible_size']]
 
     # Normalize
     if params['normalization'] == 'standard_positive':
@@ -112,7 +113,7 @@ def train(params):
 
     # Load data
     print('Status: Start data preparation.')
-    data_pre = pre_process(params=params)
+    data_pre = pre_process(params=params, artificial=params['artificial_signal'][0])
     if params['visible_size'] == 'all':
         params['visible_size'] = data_pre.shape[1]
     data_set = iEEG_DataSet(data_pre, params['window_size'])
@@ -200,7 +201,7 @@ def predict(id_: str, custom_test_set: dict=None):
     print('Status: Load and process data for prediction.')
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
     if custom_test_set is None:
-        data_pre = pre_process(params=params)
+        data_pre = pre_process(params=params, artificial=params['artificial_signal'][0])
         batch_size = params['batch_size']
     else:
         data_pre = pre_process(params=params, custom_test_set=custom_test_set)

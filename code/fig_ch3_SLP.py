@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'SRNN_L00_'
+    pre = 'SLP_'
     for attempt in range(5):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -34,7 +34,7 @@ if __name__ == '__main__':
             ids_all.append(val[0])
 
             params = {'id_': ids_attempt[-1],
-                      'model_type': None,  # None=SRNN, single_layer=SLP
+                      'model_type': 'single_layer',  # None=SRNN, single_layer=SLP
                       'path2data': '../data/',
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
@@ -44,7 +44,7 @@ if __name__ == '__main__':
                       'add_id': '(L00)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
-                      'hidden_size': val[4],  # improve: portion
+                      'hidden_size': 0,  # improve: portion
                       'lambda': 0.0,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
@@ -55,13 +55,16 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.001,
+                      'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 100}
+                      'epochs': 250}
 
-            #utrain.train_and_test(params)
-            #ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
+    plot_id = ids_all[6]
+    #ufig.plot_optimization(plot_id)
+    #ufig.plot_prediction(plot_id, n_nodes=12)
+    ufig.plot_weights(plot_id)
 
-    ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
-    ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')
-    ufig.mean_weights(ids=ids_all, hidden=True, save_name=pre)
+
+    #ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
+    #ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')
+    #ufig.mean_weights(ids=ids_all, hidden=True, save_name=pre)

@@ -59,9 +59,9 @@ if __name__ == '__main__':
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 250}
 
-            utrain.train_and_test(params)
-            ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
+            #utrain.train_and_test(params)
+            #ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
 
-    ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
-    ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')
+    #ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
+    #ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')
     ufig.mean_weights(ids=ids_all, hidden=True, save_name=pre)

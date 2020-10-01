@@ -23,7 +23,7 @@ def plot_train_test(id_: str, n_nodes=None, node_idx=None):
     plot_prediction(id_, n_nodes=n_nodes, node_idx=node_idx)
     params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
     if params['model_type'] != 'single':
-        plot_weights(id_)
+        plot_weights(id_, plot_cbar=False)
 
 
 def plot_optimization(id_: str):

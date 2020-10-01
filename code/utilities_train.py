@@ -664,11 +664,11 @@ def coupled_oscillator(t_length, fs, small_weights=False):
         k = k / 10
     dt = 1/fs
     m = np.array([0.1, 0.05, 0.01, 0.05, 0.05, 0.01])
-    k_0 = 0.3
+    k_0 = 0.6
     init = np.array([0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
 
     # Compute matrix A
-    diag = np.diag(-(2 * k_0 + np.sum(k, axis=1)))
+    diag = np.diag(-(k_0 + np.sum(k, axis=1)))
     A = k + diag
 
     # Eigenvalue decomposition to get principal modes

@@ -57,7 +57,7 @@ if __name__ == '__main__':
                       'shuffle': True,
                       'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 3}
+                      'epochs': 100}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(params['id_'], n_nodes='all')

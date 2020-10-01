@@ -9,8 +9,8 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'SLP_'
-    for attempt in range(5):
+    pre = 'SLP_wWD_'
+    for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
         ids_attempt = []
         for i, val in enumerate(params_change):
-            print('(SLP) ----- Status: Train model: ' + val[0])
+            print('(wWD) ----- Status: Train model: ' + val[0])
             ids_attempt.append(val[0])
             ids_all.append(val[0])
 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
                       'artificial_signal': [False, False],  # [bool on/off, bool small_weights]
                       'duration': 6*60,  # seconds
                       'brain_state': val[3],
-                      'add_id': '(SLP)',
+                      'add_id': '(wWD)',
                       # model parameters ------------------------
                       'visible_size': 'all',  # 'all' or scalar
                       'hidden_size': 0,  # improve: portion
@@ -55,7 +55,7 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.0005,
+                      'weight_decay': 0.00001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 80}
 

@@ -108,20 +108,36 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False, plot_cbar=True):
     sns.set_style('ticks')
 
     if W.shape[0] == ch:
-        fig = plt.figure(figsize=(3, 3))
-        gs = fig.add_gridspec(nrows=W.shape[0] + 10, ncols=W.shape[0] + 10)
-        cbar_ax = fig.add_axes([.92, .11, .02, .77])  # x-pos,y-pos,width,height
-        ax0 = fig.add_subplot(gs[5:ch+5, 5:ch+5])
-        sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax0,
-                    linecolor='grey', yticklabels=10, xticklabels=10)
-        ax0.set_ylabel('To node index [-]')
-        ax0.set_xlabel('From node index [-]')
+        if params['artificial_signal'][0] is False:
+            fig = plt.figure(figsize=(3, 3))
+            gs = fig.add_gridspec(nrows=W.shape[0] + 10, ncols=W.shape[0] + 10)
+            cbar_ax = fig.add_axes([.92, .11, .02, .77])  # x-pos,y-pos,width,height
+            ax0 = fig.add_subplot(gs[5:ch+5, 5:ch+5])
+            sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax0,
+                        linecolor='grey', yticklabels=10, xticklabels=10)
+            ax0.set_ylabel('To node index [-]')
+            ax0.set_xlabel('From node index [-]')
 
-        for _, spine in ax0.spines.items():
-            spine.set_visible(True)
-        cbar = ax0.collections[0].colorbar
-        cbar.set_ticks([-1, 0, 1])
-        cbar.ax.tick_params(size=0)
+            for _, spine in ax0.spines.items():
+                spine.set_visible(True)
+            cbar = ax0.collections[0].colorbar
+            cbar.set_ticks([-1, 0, 1])
+            cbar.ax.tick_params(size=0)
+
+        else:
+            print('Mean weight of ' + params['id_'] + ': ' + str(np.mean(W)))
+            fig = plt.figure(figsize=(3, 3))
+            sns.set_style('white')
+            sns.heatmap(W[:ch, :ch], vmin=-1, vmax=1, cmap='seismic', annot=True, fmt='.2f', cbar=False)
+            plt.ylabel('Weight index [-]'), plt.xlabel('Weight index [-]')
+            plt.tight_layout()
+            ax3 = plt.gca()
+            for _, spine in ax3.spines.items():
+                spine.set_visible(True)
+            if params['artificial_signal'][1] is False:
+                plt.savefig('figures/fig_Ch2_simul_W_strong.png', dpi=300)
+            else:
+                plt.savefig('figures/fig_Ch2_simul_W_weak.png', dpi=300)
 
     else:
         fig = plt.figure(figsize=(5, 5))
@@ -206,7 +222,8 @@ def plot_prediction(id_: str, node_idx=None, t_lim=5, n_nodes=6, offset=1):
     offset_array = np.linspace(0, (n_nodes - 1) * offset, n_nodes)
 
     sns.set_style('white')
-    fig = plt.figure(figsize=(4, int(0.2 * params['visible_size'])))
+    #fig = plt.figure(figsize=(4, int(0.2 * params['visible_size'])))
+    fig = plt.figure(figsize=(4, 4))
     gs = fig.add_gridspec(1, 6)
 
     ax0 = fig.add_subplot(gs[:, :5])

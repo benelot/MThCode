@@ -70,12 +70,14 @@ def pre_process(id_: str=None, params: dict=None, custom_test_set=None, artifici
             data = signal.resample(data, num=int(data.shape[0] / fs * params['resample']), axis=0)
 
     else:
-        synth_data = np.load('../data/50_synth_ieeg_array_ratio_0.0_scaling_1.0.npy')
-        neg_idx = []
-        for i in range(50):
-            if np.where(np.where(synth_data < 0)[1] == i)[0].size == 0:
-                neg_idx.append(i)
-        data = synth_data[:, :params['visible_size']]
+        data = coupled_oscillator(t_length=params['duration'], fs=params['resample'],
+                                  small_weights=params['artificial_signal'][1])
+        # synth_data = np.load('../data/50_synth_ieeg_array_ratio_0.0_scaling_1.0.npy')
+        # neg_idx = []
+        # for i in range(50):
+        #     if np.where(np.where(synth_data < 0)[1] == i)[0].size == 0:
+        #         neg_idx.append(i)
+        # data = synth_data[:, :params['visible_size']]
 
     # Normalize
     if params['normalization'] == 'standard_positive':
@@ -696,6 +698,19 @@ def coupled_oscillator(t_length, fs, small_weights=False):
     sns.heatmap(np.corrcoef(signals), vmin=-1, vmax=1, cmap='seismic', annot=True)
     plt.ylabel('Node [Nr.]'), plt.xlabel('Node [Nr.]'), plt.title('Correlation between nodes')
     plt.savefig('correlation_weak.png')
+
+    fig = plt.figure(figsize=(3, 3))
+    sns.set_style('white')
+    sns.heatmap(A, vmin=-1, vmax=1, cmap='seismic', annot=True, fmt='.2f', cbar=False)
+    plt.ylabel('Weight index [-]'), plt.xlabel('Weight index [-]')
+    plt.tight_layout()
+    ax3 = plt.gca()
+    for _, spine in ax3.spines.items():
+        spine.set_visible(True)
+    if small_weights:
+        plt.savefig('figures/fig_Ch2_simul_K_weak.png', dpi=300)
+    else:
+        plt.savefig('figures/fig_Ch2_simul_K_strong.png', dpi=300)
 
     return signals.T
 

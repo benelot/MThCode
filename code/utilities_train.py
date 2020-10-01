@@ -71,6 +71,10 @@ def pre_process(id_: str=None, params: dict=None, custom_test_set=None, artifici
 
     else:
         synth_data = np.load('../data/50_synth_ieeg_array_ratio_0.0_scaling_1.0.npy')
+        neg_idx = []
+        for i in range(50):
+            if np.where(np.where(synth_data < 0)[1] == i)[0].size == 0:
+                neg_idx.append(i)
         data = synth_data[:, :params['visible_size']]
 
     # Normalize

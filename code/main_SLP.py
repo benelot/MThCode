@@ -39,7 +39,7 @@ if __name__ == '__main__':
                       'patient_id': val[1],
                       'time_begin': val[2],  # [hour, minute]
                       'artificial_signal': [False, False],  # [bool on/off, bool small_weights]
-                      'duration': 5*60,  # seconds
+                      'duration': 6*60,  # seconds
                       'brain_state': val[3],
                       'add_id': '(L00)',
                       # model parameters ------------------------
@@ -57,11 +57,11 @@ if __name__ == '__main__':
                       'shuffle': True,
                       'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 250}
+                      'epochs': 80}
 
             #utrain.train_and_test(params)
-            #ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
+            ufig.plot_train_test(ids_attempt[-1], n_nodes=15)
+            ufig.plot_weights(params['id_'])
 
-    #ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
-    #ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')
-    ufig.mean_weights(ids=ids_all, hidden=True, save_name=pre)
+    ufig.mean_weights(ids=ids_all, hidden=False, save_name=pre)
+    ufig.plt_performance(ids=ids_all, save_name=pre)

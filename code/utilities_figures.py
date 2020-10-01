@@ -76,7 +76,7 @@ def plot_optimization(id_: str):
     plt.close()
 
 
-def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
+def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False, plot_cbar=True):
     """ Makes and saves a heat map of weight matrix W to ../figures/.
 
         Saves:
@@ -105,23 +105,28 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
         cmap = 'Blues'
         W = np.abs(W)
 
-    sns.set_style('white')
-    fig = plt.figure(figsize=(5, 5))
-    gs = fig.add_gridspec(nrows=W.shape[0], ncols=W.shape[0])
-    cbar_ax = fig.add_axes([.92, .11, .02, .77])  # x-pos,y-pos,width,height
+    sns.set_style('ticks')
 
     if W.shape[0] == ch:
-        ax0 = fig.add_subplot(gs[:ch, :ch])
+        fig = plt.figure(figsize=(3, 3))
+        gs = fig.add_gridspec(nrows=W.shape[0] + 10, ncols=W.shape[0] + 10)
+        cbar_ax = fig.add_axes([.92, .11, .02, .77])  # x-pos,y-pos,width,height
+        ax0 = fig.add_subplot(gs[5:ch+5, 5:ch+5])
         sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax0,
-                    linecolor='grey')
+                    linecolor='grey', yticklabels=10, xticklabels=10)
         ax0.set_ylabel('To node index [-]')
         ax0.set_xlabel('From node index [-]')
+
         for _, spine in ax0.spines.items():
             spine.set_visible(True)
         cbar = ax0.collections[0].colorbar
         cbar.set_ticks([-1, 0, 1])
+        cbar.ax.tick_params(size=0)
 
     else:
+        fig = plt.figure(figsize=(5, 5))
+        gs = fig.add_gridspec(nrows=W.shape[0], ncols=W.shape[0])
+        cbar_ax = fig.add_axes([.92, .11, .02, .77])  # x-pos,y-pos,width,height
         ax0 = fig.add_subplot(gs[:ch, :ch])
         ax0.get_xaxis().set_visible(False)
         ax1 = fig.add_subplot(gs[:ch, ch:])
@@ -131,23 +136,49 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False):
         ax3 = fig.add_subplot(gs[ch:, ch:])
         ax3.get_yaxis().set_visible(False)
 
-        sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax0)
+        ticklabels = 7
+        sns.heatmap(W[:ch, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax0,
+                    yticklabels=ticklabels)
         sns.heatmap(W[:ch, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax1)
-        sns.heatmap(W[ch:, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax2)
-        sns.heatmap(W[ch:, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax3)
+        sns.heatmap(W[ch:, :ch], cmap=cmap, vmin=vmin, vmax=vmax, cbar=False, linewidths=linewidth, ax=ax2,
+                    yticklabels=ticklabels, xticklabels=ticklabels)
+        sns.heatmap(W[ch:, ch:], cmap=cmap, vmin=vmin, vmax=vmax, cbar_ax=cbar_ax, linewidths=linewidth, ax=ax3,
+                    xticklabels=ticklabels)
 
-        pos_to_vis = 0.8 / W.shape[0] * params['hidden_size'] + 0.8 / W.shape[0] * (ch / 2) + 0.1
+        pos_to_vis = 0.8 / W.shape[0] * params['hidden_size'] + 0.8 / W.shape[0] * (ch / 2) + 0.08
         pos_to_hid = 0.8 / W.shape[0] * (params['hidden_size'] / 2) + 0.1
-        pos_from_vis = 0.8 / W.shape[0] * (ch / 2) + 0.1
-        pos_from_hid = 0.8 / W.shape[0] * ch + 0.8 / W.shape[0] * (params['hidden_size'] / 2) + 0.1
-        fig.text(0.08, pos_to_vis, 'To visible node index [-]', va='center', ha='center', rotation='vertical')
-        fig.text(0.08, pos_to_hid, 'To hidden node index [-]', va='center', ha='center', rotation='vertical')
-        fig.text(pos_from_vis, 0.06, 'From visible node index [-]', va='center', ha='center')
-        fig.text(pos_from_hid, 0.06, 'From hidden node index [-]', va='center', ha='center')
-        fig.subplots_adjust(hspace=0.8, wspace=0.8)
+        pos_from_vis = 0.8 / W.shape[0] * (ch / 2) + 0.12
+        pos_from_hid = 0.8 / W.shape[0] * ch + 0.8 / W.shape[0] * (params['hidden_size'] / 2) + 0.12
+        fig.text(0.04, pos_to_vis, 'To visible node index [-]', va='center', ha='center', rotation='vertical')
+        fig.text(0.04, pos_to_hid, 'To hidden node index [-]', va='center', ha='center', rotation='vertical')
+        fig.text(pos_from_vis, 0.03, 'From visible node index [-]', va='center', ha='center')
+        fig.text(pos_from_hid, 0.03, 'From hidden node index [-]', va='center', ha='center')
+        fig.subplots_adjust(hspace=3, wspace=3)  # 0.8
+        for _, spine in ax0.spines.items():
+            spine.set_visible(True)
+        for _, spine in ax1.spines.items():
+            spine.set_visible(True)
+        for _, spine in ax2.spines.items():
+            spine.set_visible(True)
+        for _, spine in ax3.spines.items():
+            spine.set_visible(True)
+        ax0.set_yticklabels(ax0.get_yticklabels(), rotation=0)
+        ax1.set_yticklabels(ax1.get_yticklabels(), rotation=0)
+        ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
+        ax3.set_xticklabels(ax3.get_xticklabels(), rotation=0)
 
     fig.savefig('../doc/figures/weights_' + id_ + '.png', dpi=300)
     plt.close()
+
+    if plot_cbar:
+        fig, ax4 = plt.subplots(figsize=(0.5, 1))
+        norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+        cbar = ax4.figure.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap='seismic'), ax=ax4, pad=.05, fraction=1)
+        cbar.set_ticks([-1, 0, 1])
+        cbar.ax.tick_params(size=0)
+        ax4.axis('off')
+        fig.savefig('../doc/figures/cbar.png', dpi=300)
+        plt.close()
 
 
 def plot_prediction(id_: str, node_idx=None, t_lim=5, n_nodes=6, offset=1):
@@ -168,6 +199,8 @@ def plot_prediction(id_: str, node_idx=None, t_lim=5, n_nodes=6, offset=1):
     if node_idx is not None:
         n_nodes = len(node_idx)
     else:
+        if n_nodes == 'all':
+            n_nodes = params['visible_size']
         node_idx = sorted(random.sample([i for i in range(true.shape[1])], n_nodes))
     t = np.arange(true.shape[0] / fs - t_lim, true.shape[0] / fs, 1 / fs)  # in sec.
     offset_array = np.linspace(0, (n_nodes - 1) * offset, n_nodes)
@@ -197,34 +230,61 @@ def plot_prediction(id_: str, node_idx=None, t_lim=5, n_nodes=6, offset=1):
     plt.close()
 
 
-def plot_multi_boxplots(ids: list, x: str, y: str, hue=None, ylim=None, save_name=None, split_id=False):
+def plot_performance(ids: list, save_name: str):
     """ Makes and saves box plots of results to ../figures/.
 
         Saves:
             Figure "boxplot_[...]"
     """
     df = pd.DataFrame()
-    for idx, id_ in enumerate(ids):
+    for _, id_ in enumerate(ids):
         eval_distance = pickle.load(open('../models/' + id_ + '/eval_distances.pkl', 'rb'))
         for i in range(len(eval_distance['id_'])):
-            if eval_distance['id_'][i][10:15] == 'ID11a':
-                eval_distance['patient_id'][i] = 'ID11a'
-            elif eval_distance['id_'][i][10:15] == 'ID11b':
-                eval_distance['patient_id'][i] = 'ID11b'
+            if 'ID11a' in eval_distance['id_'][i]:
+                eval_distance['patient_id'][i] = 'P11a'
+            elif 'ID11b' in eval_distance['id_'][i]:
+                eval_distance['patient_id'][i] = 'P11b'
+            elif 'ID07' in eval_distance['id_'][i]:
+                eval_distance['patient_id'][i] = 'P7'
+            elif 'ID08' in eval_distance['id_'][i]:
+                eval_distance['patient_id'][i] = 'P8'
         df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
 
-    with sns.color_palette('colorblind', 3):
-        plt.figure(figsize=(6, 4))
-        sns.set_style('whitegrid')
-        ax = sns.boxplot(x=x, y=y, data=df, hue=hue)
-        ax.set(xlabel=x, ylabel=y)
-        if ylim:
-            plt.ylim(ylim)
-        if save_name is None:
-            save_name = y + '_of_' + x
-        plt.title(y + ' of ' + x)
-        plt.savefig('../doc/figures/boxplots_' + save_name + '.png')
-        plt.close()
+    sns.set_style('ticks')
+    fig = plt.figure(figsize=(6, 6))
+    gs = fig.add_gridspec(nrows=12, ncols=12)
+    colors = ['tab:red', 'purple', 'tab:blue']
+    #ylims = [(0, 0.13), (0, 0.02), (0.7, 1)]
+    ylabels = ['MAE [-]', 'MSE [-]', 'Correlation [-]']
+    metrics = ['mae', 'mse', 'correlation']
+    gs_subs = [gs[:5, :5], gs[:5, 7:], gs[7:, :5]]
+    axs = [[], [], []]
+    for i, ax in enumerate(axs):
+        ax = fig.add_subplot(gs_subs[i])
+        ax = sns.boxplot(x=df['patient_id'], y=df[metrics[i]], data=df, hue=df['brain_state'], palette=colors)
+        # Change edgecolor
+        c_edge = 'black'
+        for k, artist in enumerate(ax.artists):
+            artist.set_edgecolor(c_edge)
+            for l in range(k * 6, k * 6 + 6):
+                ax.lines[l].set_color(c_edge)
+                ax.lines[l].set_mfc(c_edge)
+                ax.lines[l].set_mec(c_edge)
+        ax.set_ylim(ylims[i])
+        ax.set_ylabel(ylabels[i])
+        ax.set_xlabel('')
+        ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)
+        if i == 2:
+            patches = []
+            for k in range(3):
+                patches.append(mpl.patches.Patch(color=colors[k]))
+            plt.legend(frameon=False, bbox_to_anchor=(1, 1.05), loc='upper left',
+                       labels=['First', 'Second', 'Third'], title='NREM segment', handles=patches)
+        else:
+            plt.legend([], [], frameon=False)
+
+    plt.savefig('../doc/figures/performance_' + save_name + '.png', dpi=300)
+    plt.close()
 
 
 def plot_multi_scatter(ids: list, save_name='default'):
@@ -293,20 +353,20 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
         corr.append(np.median(distances['correlation']))
         # Get trained model
         model = models.GeneralRNN(params)
-
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.load_state_dict(torch.load('../models/' + id_ + '/model.pth', map_location=device))
         W = model.W.weight.data.numpy()
-
-        if id_[4:9] == 'ID11a':  # [7:12]
-            patient_id.append('ID11a')
-        elif id_[4:9] == 'ID11b':
-            patient_id.append('ID11b')
-        else:
-            patient_id.append(params['patient_id'])
+        if 'ID11a' in id_:
+            patient_id.append('P11a')
+        elif 'ID11b' in id_:
+            patient_id.append('P11b')
+        elif 'ID07' in id_:
+            patient_id.append('P7')
+        elif 'ID08' in id_:
+            patient_id.append('P8')
         brain_state.append(params['brain_state'])
         batch_size.append(params['batch_size'])
-
+        # Get absolute weights
         W_abs = np.abs(W)
         if hidden is False:
             ch = params['visible_size']
@@ -314,8 +374,6 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
         if diagonal is False:
             np.fill_diagonal(W_abs, 0)
         mean_abs.append(np.mean(W_abs))
-
-    #return mean_abs, mse, mae, corr
 
     # Normalizing over bars to first bar
     n_brain_states = 3
@@ -330,14 +388,24 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
     df['MAE'] = mae
     df['Batch size'] = batch_size
 
-    with sns.color_palette('colorblind', 3):
-        plt.figure(figsize=(6, 4))
-        sns.set_style('whitegrid')
-        ax = sns.barplot(x='NREM phases', y='Mean abs. weight', data=df)
-        ax.set(ylabel='Mean abs. weight')
-        ax.set_title('Mean abs. weight')
-        #ax.set_ylim(90, 110)
-    plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png')
+    sns.set_style('ticks')
+    fig = plt.figure(figsize=(6, 3))
+    colors = ['tab:red', 'purple', 'tab:blue']
+    metrics = ['mae', 'mse', 'correlation']
+    ax = sns.barplot(x='Patient ID', y='Mean abs. weight', hue='NREM phases', data=df, palette=colors)
+    ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)
+    #ax.set_ylim(50, 100)
+    ax.set_ylabel('Mean weights $|W|$ relative\n to first segment [%]')
+    ax.set_xlabel('')
+
+    patches = []
+    for k in range(3):
+        patches.append(mpl.patches.Patch(color=colors[k]))
+    plt.legend(frameon=False, bbox_to_anchor=(1, 1.05), loc='upper left',
+               labels=['First', 'Second', 'Third'], title='NREM segment', handles=patches)
+
+    plt.tight_layout()
+    plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png', dpi=300)
     plt.close()
 
 
@@ -449,4 +517,3 @@ def plot_sudden_lack_of_input(id_: str, custom_test_set: dict=None, window_size_
     plt.title('Prediction with sudden lack of input')
     plt.savefig('../doc/figures/lack_of_input.png')
     plt.close()
-

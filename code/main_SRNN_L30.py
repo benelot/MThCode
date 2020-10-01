@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
             utrain.train_and_test(params)
             ufig.plot_train_test(params['id_'], n_nodes='all')
-            ufig.plot_weights(params['id_'])
+            ufig.plot_weights(params['id_'], plot_cbar=False)
 
     ufig.mean_weights(ids=ids_all, save_name=pre)
     ufig.plot_performance(ids=ids_all, save_name=pre)

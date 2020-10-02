@@ -222,8 +222,8 @@ def plot_prediction(id_: str, node_idx=None, t_lim=5, n_nodes=6, offset=1):
     offset_array = np.linspace(0, (n_nodes - 1) * offset, n_nodes)
 
     sns.set_style('white')
-    #fig = plt.figure(figsize=(4, int(0.2 * params['visible_size'])))
-    fig = plt.figure(figsize=(4, 4))
+    fig = plt.figure(figsize=(4, int(0.2 * params['visible_size'])))
+    #fig = plt.figure(figsize=(4, 4))
     gs = fig.add_gridspec(1, 6)
 
     ax0 = fig.add_subplot(gs[:, :5])

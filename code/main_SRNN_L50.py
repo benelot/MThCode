@@ -10,7 +10,7 @@ if __name__ == '__main__':
 
     ids_all = []
     pre = 'SRNN_L50_'
-    for attempt in range(2):
+    for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
@@ -48,14 +48,14 @@ if __name__ == '__main__':
                       'lambda': 0.5,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
-                      'window_size': 30,
+                      'window_size': 8,
                       'resample': 256,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.001,
+                      'weight_decay': 0.0005,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 100}
 

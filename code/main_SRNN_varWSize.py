@@ -45,7 +45,7 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.00005,
+                      'weight_decay': 0.0005,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 70}
 

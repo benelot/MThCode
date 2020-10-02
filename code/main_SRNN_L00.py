@@ -9,8 +9,8 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'SRNN_L00_final_'
-    for attempt in range(1, 3):
+    pre = 'SRNN_L00_'
+    for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
                       'lambda': 0.0,
                       'af': 'relu',  # 'relu', 'linear', 'sigmoid'
                       'bias': True,
-                      'window_size': 10,
+                      'window_size': 8,
                       'resample': 256,
                       # train parameters -------------------------
                       'loss_function': 'mae',  # 'mse' or 'mae'

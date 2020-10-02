@@ -9,17 +9,15 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'SRNN_L00_varHidden_'
+    pre = 'SRNN_L00_varHidden_wWD_'
     for attempt in range(1):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
         params_change = [[pre + '0' + post, 'ID07', [32, 10], 'Nr. Hidden: 0', 0],
-                         [pre + '30' + post, 'ID07', [32, 10], 'Nr. Hidden: 30', 30],
-                         [pre + '60' + post, 'ID07', [32, 10], 'Nr. Hidden: 60', 60],
-                         [pre + '90' + post, 'ID07', [32, 10], 'Nr. Hidden: 90', 90],
-                         [pre + '120' + post, 'ID07', [32, 10], 'Nr. Hidden: 120', 120],
-                         [pre + '150' + post, 'ID07', [32, 10], 'Nr. Hidden: 150', 150]]
+                         [pre + '30' + post, 'ID07', [32, 10], 'Nr. Hidden: 30', 20],
+                         [pre + '90' + post, 'ID07', [32, 10], 'Nr. Hidden: 90', 120],
+                         [pre + '120' + post, 'ID07', [32, 10], 'Nr. Hidden: 150', 150]]
 
         ids_attempt = []
         for i, val in enumerate(params_change):
@@ -49,12 +47,12 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.001,
+                      'weight_decay': 0.00005,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 100}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(params['id_'], n_nodes='all')
 
-    ufig.mean_weights(ids=ids_all, save_name=pre)
+    #ufig.mean_weights(ids=ids_all, save_name=pre)
     ufig.plot_performance(ids=ids_all, save_name=pre)

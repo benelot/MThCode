@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'SRNN_L00_sWD_'
+    pre = 'SRNN_L00_'
     for attempt in range(2):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
@@ -55,7 +55,7 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.0001,
+                      'weight_decay': 0.001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 100}
 

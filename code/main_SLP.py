@@ -10,7 +10,7 @@ if __name__ == '__main__':
 
     ids_all = []
     pre = 'SLP_'
-    for attempt in range(5):
+    for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
@@ -55,9 +55,9 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.0005,
+                      'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
-                      'epochs': 80}
+                      'epochs': 100}
 
             utrain.train_and_test(params)
             ufig.plot_train_test(params['id_'], n_nodes='all')

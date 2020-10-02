@@ -271,7 +271,7 @@ def plot_performance(ids: list, save_name: str):
     fig = plt.figure(figsize=(6, 6))
     gs = fig.add_gridspec(nrows=12, ncols=12)
     colors = ['tab:red', 'purple', 'tab:blue']
-    #ylims = [(0, 0.13), (0, 0.02), (0.7, 1)]
+    ylims = [(0, 0.13), (0, 0.02), (0.7, 1)]
     ylabels = ['MAE [-]', 'MSE [-]', 'Correlation [-]']
     metrics = ['mae', 'mse', 'correlation']
     gs_subs = [gs[:5, :5], gs[:5, 7:], gs[7:, :5]]
@@ -411,7 +411,7 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
     metrics = ['mae', 'mse', 'correlation']
     ax = sns.barplot(x='Patient ID', y='Mean abs. weight', hue='NREM phases', data=df, palette=colors)
     ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)
-    #ax.set_ylim(50, 100)
+    #ax.set_ylim(85, 100)
     ax.set_ylabel('Mean weights $|W|$ relative\n to first segment [%]')
     ax.set_xlabel('')
 

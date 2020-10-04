@@ -1,7 +1,17 @@
 import utilities_train as utrain
 import utilities_figures as ufig
 import utilities_various as uvar
-import utilities_ieeg as ieeg
+
+from scipy.stats import mode
+from scipy import signal
+import numpy as np
+from scipy.io import loadmat
+import numpy as np
+import numpy.ma as ma
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
 import os
 
 if __name__ == '__main__':
@@ -14,6 +24,7 @@ if __name__ == '__main__':
     patient_id = 'ID11a'
     h_offset = 59
     h_range = 7
+    corrmean = []
 
     for h_ in range(h_range):
         for m in range(10):  # 30
@@ -56,6 +67,18 @@ if __name__ == '__main__':
                       'epochs': 100}
 
             ids.append(params['id_'])
-            utrain.train_and_test(params)
+            data_mat = loadmat(
+                params['path2data'] + params['patient_id'] + '_' + str(params['time_begin'][0]) + 'h.mat')
+            info_mat = loadmat(params['path2data'] + params['patient_id'] + '_' + 'info.mat')
+            fs = float(info_mat['fs'])
+            sample_begin = int(np.round(params['time_begin'][1] * 60 * fs))
+            sample_end = int(np.round(sample_begin + params['duration'] * fs))
+            data = data_mat['EEG'][:, sample_begin:sample_end].transpose()
+            data = signal.resample(data, num=int(data.shape[0] / fs * params['resample']), axis=0)
 
+            # Correlation
+            corr_mat = np.corrcoef(data.T)
+            corr_val = np.mean(np.abs(corr_mat), axis=0)
+            corrmean.append(corr_val)
 
+    np.save('../data/corrmean_ID11_59to65h_all.npy', np.asarray(corrmean))

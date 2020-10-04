@@ -404,10 +404,10 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default', out
         return mean_abs, mse, mae, corr
 
     # Normalizing over bars to first bar
-    n_brain_states = 3
-    mean_abs_mat = np.reshape(np.asarray(mean_abs), (-1, n_brain_states))
-    first_bars = np.reshape(np.repeat(mean_abs_mat[:, 0], n_brain_states), (-1, n_brain_states))
-    mean_abs = (mean_abs_mat / first_bars * 100).flatten().tolist()
+    # n_brain_states = 3
+    # mean_abs_mat = np.reshape(np.asarray(mean_abs), (-1, n_brain_states))
+    # first_bars = np.reshape(np.repeat(mean_abs_mat[:, 0], n_brain_states), (-1, n_brain_states))
+    # mean_abs = (mean_abs_mat / first_bars * 100).flatten().tolist()
 
     df = pd.DataFrame()
     df['Patient ID'] = patient_id
@@ -418,15 +418,24 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default', out
     df['Batch size'] = batch_size
 
     sns.set_style('ticks')
-    fig = plt.figure(figsize=(3, 3))  # (6, 3)
-    colors = ['tab:red', 'purple', 'tab:blue']
-    metrics = ['mae', 'mse', 'correlation']
-    ax = sns.barplot(x='Patient ID', y='Mean abs. weight', hue='NREM phases', data=df, palette=colors)
+    fig = plt.figure(figsize=(2, 3))  # (6, 3)
+    colors = ['grey', 'tab:red', 'purple', 'grey', 'tab:blue', 'grey']
+
+    df = pd.DataFrame()
+    mean_swa = np.load('mean_swa_multipos.npy')
+    df['swa'] = mean_swa
+    df['idx'] = [i for i in range(len(mean_swa))]
+    ax = sns.barplot(x='idx', y='swa', data=df, palette=colors, edgecolor='black', alpha=.8)
+    #ax = sns.barplot(x='Patient ID', y='Correlation', data=df, palette=colors, edgecolor='black', alpha=.8)
     ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)
-    ax.set_ylim(80, 100)
-    #ax.set_ylabel('Correlation with target [-]')
-    ax.set_ylabel('Mean weights $|W|$ relative\n to first segment [%]')
-    ax.set_xlabel('')
+    #ax.set_ylim(80, 100)
+    #ax.set_ylim(bottom=0.8)
+    ax.set_ylabel('Mean SWA [$\mu$V$^2$/Hz]')
+    ax.set_xticklabels([])
+    ax.set_xlabel('Data segment')
+    #ax.set_ylabel('Mean weights $|W|$ relative\n to first segment [%]')
+    #ax.set_ylabel('Mean weights $|W|$ [-]')
+    #ax.set_xlabel('')
 
     plt.legend([],[], frameon=False)
     # patches = []
@@ -436,7 +445,7 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default', out
     #            labels=['First', 'Second', 'Third'], title='NREM segment', handles=patches)
 
     plt.tight_layout()
-    plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png', dpi=300)
+    plt.savefig('../doc/figures/barplots_swa_' + save_name + '.png', dpi=300)
     #plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png', dpi=300)
     plt.close()
 

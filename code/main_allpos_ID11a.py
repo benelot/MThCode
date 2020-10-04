@@ -10,9 +10,9 @@ if __name__ == '__main__':
 
     ids = []
     pre = 'SLP_allpos_'
-    patient_id = 'ID07'
-    h_offset = 31
-    h_range = 9
+    patient_id = 'ID11a'
+    h_offset = 59
+    h_range = 7
 
     for h_ in range(h_range):
         for m in range(10):  # 30

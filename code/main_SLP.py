@@ -58,10 +58,11 @@ if __name__ == '__main__':
                       'weight_decay': 0.0001,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 100}
-            if params['id_'] == 'SLP_ID11b_136h30m_0':
-                utrain.train_and_test(params)
-            #ufig.plot_train_test(params['id_'], n_nodes='all')
-            #ufig.plot_prediction(params['id_'], n_nodes='all')
 
-    #ufig.mean_weights(ids=ids_all, save_name=pre)
+            #utrain.train_and_test(params)
+            #ufig.plot_train_test(params['id_'], n_nodes='all')
+            #if params['id_'] == 'SLP_ID11b_136h30m_0':
+                #ufig.plot_prediction('SLP_ID11b_136h30m_0', n_nodes=5)
+
+    ufig.mean_weights(ids=ids_all, save_name=pre)
     #ufig.plot_performance(ids=ids_all, save_name=pre)

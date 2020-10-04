@@ -47,23 +47,26 @@ def plot_optimization(id_: str):
     df['Node'] = df['Node'].astype('str')
 
     sns.set_style('ticks')
-    fig = plt.figure(figsize=(6, 6))
-    gs = fig.add_gridspec(nrows=12, ncols=11)
+    fig = plt.figure(figsize=(4, 4))
+    gs = fig.add_gridspec(nrows=12, ncols=14)
     ax = [[], [], []]
 
-    ax[0] = fig.add_subplot(gs[:5, :5])
-    ax[0] = sns.lineplot(x='Epoch', y='Loss', data=df, color='black')
+    ax[0] = fig.add_subplot(gs[:5, 1:6])
+    ax[0] = sns.lineplot(x='Epoch', y='Loss', data=df, color='black', lw=1)
+    ax[0].xaxis.set_major_locator(mpl.ticker.MultipleLocator(20))
     ax[0].set_ylabel('Loss (MAE) [-]'), ax[0].set_xlabel('Epoch [Nr.]')
     plt.xlim(0, epochs - 1)
 
-    ax[1] = fig.add_subplot(gs[:5, 7:])
-    ax[1] = sns.lineplot(x='Epoch', y='Grad norm', data=df, color='black')
+    ax[1] = fig.add_subplot(gs[:5, 9:])
+    ax[1] = sns.lineplot(x='Epoch', y='Grad norm', data=df, color='black', lw=1)
+    ax[1].xaxis.set_major_locator(mpl.ticker.MultipleLocator(20))
     ax[1].set_ylabel('Gradient norm [-]'), ax[1].set_xlabel('Epoch [Nr.]')
     plt.xlim(0, epochs - 1)
 
-    ax[2] = fig.add_subplot(gs[6:, :])
-    ax[2] = sns.barplot(x='Node', y='Loss', data=df.where(df['Epoch'] == epochs - 1), color='gray', edgecolor='black')
-    ax[2].set_ylabel('Mean loss of\nEpoch 250'), ax[2].set_xlabel('Node index [-]')
+    ax[2] = fig.add_subplot(gs[7:, 1:])
+    ax[2] = sns.barplot(x='Node', y='Loss', data=df.where(df['Epoch'] == epochs - 1), color='gray', edgecolor='black',
+                        linewidth=.5)
+    ax[2].set_ylabel('Mean loss of\n last Epoch'), ax[2].set_xlabel('Node index [-]')
 
     every_nth = 5
     ax[2].xaxis.set_ticks(np.arange(0, eval_optimization['loss'].shape[1], every_nth))
@@ -72,6 +75,7 @@ def plot_optimization(id_: str):
     #         label.set_visible(False)
     for i in range(len(ax)):
         ax[i].spines['right'].set_visible(False), ax[i].spines['top'].set_visible(False)
+
     fig.savefig('../doc/figures/optim_' + eval_optimization['id_'] + '.png', dpi=300)
     plt.close()
 
@@ -222,8 +226,8 @@ def plot_prediction(id_: str, node_idx=None, t_lim=5, n_nodes=6, offset=1):
     offset_array = np.linspace(0, (n_nodes - 1) * offset, n_nodes)
 
     sns.set_style('white')
-    fig = plt.figure(figsize=(4, int(0.2 * params['visible_size'])))
-    #fig = plt.figure(figsize=(4, 4))
+    #fig = plt.figure(figsize=(4, int(0.2 * params['visible_size'])))
+    fig = plt.figure(figsize=(3, 4))
     gs = fig.add_gridspec(1, 6)
 
     ax0 = fig.add_subplot(gs[:, :5])
@@ -355,7 +359,7 @@ def plot_corr_map(id_: str, size_of_samples=2000, save_name='default'):
     plt.close()
 
 
-def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
+def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default', output=False):
     """
     :math: ``\\dot{\\bar{u}}`
     """
@@ -369,9 +373,9 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
     for i, id_ in enumerate(ids):
         params = pickle.load(open('../models/' + id_ + '/params.pkl', 'rb'))
         distances = pickle.load(open('../models/' + id_ + '/eval_distances.pkl', 'rb'))
-        mse.append(np.median(distances['mae']))
-        mae.append(np.median(distances['mse']))
-        corr.append(np.median(distances['correlation']))
+        mse.append(np.mean(distances['mae']))
+        mae.append(np.mean(distances['mse']))
+        corr.append(np.mean(distances['correlation']))
         # Get trained model
         model = models.GeneralRNN(params)
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -396,7 +400,8 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
             np.fill_diagonal(W_abs, 0)
         mean_abs.append(np.mean(W_abs))
 
-    #return mean_abs, mse, mae, corr
+    if output:
+        return mean_abs, mse, mae, corr
 
     # Normalizing over bars to first bar
     n_brain_states = 3
@@ -409,26 +414,30 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default'):
     df['NREM phases'] = brain_state
     df['Mean abs. weight'] = mean_abs
     df['MAE'] = mae
+    df['Correlation'] = corr
     df['Batch size'] = batch_size
 
     sns.set_style('ticks')
-    fig = plt.figure(figsize=(6, 3))
+    fig = plt.figure(figsize=(3, 3))  # (6, 3)
     colors = ['tab:red', 'purple', 'tab:blue']
     metrics = ['mae', 'mse', 'correlation']
     ax = sns.barplot(x='Patient ID', y='Mean abs. weight', hue='NREM phases', data=df, palette=colors)
     ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)
-    #ax.set_ylim(85, 100)
+    ax.set_ylim(80, 100)
+    #ax.set_ylabel('Correlation with target [-]')
     ax.set_ylabel('Mean weights $|W|$ relative\n to first segment [%]')
     ax.set_xlabel('')
 
-    patches = []
-    for k in range(3):
-        patches.append(mpl.patches.Patch(color=colors[k]))
-    plt.legend(frameon=False, bbox_to_anchor=(1, 1.05), loc='upper left',
-               labels=['First', 'Second', 'Third'], title='NREM segment', handles=patches)
+    plt.legend([],[], frameon=False)
+    # patches = []
+    # for k in range(3):
+    #     patches.append(mpl.patches.Patch(color=colors[k]))
+    # plt.legend(frameon=False, bbox_to_anchor=(1, 1.05), loc='upper left',
+    #            labels=['First', 'Second', 'Third'], title='NREM segment', handles=patches)
 
     plt.tight_layout()
     plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png', dpi=300)
+    #plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png', dpi=300)
     plt.close()
 
 

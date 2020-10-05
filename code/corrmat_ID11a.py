@@ -80,5 +80,6 @@ if __name__ == '__main__':
             corr_mat = np.corrcoef(data.T)
             corr_val = np.mean(np.abs(corr_mat), axis=0)
             corrmean.append(corr_val)
+            print('Done: ' + params['id_'])
 
     np.save('../data/corrmean_ID11_59to65h_all.npy', np.asarray(corrmean))

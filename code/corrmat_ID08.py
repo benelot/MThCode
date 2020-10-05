@@ -21,9 +21,9 @@ if __name__ == '__main__':
 
     ids = []
     pre = 'SLP_allpos_'
-    patient_id = 'ID11a'
-    h_offset = 59
-    h_range = 7
+    patient_id = 'ID08'
+    h_offset = 57
+    h_range = 9
     corrmean = []
 
     for h_ in range(h_range):
@@ -82,4 +82,4 @@ if __name__ == '__main__':
             corrmean.append(corr_val)
             print('Done: ' + params['id_'])
 
-    np.save('../data/corrmean_ID11_59to65h_all.npy', np.asarray(corrmean))
+    np.save('../data/corrmean_ID08_57to65h_all.npy', np.asarray(corrmean))

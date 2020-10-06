@@ -9,8 +9,9 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'SRNN_L00_mWD_'
+    pre = 'SRNN_L00_'
     for attempt in range(3):
+        attempt = attempt + 3
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
@@ -61,6 +62,8 @@ if __name__ == '__main__':
 
             utrain.train_and_test(params)
             ufig.plot_train_test(params['id_'], n_nodes='all')
+            #if params['id_'] == 'SRNN_L00_ID07_32h10m_0':
+            #    ufig.plot_prediction(params['id_'], node_idx=[10, 12, 27])
 
     ufig.mean_weights(ids=ids_all, save_name=pre)
     ufig.plot_performance(ids=ids_all, save_name=pre)

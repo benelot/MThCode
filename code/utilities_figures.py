@@ -222,21 +222,25 @@ def plot_prediction(id_: str, node_idx=None, t_lim=5, n_nodes=6, offset=1):
         if n_nodes == 'all':
             n_nodes = params['visible_size']
         node_idx = sorted(random.sample([i for i in range(true.shape[1])], n_nodes))
-    t = np.arange(true.shape[0] / fs - t_lim, true.shape[0] / fs, 1 / fs)  # in sec.
+    #t = np.arange(true.shape[0] / fs - t_lim, true.shape[0] / fs, 1 / fs)  # in sec.
+    t_shift = 1
+    t_start = -int((t_lim + t_shift) * fs)
+    t_end = t_start + t_lim * fs
+    t = np.linspace(0, t_lim, true[t_start:t_end, :].shape[0])  # in sec.
     offset_array = np.linspace(0, (n_nodes - 1) * offset, n_nodes)
 
     sns.set_style('white')
     #fig = plt.figure(figsize=(4, int(0.2 * params['visible_size'])))
-    fig = plt.figure(figsize=(3, 4))
+    fig = plt.figure(figsize=(3, 15))
     gs = fig.add_gridspec(1, 6)
 
     ax0 = fig.add_subplot(gs[:, :5])
-    plt.plot(t, pred[-int(t_lim * fs):, node_idx] + offset_array, color='red', label='Predicted')
-    plt.plot(t, true[-int(t_lim * fs):, node_idx] + offset_array, color='black', label='LFP', lw=.7)
+    plt.plot(t, pred[t_start:t_end, node_idx] + offset_array, color='red', label='Predicted')
+    plt.plot(t, true[t_start:t_end, node_idx] + offset_array, color='black', label='LFP', lw=.7)
     # ((data - 0.5) * 2 * 3 * np.std(old)) + np.mean(old) // 71.40147, -0.009330093
     plt.plot([t[-1] - 0.05, t[-1] - 0.05], [offset_array[-1] + offset, offset_array[-1] + offset + 0.733],
              color='black', lw='2')
-    ax0.text(t[-1] - .4, offset_array[-1] + offset + 0.2, '100 $\mu$V', rotation=90, fontsize=8)
+    ax0.text(t[-1] - .5, offset_array[-1] + offset + 0.2, '100 $\mu$V', rotation=90, fontsize=8)
     ax0.spines['right'].set_visible(False), ax0.spines['top'].set_visible(False)
     ax0.set_yticks((offset_array + np.mean(true[-int(t_lim * fs):, node_idx[0]])).tolist())
     ax0.set_yticklabels([str(i) for i in node_idx])
@@ -251,6 +255,7 @@ def plot_prediction(id_: str, node_idx=None, t_lim=5, n_nodes=6, offset=1):
     ax1.set_ylim(ax0.get_ylim())
     ax1.set_xlim(0, 1)
 
+    plt.tight_layout()
     plt.savefig('../doc/figures/pred_' + id_ + '.png', dpi=300)
     plt.close()
 

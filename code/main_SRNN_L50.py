@@ -11,6 +11,7 @@ if __name__ == '__main__':
     ids_all = []
     pre = 'SRNN_L50_'
     for attempt in range(3):
+        attempt = attempt + 3
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 

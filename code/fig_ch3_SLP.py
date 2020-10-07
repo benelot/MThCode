@@ -59,12 +59,13 @@ if __name__ == '__main__':
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 250}
 
-    plot_id = ids_all[6]
+    #plot_id = ids_all[6]
     #ufig.plot_optimization(plot_id)
     #ufig.plot_prediction(plot_id, n_nodes=12)
-    ufig.plot_weights(plot_id)
+    #ufig.plot_weights(plot_id)
 
 
     #ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='mae', save_name=pre + 'mae')
     #ufig.plot_multi_boxplots(ids=ids_all, x='brain_state', y='correlation', save_name=pre + 'corr')
     #ufig.mean_weights(ids=ids_all, hidden=True, save_name=pre)
+    #ufig.plot_performance(ids=ids_all, save_name=pre)

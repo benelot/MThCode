@@ -11,7 +11,7 @@ if __name__ == '__main__':
     ids_all = []
     pre = 'SRNN_L00_'
     for attempt in range(3):
-        attempt = attempt + 3
+        #attempt = attempt + 3
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
@@ -60,10 +60,10 @@ if __name__ == '__main__':
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 100}
 
-            utrain.train_and_test(params)
-            ufig.plot_train_test(params['id_'], n_nodes='all')
-            #if params['id_'] == 'SRNN_L00_ID07_32h10m_0':
-            #    ufig.plot_prediction(params['id_'], node_idx=[10, 12, 27])
+            #utrain.train_and_test(params)
+            #ufig.plot_train_test(params['id_'], n_nodes='all')
+            if params['id_'] == 'SRNN_L00_ID11b_129h45m_0':
+                ufig.plot_prediction(params['id_'], n_nodes='all')
 
-    ufig.mean_weights(ids=ids_all, save_name=pre)
-    ufig.plot_performance(ids=ids_all, save_name=pre)
+    #ufig.mean_weights(ids=ids_all, save_name=pre)
+    #ufig.plot_performance(ids=ids_all, save_name=pre)

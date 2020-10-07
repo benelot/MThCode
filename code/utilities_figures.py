@@ -169,9 +169,10 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False, plot_cbar=True):
         pos_to_hid = 0.8 / W.shape[0] * (params['hidden_size'] / 2) + 0.1
         pos_from_vis = 0.8 / W.shape[0] * (ch / 2) + 0.12
         pos_from_hid = 0.8 / W.shape[0] * ch + 0.8 / W.shape[0] * (params['hidden_size'] / 2) + 0.12
-        fig.text(0.04, pos_to_vis, 'To visible node index [-]', va='center', ha='center', rotation='vertical')
+        mpl.rcParams.update({'font.size': 12})
+        fig.text(0.04, pos_to_vis, 'To vis. node idx. [-]', va='center', ha='center', rotation='vertical')
         fig.text(0.04, pos_to_hid, 'To hidden node index [-]', va='center', ha='center', rotation='vertical')
-        fig.text(pos_from_vis, 0.03, 'From visible node index [-]', va='center', ha='center')
+        fig.text(pos_from_vis, 0.03, 'From vis. node idx. [-]', va='center', ha='center')
         fig.text(pos_from_hid, 0.03, 'From hidden node index [-]', va='center', ha='center')
         fig.subplots_adjust(hspace=3, wspace=3)  # 0.8
         for _, spine in ax0.spines.items():
@@ -186,6 +187,7 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False, plot_cbar=True):
         ax1.set_yticklabels(ax1.get_yticklabels(), rotation=0)
         ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
         ax3.set_xticklabels(ax3.get_xticklabels(), rotation=0)
+
 
     fig.savefig('../doc/figures/weights_' + id_ + '.png', dpi=300)
     plt.close()
@@ -231,7 +233,7 @@ def plot_prediction(id_: str, node_idx=None, t_lim=5, n_nodes=6, offset=1):
 
     sns.set_style('white')
     #fig = plt.figure(figsize=(4, int(0.2 * params['visible_size'])))
-    fig = plt.figure(figsize=(3, 15))
+    fig = plt.figure(figsize=(3, 6))
     gs = fig.add_gridspec(1, 6)
 
     ax0 = fig.add_subplot(gs[:, :5])
@@ -280,18 +282,22 @@ def plot_performance(ids: list, save_name: str):
                 eval_distance['patient_id'][i] = 'P8'
         df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
 
+    df['model'] = ['SLP' for _ in range(len(df))]
+    df.to_pickle('../data/performance_SLP.pkl')
+
     sns.set_style('ticks')
     fig = plt.figure(figsize=(6, 6))
     gs = fig.add_gridspec(nrows=12, ncols=12)
     colors = ['tab:red', 'purple', 'tab:blue']
-    ylims = [(0, 0.13), (0, 0.02), (0.7, 1)]
+    ylims = [(0, 0.15), (0, 0.02), (0.6, 1)]
     ylabels = ['MAE [-]', 'MSE [-]', 'Correlation [-]']
     metrics = ['mae', 'mse', 'correlation']
-    gs_subs = [gs[:5, :5], gs[:5, 7:], gs[7:, :5]]
+    gs_subs = [gs[:5, :5], gs[7:, :5], gs[:5, 7:]]
     axs = [[], [], []]
     for i, ax in enumerate(axs):
         ax = fig.add_subplot(gs_subs[i])
-        ax = sns.boxplot(x=df['patient_id'], y=df[metrics[i]], data=df, hue=df['brain_state'], palette=colors)
+        ax = sns.boxplot(x=df['patient_id'], y=df[metrics[i]], data=df, hue=df['brain_state'], palette=colors,
+                         flierprops={'markersize': 2})
         # Change edgecolor
         c_edge = 'black'
         for k, artist in enumerate(ax.artists):
@@ -409,10 +415,10 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default', out
         return mean_abs, mse, mae, corr
 
     # Normalizing over bars to first bar
-    # n_brain_states = 3
-    # mean_abs_mat = np.reshape(np.asarray(mean_abs), (-1, n_brain_states))
-    # first_bars = np.reshape(np.repeat(mean_abs_mat[:, 0], n_brain_states), (-1, n_brain_states))
-    # mean_abs = (mean_abs_mat / first_bars * 100).flatten().tolist()
+    n_brain_states = 3
+    mean_abs_mat = np.reshape(np.asarray(mean_abs), (-1, n_brain_states))
+    first_bars = np.reshape(np.repeat(mean_abs_mat[:, 0], n_brain_states), (-1, n_brain_states))
+    mean_abs = (mean_abs_mat / first_bars * 100).flatten().tolist()
 
     df = pd.DataFrame()
     df['Patient ID'] = patient_id
@@ -423,24 +429,17 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default', out
     df['Batch size'] = batch_size
 
     sns.set_style('ticks')
-    fig = plt.figure(figsize=(2, 3))  # (6, 3)
-    colors = ['grey', 'tab:red', 'purple', 'grey', 'tab:blue', 'grey']
+    fig = plt.figure(figsize=(3, 3))  # (6, 3)
+    colors = ['tab:red', 'purple', 'tab:blue']
 
-    df = pd.DataFrame()
-    mean_swa = np.load('mean_swa_multipos.npy')
-    df['swa'] = mean_swa
-    df['idx'] = [i for i in range(len(mean_swa))]
-    ax = sns.barplot(x='idx', y='swa', data=df, palette=colors, edgecolor='black', alpha=.8)
-    #ax = sns.barplot(x='Patient ID', y='Correlation', data=df, palette=colors, edgecolor='black', alpha=.8)
+    ax = sns.barplot(x='Patient ID', y='Mean abs. weight', hue='NREM phases', data=df, palette=colors,
+                     errcolor='black', edgecolor='black', ci=95)
+    #ax.errorbar(y='Mean abs. weight', x='Patient ID', linewidth=.5, c='black')
     ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)
-    #ax.set_ylim(80, 100)
+    ax.set_ylim(70, 120)
     #ax.set_ylim(bottom=0.8)
-    ax.set_ylabel('Mean SWA [$\mu$V$^2$/Hz]')
-    ax.set_xticklabels([])
-    ax.set_xlabel('Data segment')
-    #ax.set_ylabel('Mean weights $|W|$ relative\n to first segment [%]')
-    #ax.set_ylabel('Mean weights $|W|$ [-]')
-    #ax.set_xlabel('')
+    ax.set_ylabel('MAW relative to MAE\n of first segment [%]')
+    ax.set_xlabel('')
 
     plt.legend([],[], frameon=False)
     # patches = []
@@ -450,8 +449,8 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default', out
     #            labels=['First', 'Second', 'Third'], title='NREM segment', handles=patches)
 
     plt.tight_layout()
-    plt.savefig('../doc/figures/barplots_swa_' + save_name + '.png', dpi=300)
-    #plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png', dpi=300)
+    #plt.savefig('../doc/figures/barplots_swa_' + save_name + '.png', dpi=300)
+    plt.savefig('../doc/figures/barplots_meanabs_' + save_name + '.png', dpi=300)
     plt.close()
 
 

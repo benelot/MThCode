@@ -60,10 +60,15 @@ if __name__ == '__main__':
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 100}
 
-            utrain.train_and_test(params)
-            ufig.plot_train_test(params['id_'], n_nodes='all')
-            #if params['id_'] == 'SLP_ID11b_136h30m_0':
-                #ufig.plot_prediction('SLP_ID11b_136h30m_0', n_nodes=5)
+            if attempt == 3:
+                if 'ID11b' in params['id_']:
+                    utrain.train_and_test(params)
+                    ufig.plot_train_test(params['id_'], n_nodes='all')
+            elif attempt > 3:
+                utrain.train_and_test(params)
+                ufig.plot_train_test(params['id_'], n_nodes='all')
+            #if params['id_'] == 'SLP_ID07_32h10m_0':
+            #    ufig.plot_weights('SLP_ID07_32h10m_0')
 
     ufig.mean_weights(ids=ids_all, save_name=pre)
     ufig.plot_performance(ids=ids_all, save_name=pre)

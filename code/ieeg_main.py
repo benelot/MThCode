@@ -16,6 +16,7 @@ import numpy as np
 #
 # ieeg.determine_fc_change(patient_id=patient_ids, time_begin=time_begins, max_sample_size=60*60, t_length=240, save_name='fc_change')
 
+ieeg.lin_corr(patient_id='ID07', time_begin=[32, 10], duration=6*60)
 
 #ieeg.determine_sample_size(patient_id=patient_ids, time_begin=time_begins, max_sample_size=600, dt=5, load_name='final', save_name='final1')
 # ieeg.plot_corr_connectivity(r2, r2_dt, h2, h2_dt, save_name=name)

@@ -113,7 +113,7 @@ def plot_weights(id_: str, vmax=1, linewidth=0, absolute=False, plot_cbar=True):
 
     if W.shape[0] == ch:
         if params['artificial_signal'][0] is False:
-            fig = plt.figure(figsize=(3, 3))
+            fig = plt.figure(figsize=(4, 4))
             gs = fig.add_gridspec(nrows=W.shape[0] + 10, ncols=W.shape[0] + 10)
             cbar_ax = fig.add_axes([.92, .11, .02, .77])  # x-pos,y-pos,width,height
             ax0 = fig.add_subplot(gs[5:ch+5, 5:ch+5])

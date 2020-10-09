@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 #uvar.print_params('SLP_ID07_32h10m_0')
-ufig.plot_prediction('SLP_ID11b_136h30m_0', n_nodes='all')
+ids = ['SLP_nWD_ID07_32h10m_0', 'SRNN_L00_nWD_ID07_32h10m_0']
+ufig.plot_performance(ids=ids, save_name='model_comparion')
 
 #sig = utrain.coupled_oscillator(t_length=60, fs=512, small_weights=False)
 #

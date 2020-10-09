@@ -341,12 +341,13 @@ class iEEG_SingleLayerSet(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         x = self.data[index, :]
-        y = self.data[index + 1, :]
+        #y = self.data[index + 1, :]
+        y = self.data[index, :]
         return x, y
 
     def __len__(self):
-        return self.data.shape[0] - 1
-
+        #return self.data.shape[0] - 1
+        return self.data.shape[0]
 
 def train_old(params: dict):
     """ Trains model with parameters params.

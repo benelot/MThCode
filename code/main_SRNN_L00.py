@@ -60,8 +60,9 @@ if __name__ == '__main__':
                       'epochs': 100}
 
             if 'ID07_32h10m' in params['id_']:
-                utrain.train_and_test(params)
+                #utrain.train_and_test(params)
                 ufig.plot_train_test(params['id_'], n_nodes='all')
+
 
     #ufig.mean_weights(ids=ids_all, save_name=pre)
     #ufig.plot_performance(ids=ids_all, save_name=pre)

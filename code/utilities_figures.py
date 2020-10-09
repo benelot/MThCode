@@ -296,7 +296,7 @@ def plot_performance(ids: list, save_name: str):
     axs = [[], [], []]
     for i, ax in enumerate(axs):
         ax = fig.add_subplot(gs_subs[i])
-        ax = sns.boxplot(x=df['patient_id'], y=df[metrics[i]], data=df, hue=df['brain_state'], palette=colors,
+        ax = sns.boxplot(x=df['id_'], y=df[metrics[i]], data=df, hue=df['brain_state'], palette=colors,
                          flierprops={'markersize': 2})
         # Change edgecolor
         c_edge = 'black'
@@ -306,7 +306,7 @@ def plot_performance(ids: list, save_name: str):
                 ax.lines[l].set_color(c_edge)
                 ax.lines[l].set_mfc(c_edge)
                 ax.lines[l].set_mec(c_edge)
-        ax.set_ylim(ylims[i])
+        #ax.set_ylim(ylims[i])
         ax.set_ylabel(ylabels[i])
         ax.set_xlabel('')
         ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)

@@ -431,6 +431,7 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default', out
     sns.set_style('ticks')
     fig = plt.figure(figsize=(3, 3))  # (6, 3)
     colors = ['tab:red', 'purple', 'tab:blue']
+    # ax = sns.barplot(x='NREM phases', y='Mean abs. weight', data=df.where(df['Patient ID'] == 'P8'), palette=['grey', 'grey', 'grey'], errcolor='black', edgecolor='black', ci=95)
 
     ax = sns.barplot(x='Patient ID', y='Mean abs. weight', hue='NREM phases', data=df, palette=colors,
                      errcolor='black', edgecolor='black', ci=95)

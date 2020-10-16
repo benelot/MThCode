@@ -530,7 +530,7 @@ def lin_corr(patient_id: str, time_begin: list, duration: float, t_lag=0.7, crit
     #     data_raw[:, i] = 100 * np.sin(2 * np.pi * val * t)
 
     n_lag = int(t_lag * fs)
-    factor = np.exp(-1)
+    factor = 0.99
 
     # Compute normalized cross correlation (NCC)
     cctl = np.zeros((data_raw.shape[1], data_raw.shape[1], (n_lag * 2) + 1))

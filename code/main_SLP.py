@@ -9,8 +9,8 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids_all = []
-    pre = 'SLP_current_'
-    for attempt in range(1):
+    pre = 'SLP_nWD_'
+    for attempt in range(3):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
@@ -59,9 +59,8 @@ if __name__ == '__main__':
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 100}
 
-            if 'ID07_32h10m' in params['id_']:
-                utrain.train_and_test(params)
-                ufig.plot_train_test(params['id_'], n_nodes='all')
+            utrain.train_and_test(params)
+            ufig.plot_train_test(params['id_'], n_nodes='all')
 
-    #ufig.mean_weights(ids=ids_all, save_name=pre)
-    #ufig.plot_performance(ids=ids_all, save_name=pre)
+    ufig.mean_weights(ids=ids_all, save_name=pre)
+    ufig.plot_performance(ids=ids_all, save_name=pre)

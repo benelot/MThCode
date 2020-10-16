@@ -280,10 +280,32 @@ def plot_performance(ids: list, save_name: str):
                 eval_distance['patient_id'][i] = 'P7'
             elif 'ID08' in eval_distance['id_'][i]:
                 eval_distance['patient_id'][i] = 'P8'
+
+        at = int(eval_distance['id_'][0][-1])
+        attempt = [at for _ in range(len(eval_distance['id_']))]
+        eval_distance['attempt'] = attempt
+
         df = df.append(pd.DataFrame(eval_distance), ignore_index=True)
 
-    df['model'] = ['SLP' for _ in range(len(df))]
-    df.to_pickle('../data/performance_SLP.pkl')
+    patient_ids = ['P7', 'P8', 'P11a', 'P11b']
+    brain_states = ['NREM beginning', 'NREM middle', 'NREM end']
+    df_mean = pd.DataFrame()
+    for i, pat in enumerate(patient_ids):
+        for j, stat in enumerate(brain_states):
+            nd_len = len(df[(df.patient_id == pat) & (df.brain_state == stat) & (df.attempt == 0)]['node_idx'])
+            mae, mse, corr = [], [], []
+            df_0 = pd.DataFrame()
+            for nd in range(nd_len):
+                mae.append(df[(df.patient_id == pat) & (df.brain_state == stat) & (df.node_idx == nd)]['mae'].mean())
+                mse.append(df[(df.patient_id == pat) & (df.brain_state == stat) & (df.node_idx == nd)]['mse'].mean())
+                corr.append(df[(df.patient_id == pat) & (df.brain_state == stat) & (df.node_idx == nd)]['correlation'].mean())
+            df_0['patient_id'] = [pat for _ in range(nd_len)]
+            df_0['brain_state'] = [stat for _ in range(nd_len)]
+            df_0['node_idx'] = [n for n in range(nd_len)]
+            df_0['mae'] = mae
+            df_0['mse'] = mae
+            df_0['correlation'] = corr
+            df_mean = df_mean.append(df_0, ignore_index=True)
 
     sns.set_style('ticks')
     fig = plt.figure(figsize=(6, 6))
@@ -296,7 +318,7 @@ def plot_performance(ids: list, save_name: str):
     axs = [[], [], []]
     for i, ax in enumerate(axs):
         ax = fig.add_subplot(gs_subs[i])
-        ax = sns.boxplot(x=df['id_'], y=df[metrics[i]], data=df, hue=df['brain_state'], palette=colors,
+        ax = sns.boxplot(x=df['patient_id'], y=df[metrics[i]], data=df_mean, hue=df['brain_state'], palette=colors,
                          flierprops={'markersize': 2})
         # Change edgecolor
         c_edge = 'black'
@@ -306,7 +328,7 @@ def plot_performance(ids: list, save_name: str):
                 ax.lines[l].set_color(c_edge)
                 ax.lines[l].set_mfc(c_edge)
                 ax.lines[l].set_mec(c_edge)
-        #ax.set_ylim(ylims[i])
+        ax.set_ylim(ylims[i])
         ax.set_ylabel(ylabels[i])
         ax.set_xlabel('')
         ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)

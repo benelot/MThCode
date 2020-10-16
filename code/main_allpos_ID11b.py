@@ -9,7 +9,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
     ids = []
-    pre = 'SLP_allpos_'
+    pre = 'SLP_allpos_nWD_'
     patient_id = 'ID11b'
     h_offset = 129
     h_range = 9
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                       'lr': 0.001,
                       'batch_size': 1024,
                       'shuffle': True,
-                      'weight_decay': 0.0001,
+                      'weight_decay': 0,
                       'normalization': 'all_standard_positive',  # 'min_max', 'standard', None
                       'epochs': 100}
 

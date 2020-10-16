@@ -10,8 +10,7 @@ if __name__ == '__main__':
 
     ids_all = []
     pre = 'SRNN_L50_'
-    for attempt in range(3):
-        #attempt = attempt + 3
+    for attempt in range(6):
         print('------------------------------ ' + 'Attempt Nr. ' + str(attempt) + ' ------------------------------')
         post = '_' + str(attempt)
 
@@ -65,5 +64,5 @@ if __name__ == '__main__':
             #if params['id_'] == 'SRNN_L50_ID11b_129h45m_0':
             #    ufig.plot_weights(params['id_'])
 
-    ufig.mean_weights(ids=ids_all, save_name=pre)
-    #ufig.plot_performance(ids=ids_all, save_name=pre)
+    #ufig.mean_weights(ids=ids_all, save_name=pre)
+    ufig.plot_performance(ids=ids_all, save_name=pre)

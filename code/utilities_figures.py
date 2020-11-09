@@ -328,7 +328,7 @@ def plot_performance(ids: list, save_name: str):
                 ax.lines[l].set_color(c_edge)
                 ax.lines[l].set_mfc(c_edge)
                 ax.lines[l].set_mec(c_edge)
-        ax.set_ylim(ylims[i])
+        #ax.set_ylim(ylims[i])
         ax.set_ylabel(ylabels[i])
         ax.set_xlabel('')
         ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)
@@ -464,7 +464,7 @@ def mean_weights(ids: list, hidden=True, diagonal=True, save_name='default', out
     ax.set_ylabel('MAW relative to MAE\n of first segment [%]')
     ax.set_xlabel('')
 
-    plt.legend([],[], frameon=False)
+    plt.legend([], [], frameon=False)
     # patches = []
     # for k in range(3):
     #     patches.append(mpl.patches.Patch(color=colors[k]))
@@ -571,17 +571,27 @@ def plot_sudden_lack_of_input(id_: str, custom_test_set: dict=None, window_size_
             break
 
     # Plot
-    plt.figure(figsize=(9, 6))
+    colors = sns.color_palette('rocket', 3)
+    plt.figure(figsize=(2.6, 2.4))
     t = np.linspace(0, u_hist.shape[0] / fs, u_hist.shape[0])
-    plt.plot(t, u_hist[:, 2], color='tab:blue', label='Node 2, predicted')
-    plt.plot(t, X_hist[:, 2], color='tab:blue', linestyle=':', label='Node 2, true')
-    plt.plot(t, u_hist[:, 50], color='tab:red', label='Node 50, predicted')
-    plt.plot(t, X_hist[:, 50], color='tab:red', linestyle=':', label='Node 50, true')
-    plt.plot(t, u_hist[:, 65], color='tab:green', label='Node 2, predicted')
-    plt.plot(t, X_hist[:, 65], color='tab:green', linestyle=':', label='Node 2, true')
-    plt.plot([interrupt_t, interrupt_t], [0.2, 0.78], color='black', linestyle='--')
-    plt.legend(), plt.xlim(t[0], t[-1]), plt.ylim(0.2, 0.78)
-    plt.xlabel('Time [s]'), plt.ylabel('Membrane potential [a. U.]')
-    plt.title('Prediction with sudden lack of input')
-    plt.savefig('../doc/figures/lack_of_input.png')
+
+    plt.plot(t, u_hist[:, 2], color=colors[0], lw=2.3, label='Node 2, predicted')
+    plt.plot(t, u_hist[:, 50], color=colors[1], lw=2.3, label='Node 50, predicted')
+    plt.plot(t, u_hist[:, 65], color=colors[2], lw=2.3, label='Node 2, predicted')
+    #plt.plot(t, X_hist[:, 2], color='black', lw=.8, label='Node 2, true')
+    #plt.plot(t, X_hist[:, 50], color='black', lw=.8, label='Node 50, true')
+    #plt.plot(t, X_hist[:, 65], color='black', lw=.8, label='Node 2, true')
+    plt.plot(t, X_hist[:, 2], color=colors[0], lw=.8, ls='--', label='Node 2, true')
+    plt.plot(t, X_hist[:, 50], color=colors[1], lw=.8, ls='--', label='Node 50, true')
+    plt.plot(t, X_hist[:, 65], color=colors[2], lw=.8, ls='--', label='Node 2, true')
+
+    #plt.plot([interrupt_t, interrupt_t], [0.2, 0.78], color='black', linestyle='--')
+    plt.xlim(t[0], t[-1])#, plt.ylim(0.2, 0.78)
+    plt.xlabel('Time [s]'), plt.ylabel('Membrane\n potential [a.u.]')
+    #plt.legend()
+    ax = plt.gca()
+    ax.spines['right'].set_visible(False), ax.spines['top'].set_visible(False)
+    #plt.title('Prediction with sudden lack of input')
+    plt.tight_layout()
+    plt.savefig('../doc/figures/lack_of_input_2.png', dpi=200)
     plt.close()

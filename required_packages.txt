@@ -1,3 +1,5 @@
+For training models:
+
 matplotlib.pyplot
 numpy
 seaborn
@@ -8,3 +10,12 @@ os
 scipy
 sklearn
 time
+
+
+For iEEG analysis additionally:
+
+sklearn
+hdf5storage
+pwlf
+time
+obspy
